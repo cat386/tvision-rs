@@ -31,7 +31,8 @@ pub enum MenuItem {
         help_ctx: u16,
     },
     /// Подменю.
-    SubMenu { name: String, menu: Rc<Menu>, help_ctx: u16 },
+    /// `key` — клавиша, открывающая подменю из строки меню (как `kbAltSpace` у меню «≡»).
+    SubMenu { name: String, menu: Rc<Menu>, help_ctx: u16, key: Option<KeyEvent> },
     /// Разделитель (`newLine()`).
     Separator,
 }
@@ -90,7 +91,22 @@ impl Menu {
 
     /// Добавить подменю.
     pub fn submenu(mut self, name: &str, menu: Menu) -> Self {
-        self.items.push(MenuItem::SubMenu { name: name.into(), menu: Rc::new(menu), help_ctx: 0 });
+        self.items.push(MenuItem::SubMenu { name: name.into(), menu: Rc::new(menu), help_ctx: 0, key: None });
+        self
+    }
+
+    /// Добавить подменю, которое открывается ещё и клавишей `key`.
+    pub fn submenu_key(mut self, name: &str, key: KeyEvent, menu: Menu) -> Self {
+        self.items.push(MenuItem::SubMenu { name: name.into(), menu: Rc::new(menu), help_ctx: 0, key: Some(key) });
+        self
+    }
+
+    /// Задать контекст справки последнему добавленному пункту.
+    pub fn help(mut self, ctx: u16) -> Self {
+        match self.items.last_mut() {
+            Some(MenuItem::Command { help_ctx, .. }) | Some(MenuItem::SubMenu { help_ctx, .. }) => *help_ctx = ctx,
+            _ => {}
+        }
         self
     }
 
@@ -217,6 +233,12 @@ impl View for MenuBar {
                 // F10 — войти в меню.
                 if k.key == Key::F(10) && k.mods == Default::default() {
                     ctx.request(Request::MenuBar { item: None, mouse: false });
+                    ev.clear();
+                    return;
+                }
+                // Клавиша подменю (например, Alt+Пробел для «≡»).
+                if let Some(i) = self.menu.items.iter().position(|it| matches!(it, MenuItem::SubMenu { key: Some(key), .. } if k.is(*key))) {
+                    ctx.request(Request::MenuBar { item: Some(i), mouse: false });
                     ev.clear();
                     return;
                 }

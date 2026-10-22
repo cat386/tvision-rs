@@ -25,6 +25,19 @@ impl Desktop {
         Desktop { group, background_id, tile_columns_first: false }
     }
 
+    /// Узор фона (`background->pattern`).
+    pub fn pattern(&self) -> char {
+        self.group.find::<Background>(self.background_id).map(|b| b.pattern).unwrap_or('░')
+    }
+
+    /// Сменить узор фона.
+    pub fn set_pattern(&mut self, c: char) {
+        let id = self.background_id;
+        if let Some(b) = self.group.find_mut::<Background>(id) {
+            b.pattern = c;
+        }
+    }
+
     /// Окна, которые участвуют в мозаике/каскаде (индексы сверху вниз).
     fn tileable(&self) -> Vec<usize> {
         (0..self.group.children.len())

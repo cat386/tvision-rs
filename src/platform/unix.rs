@@ -186,6 +186,29 @@ impl Backend for UnixBackend {
         }
     }
 
+    fn suspend(&mut self) {
+        let mut out = io::stdout();
+        let _ = out.write_all(LEAVE_SEQ.as_bytes());
+        let _ = out.flush();
+        unsafe {
+            tcsetattr(STDIN, TCSANOW, &self.saved);
+        }
+    }
+
+    fn resume(&mut self) {
+        unsafe {
+            let mut raw = self.saved;
+            cfmakeraw(&mut raw);
+            tcsetattr(STDIN, TCSANOW, &raw);
+        }
+        let mut out = io::stdout();
+        let _ = out.write_all(ENTER_SEQ.as_bytes());
+        let _ = out.flush();
+        self.writer.invalidate();
+        self.inbuf.clear();
+        self.size = self.query_size();
+    }
+
     fn system_clipboard(&self) -> bool {
         true
     }

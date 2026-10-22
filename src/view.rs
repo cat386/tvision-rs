@@ -311,6 +311,9 @@ pub enum Request {
     Exec { view: Box<dyn View>, reply_to: Option<ViewId>, tag: u16, anchor: Option<ViewId>, place: Option<PlaceFn> },
     /// Передать фокус представлению (выбрать его и всех его владельцев).
     Focus(ViewId),
+    /// Выполнить действие с программой (в C++ представления обращались к
+    /// `TProgram::application` и `TProgram::deskTop` напрямую).
+    WithProgram(Box<dyn FnOnce(&mut crate::program::Program)>),
 }
 
 /// Функция размещения модального окна относительно представления-якоря:
@@ -503,6 +506,13 @@ impl Ctx {
     /// окно истории под строкой ввода).
     pub fn exec_placed(&mut self, view: Box<dyn View>, reply_to: Option<ViewId>, tag: u16, anchor: ViewId, place: PlaceFn) {
         self.requests.push(Request::Exec { view, reply_to, tag, anchor: Some(anchor), place: Some(place) });
+    }
+
+    /// Выполнить действие с программой после текущего события, например
+    /// поменять узор фона рабочего стола из диалога:
+    /// `ctx.with_program(move |app| app.desktop_mut().set_pattern('▒'))`.
+    pub fn with_program(&mut self, f: impl FnOnce(&mut crate::program::Program) + 'static) {
+        self.requests.push(Request::WithProgram(Box::new(f)));
     }
 
     /// Передать фокус представлению `id` (где бы оно ни находилось).
@@ -748,6 +758,9 @@ pub trait View: Any {
     /// [`Ctx::exec`]: `tag` — метка запроса, `command` — код завершения,
     /// `view` — само окно (его можно привести к нужному типу через `into_any`).
     fn exec_result(&mut self, _tag: u16, _command: u16, _view: Box<dyn View>, _ctx: &mut Ctx) {}
+
+    /// Наблюдение за всеми событиями программы (см. `Program::event_monitor`).
+    fn monitor_event(&mut self, _ev: &Event) {}
 
     /// Обновить разрешённые команды (`updateCommands`). Программа вызывает
     /// этот метод после каждого события: сначала у всех представлений вне

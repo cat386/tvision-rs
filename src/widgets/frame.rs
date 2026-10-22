@@ -87,8 +87,11 @@ impl Frame {
                 b.put_char(width - i, char::from(b'0' + info.number as u8));
             }
         }
-        if !info.title.is_empty() && l > 0 {
-            let t = truncate_width(info.title, l.max(0) as usize);
+        // `l` в оригинале — только подсказка для `getTitle(l)`, которую
+        // `TWindow` игнорирует; заголовок ограничивается шириной `width - 10`.
+        let _ = l;
+        if !info.title.is_empty() && width > 10 {
+            let t = truncate_width(info.title, width - 10);
             let tl = str_width(t);
             let i = (width - tl) / 2;
             if i >= 1 {

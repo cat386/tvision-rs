@@ -363,6 +363,25 @@ impl Backend for WindowsBackend {
         self.pending.pop_front()
     }
 
+    fn suspend(&mut self) {
+        self.write_str(LEAVE_SEQ);
+        unsafe {
+            SetConsoleMode(self.hin, self.saved_in);
+            SetConsoleMode(self.hout, self.saved_out);
+        }
+    }
+
+    fn resume(&mut self) {
+        unsafe {
+            SetConsoleMode(self.hin, ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT | ENABLE_EXTENDED_FLAGS);
+            SetConsoleMode(self.hout, ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN);
+        }
+        self.write_str(ENTER_SEQ);
+        self.writer.invalidate();
+        self.pending.clear();
+        self.size = self.query_size();
+    }
+
     fn system_clipboard(&self) -> bool {
         true
     }

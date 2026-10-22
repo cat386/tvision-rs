@@ -19,6 +19,7 @@ use crate::geometry::Point;
 
 pub mod ansi;
 pub mod clipboard;
+pub mod time;
 #[cfg(unix)]
 pub mod unix;
 #[cfg(windows)]
@@ -48,6 +49,12 @@ pub trait Backend {
     /// Выводит экранный буфер. `cursor` — позиция видимого курсора
     /// (`None` — курсор скрыт), `insert` — режим вставки (блочный курсор).
     fn flush(&mut self, screen: &ScreenBuffer, cursor: Option<Point>, insert: bool);
+
+    /// Временно вернуть терминал в обычный режим (для запуска оболочки).
+    fn suspend(&mut self) {}
+
+    /// Снова перейти в полноэкранный режим после `suspend`.
+    fn resume(&mut self) {}
 
     /// Подключать ли системный буфер обмена (у настоящих терминалов — да).
     fn system_clipboard(&self) -> bool {

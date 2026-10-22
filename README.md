@@ -14,6 +14,8 @@ cargo run --example hello   # порт hello.cpp
 cargo run --example demo    # окна, меню, диалог со всеми элементами, список, контекстное меню
 cargo run --example tvedit  # порт примера tvedit: многооконный редактор файлов
 cargo run --example tvhc -- examples/demohelp.txt hc.rs   # проверка справки и константы контекстов
+cargo run --example tvdemo  # порт tvdemo: калькулятор, календарь, пятнашки, ASCII, просмотр файлов...
+cargo test --all-targets    # все тесты, включая тесты tvdemo
 cargo test                  # тесты на «невидимом» терминале
 ```
 
@@ -56,8 +58,38 @@ cargo test                  # тесты на «невидимом» терми�
 
 * `TMonoSelector` (выбор цвета в монохромном режиме);
 * `TStreamable` / ресурсы (сохранение объектов в поток);
-* 256 цветов и TrueColor (`TColorAttr` с RGB), системный буфер обмена;
+* 256 цветов и TrueColor (`TColorAttr` с RGB);
 * кодировки, отличные от UTF-8, в редакторе; время в `FileInfoPane` пока в UTC.
+
+## Системный буфер обмена
+
+`Ctx::clipboard` связан с буфером обмена ОС (строки ввода и редактор
+используют его для Ctrl+Ins / Shift+Ins / Shift+Del):
+
+| ОС | Как |
+|----|-----|
+| Windows | WinAPI, `CF_UNICODETEXT` |
+| macOS | `pbcopy` / `pbpaste` |
+| Linux / BSD, Wayland | `wl-copy` / `wl-paste` |
+| Linux / BSD, X11 | `xclip` или `xsel` |
+| нет ничего из этого (например, SSH) | копирование — последовательностью терминала OSC 52, вставка — из внутреннего буфера |
+
+## tvdemo
+
+`examples/tvdemo/` — порт демонстрационной программы целиком: меню «≡»
+(Alt+Пробел), About, Puzzle, Calendar, Ascii Table, Calculator, Event Viewer
+(Alt+0), просмотр файлов, смена каталога, выход в оболочку (DOS Shell),
+настройки мыши, цвета, узор фона, сохранение/восстановление рабочего стола,
+часы и счётчик памяти, контекстная справка по F1 из оригинального
+`demohelp.txt`. Отличия: «Video mode» переключает палитры (цветная, ч/б,
+монохромная), а не 25/43 строки; рабочий стол сохраняется в простой
+текстовый формат вместо потоков объектов `TStreamable`.
+
+Для этого в библиотеке появились: `Program::dos_shell`, `Program::double_delay`
+и `reverse_buttons`, `Program::event_monitor` + `View::monitor_event`,
+`Ctx::with_program` (действие с программой из любого представления),
+`Desktop::set_pattern`, `platform::time` (местное время),
+`Menu::submenu_key` и `Menu::help`.
 
 ## Справка
 

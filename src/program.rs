@@ -52,8 +52,8 @@ pub trait AppHandler {
 pub struct NoHandler;
 impl AppHandler for NoHandler {}
 
-/// Интервал двойного щелчка (`doubleDelay`).
-const DOUBLE_CLICK: Duration = Duration::from_millis(400);
+/// Интервал двойного щелчка по умолчанию (`doubleDelay`).
+pub const DOUBLE_CLICK: Duration = Duration::from_millis(400);
 
 pub struct Program {
     /// Корневая группа: рабочий стол, строка состояния, строка меню.
@@ -77,6 +77,13 @@ pub struct Program {
     last_mouse: MouseEvent,
     last_click: Option<(Instant, Point)>,
     running: bool,
+    /// Интервал двойного щелчка (`TEventQueue::doubleDelay`).
+    pub double_delay: Duration,
+    /// Поменять местами левую и правую кнопки мыши (`TEventQueue::mouseReverse`).
+    pub reverse_buttons: bool,
+    /// Представление, которому показываются все события (как `printEvent`
+    /// в `tvdemo`): у него вызывается `View::monitor_event`.
+    pub event_monitor: Option<ViewId>,
 }
 
 impl Program {
@@ -124,6 +131,9 @@ impl Program {
             last_mouse: MouseEvent::default(),
             last_click: None,
             running: true,
+            double_delay: DOUBLE_CLICK,
+            reverse_buttons: false,
+            event_monitor: None,
         }
     }
 
@@ -218,6 +228,22 @@ impl Program {
     /// Поставить событие в очередь.
     pub fn put_event(&mut self, ev: Event) {
         self.ctx.put_event(ev);
+    }
+
+    /// Выход в оболочку ОС (`TApplication::dosShell`): терминал возвращается
+    /// в обычный режим, запускается командный интерпретатор (`$SHELL` или
+    /// `cmd.exe`), после выхода из него программа продолжает работу.
+    pub fn dos_shell(&mut self, banner: &str) {
+        self.backend.suspend();
+        println!("{}", banner);
+        #[cfg(windows)]
+        let shell = std::env::var("COMSPEC").unwrap_or_else(|_| "cmd.exe".into());
+        #[cfg(not(windows))]
+        let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".into());
+        let _ = std::process::Command::new(shell).status();
+        self.backend.resume();
+        let s = self.backend.size();
+        self.resize(s);
     }
 
     /// Завершить главный цикл.
@@ -335,6 +361,20 @@ impl Program {
 
     /// Получить следующее событие (`getEvent`): сначала очередь, потом терминал.
     pub fn get_event(&mut self) -> Event {
+        let ev = self.next_event();
+        // Наблюдатель событий (окно Event Viewer в tvdemo).
+        if !ev.is_nothing() {
+            if let Some(id) = self.event_monitor {
+                match self.group.view_mut(id) {
+                    Some(v) => v.monitor_event(&ev),
+                    None => self.event_monitor = None,
+                }
+            }
+        }
+        ev
+    }
+
+    fn next_event(&mut self) -> Event {
         if let Some(e) = self.ctx.queue.pop_front() {
             return e;
         }
@@ -358,7 +398,11 @@ impl Program {
     }
 
     /// Превращает состояние мыши в событие нажатия/отпускания/движения.
-    fn convert_mouse(&mut self, pos: Point, buttons: u8, mods: crate::event::Mods, wheel: i8) -> Event {
+    fn convert_mouse(&mut self, pos: Point, mut buttons: u8, mods: crate::event::Mods, wheel: i8) -> Event {
+        if self.reverse_buttons {
+            // Левая ↔ правая (биты 0 и 1).
+            buttons = (buttons & !3) | ((buttons & 1) << 1) | ((buttons & 2) >> 1);
+        }
         let old = self.mouse_buttons;
         let mut me = MouseEvent { pos, buttons, double: false, mods, wheel };
         let ev = if wheel != 0 {
@@ -366,7 +410,7 @@ impl Program {
         } else if buttons & !old != 0 {
             let now = Instant::now();
             if let Some((t, p)) = self.last_click {
-                me.double = p == pos && now.duration_since(t) < DOUBLE_CLICK;
+                me.double = p == pos && now.duration_since(t) < self.double_delay;
             }
             self.last_click = if me.double { None } else { Some((now, pos)) };
             Event::MouseDown(me)
@@ -544,6 +588,7 @@ impl Program {
                         self.menu = Some(MenuSession::popup(menu, pos, self.ctx.screen_size));
                     }
                     Request::Exec { view, reply_to, tag, anchor, place } => self.exec_request(view, reply_to, tag, anchor, place),
+                    Request::WithProgram(f) => f(self),
                     Request::Focus(id) => {
                         self.ctx.depth = 0;
                         self.group.focus_path(id, &mut self.ctx);
