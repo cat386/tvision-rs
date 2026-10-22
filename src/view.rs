@@ -527,7 +527,7 @@ pub struct DrawCtx<'a> {
     /// Абсолютная область, в которую можно рисовать.
     clip: Rect,
     /// Цепочка палитр от приложения (первая) до текущего представления (последняя).
-    palettes: Vec<&'static [u8]>,
+    palettes: Vec<&'a [u8]>,
     /// Разрешённые команды (нужны, например, строке состояния и кнопкам).
     pub commands: &'a CommandSet,
     /// Размер текущего представления.
@@ -536,7 +536,7 @@ pub struct DrawCtx<'a> {
 
 impl<'a> DrawCtx<'a> {
     /// Корневой контекст на весь экран.
-    pub fn new(screen: &'a mut ScreenBuffer, app_palette: &'static [u8], commands: &'a CommandSet) -> Self {
+    pub fn new(screen: &'a mut ScreenBuffer, app_palette: &'a [u8], commands: &'a CommandSet) -> Self {
         let size = Point::new(screen.width as i32, screen.height as i32);
         DrawCtx {
             screen,

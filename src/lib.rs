@@ -30,6 +30,9 @@
 //! | `TScroller`, `TTerminal` | [`Scroller`], [`Terminal`] |
 //! | `TEditor`, `TMemo`, `TFileEditor`, `TEditWindow`, `TIndicator` | [`Editor`], [`Memo`], [`FileEditor`], [`EditWindow`], [`Indicator`] |
 //! | `TFileDialog`, `TChDirDialog` | [`FileDialog`], [`ChDirDialog`] |
+//! | `TOutline`, `TNode` | [`Outline`], [`Node`] |
+//! | `TColorDialog` | [`ColorDialog`] |
+//! | `THelpFile`, `THelpWindow` | [`HelpFile`], [`HelpWindow`] |
 //!
 //! ## Главное архитектурное отличие от C++
 //!

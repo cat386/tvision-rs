@@ -95,10 +95,7 @@ fn main() -> std::io::Result<()> {
                 .separator()
                 .item_key("~C~lear", cm::CLEAR, KeyEvent::new(Key::Del, Mods::CTRL), "Ctrl-Del"),
         )
-        .submenu(
-            "~S~earch",
-            Menu::new().item("~F~ind...", cm::FIND).item("~R~eplace...", cm::REPLACE).item("~S~earch again", cm::SEARCH_AGAIN),
-        )
+        .submenu("~S~earch", Menu::new().item("~F~ind...", cm::FIND).item("~R~eplace...", cm::REPLACE).item("~S~earch again", cm::SEARCH_AGAIN))
         .submenu(
             "~W~indows",
             Menu::new()

@@ -63,7 +63,8 @@ pub struct Program {
     backend: Box<dyn Backend>,
     screen: ScreenBuffer,
     /// Палитра приложения (цветная, ч/б или монохромная).
-    pub palette: &'static [u8],
+    /// Палитру можно менять во время работы (см. [`crate::ColorDialog`]).
+    pub palette: Vec<u8>,
     pub desktop_id: ViewId,
     pub menu_bar_id: Option<ViewId>,
     pub status_line_id: Option<ViewId>,
@@ -110,7 +111,7 @@ impl Program {
             ctx,
             backend,
             screen: ScreenBuffer::new(size.x.max(1) as usize, size.y.max(1) as usize),
-            palette: palettes::APP_COLOR,
+            palette: palettes::APP_COLOR.to_vec(),
             desktop_id,
             menu_bar_id,
             status_line_id,
@@ -152,6 +153,11 @@ impl Program {
 
     fn desktop_index(&self) -> usize {
         self.group.index_of(self.desktop_id).expect("рабочий стол")
+    }
+
+    /// Текущий контекст справки (`getHelpCtx`): у представления в фокусе.
+    pub fn help_ctx(&self) -> u16 {
+        self.group.help_ctx()
     }
 
     /// Вставить окно на рабочий стол (`insertWindow`). Возвращает id окна.
@@ -676,7 +682,7 @@ impl Program {
         }
 
         {
-            let mut dc = DrawCtx::new(&mut self.screen, self.palette, &self.ctx.commands);
+            let mut dc = DrawCtx::new(&mut self.screen, &self.palette, &self.ctx.commands);
             self.group.draw_children(&mut dc);
             if let Some(s) = &self.menu {
                 s.draw(&mut dc);

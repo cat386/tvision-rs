@@ -22,3 +22,6 @@ name = "demo"
 
 [[example]]
 name = "tvedit"
+
+[[example]]
+name = "tvhc"

@@ -13,6 +13,7 @@
 cargo run --example hello   # порт hello.cpp
 cargo run --example demo    # окна, меню, диалог со всеми элементами, список, контекстное меню
 cargo run --example tvedit  # порт примера tvedit: многооконный редактор файлов
+cargo run --example tvhc -- examples/demohelp.txt hc.rs   # проверка справки и константы контекстов
 cargo test                  # тесты на «невидимом» терминале
 ```
 
@@ -46,13 +47,32 @@ cargo test                  # тесты на «невидимом» терми�
 | `TEditWindow`, `TIndicator`           | `EditWindow`, `Indicator`                   |
 | `TFileDialog`, `TFileList`, `TFileInfoPane` | `FileDialog`, `FileList`, `FileInfoPane` |
 | `TChDirDialog`, `TDirListBox`         | `ChDirDialog`, `DirListBox`                 |
+| `TOutlineViewer`, `TOutline`, `TNode` | `Outline`, `Node`                           |
+| `TColorDialog`, `TColorSelector`, `TColorDisplay`, `TColorGroup`, `TColorItem` | `ColorDialog`, `ColorSelector`, `ColorDisplay`, `ColorGroup`, `ColorItem` |
+| `THelpFile`, `THelpTopic`, `THelpViewer`, `THelpWindow` | `HelpFile`, `HelpTopic`, `HelpViewer`, `HelpWindow` |
+| утилита `tvhc`                        | пример `tvhc` (проверка + константы `HC_*`) |
 
 ## Чего ещё нет (следующие этапы)
 
-* `TOutline` (дерево), `THelpWindow` и компилятор справки `tvhc`, `TColorDialog`;
+* `TMonoSelector` (выбор цвета в монохромном режиме);
 * `TStreamable` / ресурсы (сохранение объектов в поток);
 * 256 цветов и TrueColor (`TColorAttr` с RGB), системный буфер обмена;
 * кодировки, отличные от UTF-8, в редакторе; время в `FileInfoPane` пока в UTC.
+
+## Справка
+
+Исходник справки пишется в формате `tvhc` (см. `examples/demohelp.txt`) и
+читается программой напрямую — двоичный `.hlp` не нужен:
+
+```rust
+let help = Rc::new(HelpFile::parse(include_str!("demohelp.txt"))?);
+// по F1:
+let ctx = app.help_ctx();
+app.exec_dialog(HelpWindow::new(help.clone(), ctx));
+```
+
+Палитра приложения (`Program::palette`) теперь обычный `Vec<u8>`; её меняет
+`ColorDialog`, а сохранить её между запусками можно как угодно (например, в файл).
 
 ## Модальные окна изнутри представлений
 
