@@ -91,11 +91,7 @@ impl Button {
                 i = 1;
             }
             if y == t && !self.title.is_empty() {
-                let l = if self.flags & bf::LEFT_JUST != 0 {
-                    1
-                } else {
-                    ((s as i32 - cstr_width(&self.title) as i32 - 1) / 2).max(1) as usize
-                };
+                let l = if self.flags & bf::LEFT_JUST != 0 { 1 } else { ((s as i32 - cstr_width(&self.title) as i32 - 1) / 2).max(1) as usize };
                 b.move_cstr(i + l, &self.title, c_button);
             }
             dc.write_line(0, y, self.vs.size.x, 1, &b);
@@ -162,9 +158,7 @@ impl View for Button {
             Event::KeyDown(k) => {
                 let hot = hotkey(&self.title);
                 let by_alt = hot.is_some() && k.alt_char() == hot;
-                let by_letter = ctx.phase == Phase::PostProcess
-                    && hot.is_some()
-                    && k.text_char().map(to_upper) == hot;
+                let by_letter = ctx.phase == Phase::PostProcess && hot.is_some() && k.text_char().map(to_upper) == hot;
                 let by_space = self.vs.is_focused() && k.key == Key::Char(' ') && k.mods == Default::default();
                 if (by_alt || by_letter || by_space) && enabled {
                     self.press(ctx);

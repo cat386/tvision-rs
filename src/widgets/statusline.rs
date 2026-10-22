@@ -68,11 +68,7 @@ impl StatusLine {
 
     /// Пункты для текущего контекста справки (`findItems`).
     pub fn items(&self) -> &[StatusItem] {
-        self.defs
-            .iter()
-            .find(|d| d.min <= self.help_ctx && self.help_ctx <= d.max)
-            .map(|d| d.items.as_slice())
-            .unwrap_or(&[])
+        self.defs.iter().find(|d| d.min <= self.help_ctx && self.help_ctx <= d.max).map(|d| d.items.as_slice()).unwrap_or(&[])
     }
 
     /// Номер видимого пункта под позицией `x` (`itemMouseIsIn`).

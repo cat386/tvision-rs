@@ -185,11 +185,7 @@ impl ScreenBuffer {
 
     /// Текст одной строки (для тестов и отладки). Хвосты широких символов пропускаются.
     pub fn line_text(&self, y: usize) -> String {
-        (0..self.width)
-            .map(|x| self.get(x, y))
-            .filter(|c| !c.is_wide_tail())
-            .map(|c| c.ch)
-            .collect()
+        (0..self.width).map(|x| self.get(x, y)).filter(|c| !c.is_wide_tail()).map(|c| c.ch).collect()
     }
 
     /// Весь экран как текст (строки через `\n`). Удобно для тестов.

@@ -94,12 +94,7 @@ impl Demo {
 
     fn context_menu() -> Rc<Menu> {
         Rc::new(
-            Menu::new()
-                .item("Новое ~о~кно", cm::NEW)
-                .item("~С~писок", CM_LIST)
-                .separator()
-                .item("~М~озаика", cm::TILE)
-                .item("~К~аскад", cm::CASCADE),
+            Menu::new().item("Новое ~о~кно", cm::NEW).item("~С~писок", CM_LIST).separator().item("~М~озаика", cm::TILE).item("~К~аскад", cm::CASCADE),
         )
     }
 }
@@ -140,11 +135,12 @@ fn main() -> std::io::Result<()> {
     let menu = Menu::new()
         .submenu(
             "~Ф~айл",
-            Menu::new()
-                .item_key("~Н~овое окно", cm::NEW, kb::F2, "F2")
-                .item_key("~С~писок", CM_LIST, kb::F3, "F3")
-                .separator()
-                .item_key("~В~ыход", cm::QUIT, kb::ALT_X, "Alt-X"),
+            Menu::new().item_key("~Н~овое окно", cm::NEW, kb::F2, "F2").item_key("~С~писок", CM_LIST, kb::F3, "F3").separator().item_key(
+                "~В~ыход",
+                cm::QUIT,
+                kb::ALT_X,
+                "Alt-X",
+            ),
         )
         .submenu(
             "~Д~иалоги",

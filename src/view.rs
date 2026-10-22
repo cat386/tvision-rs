@@ -554,14 +554,7 @@ impl<'a> DrawCtx<'a> {
         let abs = bounds.moved(self.origin.x, self.origin.y);
         let mut palettes = self.palettes.clone();
         palettes.push(palette);
-        DrawCtx {
-            screen: self.screen,
-            origin: abs.a,
-            clip: self.clip.intersect(&abs),
-            palettes,
-            commands: self.commands,
-            size: bounds.size(),
-        }
+        DrawCtx { screen: self.screen, origin: abs.a, clip: self.clip.intersect(&abs), palettes, commands: self.commands, size: bounds.size() }
     }
 
     /// Абсолютная позиция представления на экране.
@@ -792,6 +785,13 @@ pub trait View: Any {
         }
     }
 
+    /// Если представление — окно (или построено вокруг окна), вернуть его.
+    /// Программа по этому узнаёт флаги активного окна для команд
+    /// `cm::CLOSE`, `cm::ZOOM`, `cm::RESIZE`.
+    fn as_window(&self) -> Option<&crate::widgets::Window> {
+        None
+    }
+
     /// Если представление — группа (или содержит группу), вернуть её.
     fn as_group(&self) -> Option<&Group> {
         None
@@ -899,6 +899,24 @@ macro_rules! impl_view_basics {
 #[macro_export]
 macro_rules! impl_group_basics {
     ($($g:ident).+) => {
+        $crate::impl_group_core!($($g).+);
+        fn has_data(&self) -> bool {
+            self.$($g).+.has_data()
+        }
+        fn get_data(&self) -> $crate::Value {
+            self.$($g).+.get_data()
+        }
+        fn set_data(&mut self, value: &$crate::Value) {
+            self.$($g).+.set_data(value)
+        }
+    };
+}
+
+/// Как [`impl_group_basics!`], но без методов данных (`has_data`/`get_data`/
+/// `set_data`) — для групп, у которых данные свои (например, `FileDialog`).
+#[macro_export]
+macro_rules! impl_group_core {
+    ($($g:ident).+) => {
         fn vs(&self) -> &$crate::ViewState {
             &self.$($g).+.vs
         }
@@ -923,17 +941,32 @@ macro_rules! impl_group_basics {
         fn change_bounds(&mut self, bounds: $crate::Rect) {
             self.$($g).+.change_bounds(bounds)
         }
-        fn has_data(&self) -> bool {
-            self.$($g).+.has_data()
-        }
-        fn get_data(&self) -> $crate::Value {
-            self.$($g).+.get_data()
-        }
-        fn set_data(&mut self, value: &$crate::Value) {
-            self.$($g).+.set_data(value)
-        }
         fn help_ctx(&self) -> u16 {
             self.$($g).+.help_ctx()
+        }
+    };
+}
+
+/// Как [`impl_view_basics!`], но `ViewState` берётся из вложенного поля
+/// (`self.$f.vs`). Удобно для представлений-«обёрток»: `Memo` вокруг
+/// `Editor`, `FileList` вокруг `ListBox` и т.п. — аналог наследования в C++.
+#[macro_export]
+macro_rules! impl_view_basics_field {
+    ($f:ident) => {
+        fn vs(&self) -> &$crate::ViewState {
+            &self.$f.vs
+        }
+        fn vs_mut(&mut self) -> &mut $crate::ViewState {
+            &mut self.$f.vs
+        }
+        fn as_any(&self) -> &dyn ::std::any::Any {
+            self
+        }
+        fn as_any_mut(&mut self) -> &mut dyn ::std::any::Any {
+            self
+        }
+        fn into_any(self: Box<Self>) -> Box<dyn ::std::any::Any> {
+            self
         }
     };
 }

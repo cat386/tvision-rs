@@ -99,11 +99,7 @@ impl Window {
     /// `vertical` — справа, иначе — снизу.
     pub fn standard_scroll_bar(&mut self, vertical: bool) -> ViewId {
         let e = self.group.vs.extent();
-        let r = if vertical {
-            Rect::new(e.b.x - 1, e.a.y + 1, e.b.x, e.b.y - 1)
-        } else {
-            Rect::new(e.a.x + 2, e.b.y - 1, e.b.x - 2, e.b.y)
-        };
+        let r = if vertical { Rect::new(e.b.x - 1, e.a.y + 1, e.b.x, e.b.y - 1) } else { Rect::new(e.a.x + 2, e.b.y - 1, e.b.x - 2, e.b.y) };
         self.group.add(crate::widgets::ScrollBar::new(r))
     }
 
@@ -342,6 +338,10 @@ impl Window {
 
 impl View for Window {
     crate::impl_group_basics!(group);
+
+    fn as_window(&self) -> Option<&Window> {
+        Some(self)
+    }
 
     fn draw(&self, dc: &mut DrawCtx) {
         self.draw_window(dc);

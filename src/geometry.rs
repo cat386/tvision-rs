@@ -94,22 +94,12 @@ impl Rect {
 
     /// Пересечение двух прямоугольников. Аналог `TRect::intersect`.
     pub fn intersect(&self, r: &Rect) -> Rect {
-        Rect::new(
-            self.a.x.max(r.a.x),
-            self.a.y.max(r.a.y),
-            self.b.x.min(r.b.x),
-            self.b.y.min(r.b.y),
-        )
+        Rect::new(self.a.x.max(r.a.x), self.a.y.max(r.a.y), self.b.x.min(r.b.x), self.b.y.min(r.b.y))
     }
 
     /// Объединение (наименьший охватывающий прямоугольник). Аналог `TRect::Union`.
     pub fn union(&self, r: &Rect) -> Rect {
-        Rect::new(
-            self.a.x.min(r.a.x),
-            self.a.y.min(r.a.y),
-            self.b.x.max(r.b.x),
-            self.b.y.max(r.b.y),
-        )
+        Rect::new(self.a.x.min(r.a.x), self.a.y.min(r.a.y), self.b.x.max(r.b.x), self.b.y.max(r.b.y))
     }
 
     /// Лежит ли точка внутри прямоугольника.

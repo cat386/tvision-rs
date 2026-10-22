@@ -135,16 +135,9 @@ impl WindowsBackend {
             // эхо, построчный режим и обработку Ctrl+C системой.
             SetConsoleMode(hin, ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT | ENABLE_EXTENDED_FLAGS);
             // Вывод: включаем поддержку VT-последовательностей.
-            if SetConsoleMode(
-                hout,
-                ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN,
-            ) == 0
-            {
+            if SetConsoleMode(hout, ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN) == 0 {
                 SetConsoleMode(hin, saved_in);
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "консоль не поддерживает VT-последовательности (нужна Windows 10 или новее)",
-                ));
+                return Err(io::Error::new(io::ErrorKind::Other, "консоль не поддерживает VT-последовательности (нужна Windows 10 или новее)"));
             }
             let mut b = WindowsBackend {
                 hin,
@@ -299,7 +292,11 @@ impl WindowsBackend {
         }
         let wheel = if flags & MOUSE_WHEELED != 0 {
             // Старшее слово — направление: положительное = от пользователя (вверх).
-            if (bstate as i32) >> 16 > 0 { -1 } else { 1 }
+            if (bstate as i32) >> 16 > 0 {
+                -1
+            } else {
+                1
+            }
         } else {
             0
         };

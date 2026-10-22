@@ -40,16 +40,10 @@ fn main() -> std::io::Result<()> {
     // Аналог `initMenuBar`.
     let menu = Menu::new().submenu(
         "~H~ello",
-        Menu::new()
-            .item_key("~G~reeting...", GREET_THEM_CMD, kb::alt('G'), "Alt-G")
-            .separator()
-            .item_key("E~x~it", cm::QUIT, kb::ALT_X, "Alt-X"),
+        Menu::new().item_key("~G~reeting...", GREET_THEM_CMD, kb::alt('G'), "Alt-G").separator().item_key("E~x~it", cm::QUIT, kb::ALT_X, "Alt-X"),
     );
     // Аналог `initStatusLine`.
-    let status = vec![StatusDef::all(vec![
-        StatusItem::new("~Alt-X~ Exit", kb::ALT_X, cm::QUIT),
-        StatusItem::new("", kb::F10, cm::MENU),
-    ])];
+    let status = vec![StatusDef::all(vec![StatusItem::new("~Alt-X~ Exit", kb::ALT_X, cm::QUIT), StatusItem::new("", kb::F10, cm::MENU)])];
 
     let mut app = Program::with_terminal(Some(menu), Some(status))?;
     app.run(&mut HelloApp);

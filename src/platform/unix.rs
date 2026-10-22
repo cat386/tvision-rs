@@ -88,13 +88,7 @@ impl UnixBackend {
             if tcsetattr(STDIN, TCSANOW, &raw) != 0 {
                 return Err(io::Error::last_os_error());
             }
-            let mut b = UnixBackend {
-                saved,
-                size: Point::new(80, 25),
-                writer: AnsiWriter::new(),
-                parser: InputParser::new(),
-                inbuf: Vec::new(),
-            };
+            let mut b = UnixBackend { saved, size: Point::new(80, 25), writer: AnsiWriter::new(), parser: InputParser::new(), inbuf: Vec::new() };
             b.size = b.query_size();
             let mut out = io::stdout();
             out.write_all(ENTER_SEQ.as_bytes())?;

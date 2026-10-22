@@ -36,7 +36,7 @@ use crate::view::{sf, Ctx, DrawCtx, Phase, Request, View, ViewId};
 use crate::widgets::desktop::Desktop;
 use crate::widgets::menu::{Menu, MenuBar, MenuOutcome, MenuSession};
 use crate::widgets::statusline::{StatusDef, StatusLine};
-use crate::widgets::window::{wf, Window};
+use crate::widgets::window::wf;
 
 /// Обработчик событий приложения — то, что в C++ было переопределённым
 /// `TApplication::handleEvent` и `idle`. Получает доступ ко всей программе,
@@ -298,6 +298,9 @@ impl Program {
                 if ok {
                     break c;
                 }
+                // `valid` мог попросить показать сообщение или передать фокус.
+                self.ctx.outbox.clear();
+                self.process_requests();
             }
         };
         self.modal_stack.pop();
@@ -428,6 +431,7 @@ impl Program {
                 if self.group.valid(cm::QUIT, &mut self.ctx) {
                     self.running = false;
                 }
+                self.ctx.outbox.clear();
                 ev.clear();
             }
             if !ev.is_nothing() {
@@ -503,22 +507,7 @@ impl Program {
         if matches!(ev, Event::MouseUp(_)) && self.mouse_buttons == 0 {
             self.ctx.release_mouse();
         }
-        // Запросы представлений к программе.
-        let reqs = std::mem::take(&mut self.ctx.requests);
-        for r in reqs {
-            match r {
-                Request::MenuBar { item, mouse } => self.open_menu_bar(item, mouse),
-                Request::Popup { menu, pos } => {
-                    self.menu = Some(MenuSession::popup(menu, pos, self.ctx.screen_size));
-                }
-                Request::Exec { view, reply_to, tag, anchor, place } => self.exec_request(view, reply_to, tag, anchor, place),
-                Request::Focus(id) => {
-                    self.ctx.depth = 0;
-                    self.group.focus_path(id, &mut self.ctx);
-                    self.ctx.outbox.clear();
-                }
-            }
-        }
+        self.process_requests();
         self.update_window_commands();
         self.update_view_commands();
         if self.ctx.commands_changed {
@@ -527,6 +516,32 @@ impl Program {
             self.ctx.depth = 0;
             self.group.broadcast_children(&mut b, &mut self.ctx);
             self.ctx.outbox.clear();
+        }
+    }
+
+    /// Выполняет запросы представлений к программе. Запросы, появившиеся
+    /// во время выполнения других (например, вопрос после закрытия диалога),
+    /// выполняются тут же, а не после следующего события.
+    fn process_requests(&mut self) {
+        loop {
+            let reqs = std::mem::take(&mut self.ctx.requests);
+            if reqs.is_empty() {
+                break;
+            }
+            for r in reqs {
+                match r {
+                    Request::MenuBar { item, mouse } => self.open_menu_bar(item, mouse),
+                    Request::Popup { menu, pos } => {
+                        self.menu = Some(MenuSession::popup(menu, pos, self.ctx.screen_size));
+                    }
+                    Request::Exec { view, reply_to, tag, anchor, place } => self.exec_request(view, reply_to, tag, anchor, place),
+                    Request::Focus(id) => {
+                        self.ctx.depth = 0;
+                        self.group.focus_path(id, &mut self.ctx);
+                        self.ctx.outbox.clear();
+                    }
+                }
+            }
         }
     }
 
@@ -591,13 +606,7 @@ impl Program {
     fn update_window_commands(&mut self) {
         let flags = {
             let desk = self.desktop();
-            desk.group.current_view().and_then(|v| {
-                if let Some(w) = v.as_any().downcast_ref::<Window>() {
-                    Some(w.flags)
-                } else {
-                    v.as_any().downcast_ref::<crate::widgets::Dialog>().map(|d| d.win.flags)
-                }
-            })
+            desk.group.current_view().and_then(|v| v.as_window()).map(|w| w.flags)
         };
         let has = flags.is_some();
         let f = flags.unwrap_or(0);
@@ -674,11 +683,7 @@ impl Program {
             }
         }
         let size = self.ctx.screen_size;
-        let cursor = if self.menu.is_some() {
-            None
-        } else {
-            self.group.cursor_pos(Point::default(), Rect::new(0, 0, size.x, size.y))
-        };
+        let cursor = if self.menu.is_some() { None } else { self.group.cursor_pos(Point::default(), Rect::new(0, 0, size.x, size.y)) };
         let (pos, ins) = match cursor {
             Some((p, i)) => (Some(p), i),
             None => (None, false),

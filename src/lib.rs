@@ -25,6 +25,11 @@
 //! | `TScrollBar`         | [`ScrollBar`]                          |
 //! | `TListViewer`, `TListBox` | [`ListBox`]                       |
 //! | `messageBox()`, `inputBox()` | [`message_box`], [`input_box`] |
+//! | `TValidator` и наследники | трейт [`Validator`], [`PictureValidator`], [`RangeValidator`] ... |
+//! | `THistory`, `THistoryWindow` | [`History`], [`HistoryWindow`] |
+//! | `TScroller`, `TTerminal` | [`Scroller`], [`Terminal`] |
+//! | `TEditor`, `TMemo`, `TFileEditor`, `TEditWindow`, `TIndicator` | [`Editor`], [`Memo`], [`FileEditor`], [`EditWindow`], [`Indicator`] |
+//! | `TFileDialog`, `TChDirDialog` | [`FileDialog`], [`ChDirDialog`] |
 //!
 //! ## Главное архитектурное отличие от C++
 //!
@@ -44,22 +49,22 @@
 //! * вложенные модальные циклы (`execView`) запускаются из [`Program`]
 //!   (обычно из обработчика приложения [`AppHandler`]).
 
-pub mod geometry;
-pub mod text;
 pub mod color;
 pub mod drawbuf;
 pub mod event;
-pub mod platform;
-pub mod view;
+pub mod geometry;
 pub mod group;
+pub mod platform;
 pub mod program;
+pub mod text;
+pub mod view;
 pub mod widgets;
 
-pub use geometry::{Point, Rect};
 pub use color::{Attr, AttrPair};
 pub use drawbuf::{Cell, DrawBuffer, ScreenBuffer};
 pub use event::{cm, kb, Event, Info, Key, KeyEvent, Message, Mods, MouseEvent};
-pub use view::{dm, gf, of, sf, Ctx, DrawCtx, Phase, Value, View, ViewId, ViewState};
+pub use geometry::{Point, Rect};
 pub use group::Group;
 pub use program::{AppHandler, Program};
+pub use view::{dm, gf, of, sf, Ctx, DrawCtx, Phase, Value, View, ViewId, ViewState};
 pub use widgets::*;

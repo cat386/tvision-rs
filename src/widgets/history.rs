@@ -194,6 +194,10 @@ impl HistoryWindow {
 impl View for HistoryWindow {
     crate::impl_group_basics!(win.group);
 
+    fn as_window(&self) -> Option<&Window> {
+        Some(&self.win)
+    }
+
     fn draw(&self, dc: &mut DrawCtx) {
         self.win.draw_window(dc);
     }

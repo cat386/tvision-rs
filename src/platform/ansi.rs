@@ -398,17 +398,8 @@ mod tests {
     #[test]
     fn mouse() {
         let mut p = InputParser::new();
-        assert_eq!(
-            ev(&mut p, b"\x1b[<0;10;5M"),
-            RawEvent::Mouse { pos: Point::new(9, 4), buttons: 1, mods: Mods::NONE, wheel: 0 }
-        );
-        assert_eq!(
-            ev(&mut p, b"\x1b[<0;10;5m"),
-            RawEvent::Mouse { pos: Point::new(9, 4), buttons: 0, mods: Mods::NONE, wheel: 0 }
-        );
-        assert_eq!(
-            ev(&mut p, b"\x1b[<65;1;1M"),
-            RawEvent::Mouse { pos: Point::new(0, 0), buttons: 0, mods: Mods::NONE, wheel: 1 }
-        );
+        assert_eq!(ev(&mut p, b"\x1b[<0;10;5M"), RawEvent::Mouse { pos: Point::new(9, 4), buttons: 1, mods: Mods::NONE, wheel: 0 });
+        assert_eq!(ev(&mut p, b"\x1b[<0;10;5m"), RawEvent::Mouse { pos: Point::new(9, 4), buttons: 0, mods: Mods::NONE, wheel: 0 });
+        assert_eq!(ev(&mut p, b"\x1b[<65;1;1M"), RawEvent::Mouse { pos: Point::new(0, 0), buttons: 0, mods: Mods::NONE, wheel: 1 });
     }
 }

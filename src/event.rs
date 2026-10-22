@@ -69,14 +69,10 @@ impl KeyEvent {
     pub fn is(&self, other: KeyEvent) -> bool {
         match (self.key, other.key) {
             (Key::Char(a), Key::Char(b)) => {
-                crate::text::to_upper(a) == crate::text::to_upper(b)
-                    && self.mods.alt == other.mods.alt
-                    && self.mods.ctrl == other.mods.ctrl
+                crate::text::to_upper(a) == crate::text::to_upper(b) && self.mods.alt == other.mods.alt && self.mods.ctrl == other.mods.ctrl
             }
             // Shift+Tab может прийти как BackTab.
-            (Key::BackTab, Key::Tab) | (Key::Tab, Key::BackTab) => {
-                other.mods.shift || self.mods.shift
-            }
+            (Key::BackTab, Key::Tab) | (Key::Tab, Key::BackTab) => other.mods.shift || self.mods.shift,
             (a, b) => a == b && self.mods == other.mods,
         }
     }
@@ -213,10 +209,7 @@ impl Event {
 
     /// Событие мыши — «позиционное»: доставляется представлению под курсором.
     pub fn is_mouse(&self) -> bool {
-        matches!(
-            self,
-            Event::MouseDown(_) | Event::MouseUp(_) | Event::MouseMove(_) | Event::MouseAuto(_) | Event::MouseWheel(_)
-        )
+        matches!(self, Event::MouseDown(_) | Event::MouseUp(_) | Event::MouseMove(_) | Event::MouseAuto(_) | Event::MouseWheel(_))
     }
 
     /// «Фокусное» событие: доставляется по цепочке выбранных представлений.

@@ -112,6 +112,7 @@ pub mod palettes {
     /// `cpHistoryWindow`, уже пересчитанная через палитру серого диалога:
     /// в C++ окно истории вставлялось в диалог, а здесь — на рабочий стол.
     pub const HISTORY_WINDOW: &[u8] = b"\x32\x32\x34\x37\x36\x32\x33";
+    pub const INFO_PANE: &[u8] = b"\x1E";
     pub const HISTORY_VIEWER: &[u8] = b"\x06\x06\x07\x06\x06";
     pub const INDICATOR: &[u8] = b"\x02\x03";
     pub const EDITOR: &[u8] = b"\x06\x07";

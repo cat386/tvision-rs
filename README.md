@@ -12,10 +12,11 @@
 ```
 cargo run --example hello   # порт hello.cpp
 cargo run --example demo    # окна, меню, диалог со всеми элементами, список, контекстное меню
+cargo run --example tvedit  # порт примера tvedit: многооконный редактор файлов
 cargo test                  # тесты на «невидимом» терминале
 ```
 
-## Что уже перенесено (этап 1)
+## Что уже перенесено
 
 | C++                                   | Rust                                        |
 |---------------------------------------|---------------------------------------------|
@@ -38,15 +39,29 @@ cargo test                  # тесты на «невидимом» терми�
 | `TListViewer`, `TListBox`             | `ListBox` (несколько столбцов)              |
 | `messageBox`, `inputBox`              | `message_box`, `message_box_rect`, `input_box` |
 | `platform/*`                          | `platform::{unix, windows, ansi}`           |
+| `TValidator`, `TPXPictureValidator`, `TFilterValidator`, `TRangeValidator`, `TStringLookupValidator` | трейт `Validator`, `PictureValidator`, `FilterValidator`, `RangeValidator`, `StringLookupValidator` |
+| `THistory`, `THistoryWindow`, `historyAdd` | `History`, `HistoryWindow`, `history_add` |
+| `TScroller`, `TTerminal`              | `Scroller`, `Terminal`                      |
+| `TEditor`, `TMemo`, `TFileEditor`     | `Editor`, `Memo`, `FileEditor` (многоуровневая отмена, поиск/замена) |
+| `TEditWindow`, `TIndicator`           | `EditWindow`, `Indicator`                   |
+| `TFileDialog`, `TFileList`, `TFileInfoPane` | `FileDialog`, `FileList`, `FileInfoPane` |
+| `TChDirDialog`, `TDirListBox`         | `ChDirDialog`, `DirListBox`                 |
 
 ## Чего ещё нет (следующие этапы)
 
-* `TEditor`, `TMemo`, `TFileEditor`, `TEditWindow`, `TIndicator`;
-* `TFileDialog`, `TChDirDialog`, `TDirListBox`, `TFileList`;
-* `THistory` (история строк ввода), `TValidator` и его наследники (сейчас — замыкание `InputLine::validator`);
-* `TScroller`, `TTextDevice`/`TTerminal`, `TOutline`, `THelpWindow`, `TColorDialog`;
+* `TOutline` (дерево), `THelpWindow` и компилятор справки `tvhc`, `TColorDialog`;
 * `TStreamable` / ресурсы (сохранение объектов в поток);
-* 256 цветов и TrueColor (`TColorAttr` с RGB), системный буфер обмена.
+* 256 цветов и TrueColor (`TColorAttr` с RGB), системный буфер обмена;
+* кодировки, отличные от UTF-8, в редакторе; время в `FileInfoPane` пока в UTC.
+
+## Модальные окна изнутри представлений
+
+В C++ любое представление могло вызвать `owner->execView(dialog)` или
+`messageBox(...)` прямо из `handleEvent`. Здесь для этого есть
+`ctx.exec(Box::new(dialog), Some(self.vs.id), tag)`: программа запускает окно
+после текущего события, а результат приходит в `View::exec_result(tag, cmd, view, ctx)`.
+Так работают сообщения валидаторов, окно истории, вопрос «Сохранить изменения?»
+и диалоги поиска/замены в редакторе. `View::valid(cmd, ctx)` тоже получает контекст.
 
 ## Главное отличие от C++
 

@@ -14,11 +14,12 @@ fn menu() -> Menu {
     Menu::new()
         .submenu(
             "~F~ile",
-            Menu::new()
-                .item_key("~N~ew", cm::NEW, kb::F2, "F2")
-                .item("~D~ialog...", CM_DIALOG)
-                .separator()
-                .item_key("E~x~it", cm::QUIT, kb::ALT_X, "Alt-X"),
+            Menu::new().item_key("~N~ew", cm::NEW, kb::F2, "F2").item("~D~ialog...", CM_DIALOG).separator().item_key(
+                "E~x~it",
+                cm::QUIT,
+                kb::ALT_X,
+                "Alt-X",
+            ),
         )
         .submenu("~W~indow", Menu::new().item("~T~ile", cm::TILE).item("C~a~scade", cm::CASCADE))
 }
