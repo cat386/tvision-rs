@@ -363,6 +363,10 @@ impl Backend for WindowsBackend {
         self.pending.pop_front()
     }
 
+    fn system_clipboard(&self) -> bool {
+        true
+    }
+
     fn flush(&mut self, screen: &ScreenBuffer, cursor: Option<Point>, insert: bool) {
         let s = self.writer.render(screen, cursor, insert);
         self.write_str(&s);

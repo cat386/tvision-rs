@@ -18,6 +18,7 @@ use crate::event::{KeyEvent, Mods};
 use crate::geometry::Point;
 
 pub mod ansi;
+pub mod clipboard;
 #[cfg(unix)]
 pub mod unix;
 #[cfg(windows)]
@@ -47,6 +48,11 @@ pub trait Backend {
     /// Выводит экранный буфер. `cursor` — позиция видимого курсора
     /// (`None` — курсор скрыт), `insert` — режим вставки (блочный курсор).
     fn flush(&mut self, screen: &ScreenBuffer, cursor: Option<Point>, insert: bool);
+
+    /// Подключать ли системный буфер обмена (у настоящих терминалов — да).
+    fn system_clipboard(&self) -> bool {
+        false
+    }
 
     /// Для тестового терминала — последний выведенный кадр.
     fn last_frame(&self) -> Option<&ScreenBuffer> {

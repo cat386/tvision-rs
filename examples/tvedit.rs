@@ -56,7 +56,8 @@ impl AppHandler for EditorApp {
             cm::NEW => self.open_editor(app, Path::new("")),
             CM_CHANGE_DRCT => self.change_dir(app),
             CM_SHOW_CLIP => {
-                let text = if app.ctx.clipboard.is_empty() { "(пусто)".to_string() } else { app.ctx.clipboard.clone() };
+                let t = app.ctx.clipboard.get();
+                let text = if t.is_empty() { "(пусто)".to_string() } else { t };
                 message_box_rect(app, Rect::new(0, 0, 60, 12), &format!("Буфер обмена:\n{}", text), mf::INFORMATION | mf::OK_BUTTON, true);
             }
             cm::DOS_SHELL => {

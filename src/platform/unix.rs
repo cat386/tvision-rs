@@ -186,6 +186,10 @@ impl Backend for UnixBackend {
         }
     }
 
+    fn system_clipboard(&self) -> bool {
+        true
+    }
+
     fn flush(&mut self, screen: &ScreenBuffer, cursor: Option<Point>, insert: bool) {
         let s = self.writer.render(screen, cursor, insert);
         let mut out = io::stdout().lock();

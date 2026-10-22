@@ -775,17 +775,17 @@ impl Editor {
             cm::REDO => self.redo(),
             cm::CUT => {
                 if self.selection().is_some() {
-                    ctx.clipboard = self.selected_text();
+                    ctx.clipboard.set(&self.selected_text());
                     self.delete_select();
                 }
             }
             cm::COPY => {
                 if self.selection().is_some() {
-                    ctx.clipboard = self.selected_text();
+                    ctx.clipboard.set(&self.selected_text());
                 }
             }
             cm::PASTE => {
-                let s = ctx.clipboard.clone();
+                let s = ctx.clipboard.get();
                 if !s.is_empty() {
                     self.insert_text(&s, false);
                 }
@@ -1103,7 +1103,7 @@ impl Editor {
         ctx.set_command(cm::CUT, focused && sel);
         ctx.set_command(cm::COPY, focused && sel);
         ctx.set_command(cm::CLEAR, focused && sel);
-        ctx.set_command(cm::PASTE, focused && !ctx.clipboard.is_empty());
+        ctx.set_command(cm::PASTE, focused && ctx.clipboard.has_text());
         ctx.set_command(cm::FIND, focused);
         ctx.set_command(cm::REPLACE, focused);
         ctx.set_command(cm::SEARCH_AGAIN, focused);

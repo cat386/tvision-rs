@@ -101,6 +101,9 @@ impl Program {
 
         let mut ctx = Ctx::new();
         ctx.screen_size = size;
+        if backend.system_clipboard() {
+            ctx.clipboard = crate::platform::clipboard::Clipboard::system();
+        }
         // Команды окон запрещены, пока нет активного окна (`initCommands`).
         for c in [cm::ZOOM, cm::CLOSE, cm::RESIZE, cm::NEXT, cm::PREV] {
             ctx.disable_command(c);

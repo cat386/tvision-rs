@@ -386,7 +386,7 @@ impl View for InputLine {
                     Key::Del if shift => {
                         // Shift+Del — вырезать.
                         if self.has_selection() {
-                            ctx.clipboard = self.selected_text();
+                            ctx.clipboard.set(&self.selected_text());
                             self.delete_selection();
                             self.adjust_first();
                         }
@@ -394,12 +394,12 @@ impl View for InputLine {
                     }
                     Key::Ins if k.mods.ctrl => {
                         if self.has_selection() {
-                            ctx.clipboard = self.selected_text();
+                            ctx.clipboard.set(&self.selected_text());
                         }
                         true
                     }
                     Key::Ins if shift => {
-                        let s = ctx.clipboard.clone();
+                        let s = ctx.clipboard.get();
                         self.insert_str(&s);
                         true
                     }
@@ -411,20 +411,20 @@ impl View for InputLine {
                     Key::Char(c) if k.mods.ctrl && !k.mods.alt => match c.to_ascii_lowercase() {
                         'c' => {
                             if self.has_selection() {
-                                ctx.clipboard = self.selected_text();
+                                ctx.clipboard.set(&self.selected_text());
                             }
                             true
                         }
                         'x' => {
                             if self.has_selection() {
-                                ctx.clipboard = self.selected_text();
+                                ctx.clipboard.set(&self.selected_text());
                                 self.delete_selection();
                                 self.adjust_first();
                             }
                             true
                         }
                         'v' => {
-                            let s = ctx.clipboard.clone();
+                            let s = ctx.clipboard.get();
                             self.insert_str(&s);
                             true
                         }

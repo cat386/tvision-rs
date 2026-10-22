@@ -363,8 +363,8 @@ pub struct Ctx {
     pub(crate) requests: Vec<Request>,
     /// Размер экрана.
     pub screen_size: Point,
-    /// Внутренний буфер обмена (для строк ввода).
-    pub clipboard: String,
+    /// Буфер обмена (внутренний и, у настоящего терминала, системный).
+    pub clipboard: crate::platform::clipboard::Clipboard,
 }
 
 impl Default for Ctx {
@@ -387,7 +387,7 @@ impl Ctx {
             commands_changed: false,
             requests: Vec::new(),
             screen_size: Point::new(80, 25),
-            clipboard: String::new(),
+            clipboard: crate::platform::clipboard::Clipboard::internal(),
         }
     }
 
