@@ -1,0 +1,21 @@
+[package]
+name = "tvision-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Порт библиотеки Turbo Vision (magiblot/tvision) с C++ на Rust"
+license = "MIT"
+
+# Библиотека намеренно не имеет внешних зависимостей:
+# работа с терминалом (Unix: termios + ANSI, Windows: Console API)
+# реализована внутри крейта, как и в оригинальном tvision (source/platform).
+[dependencies]
+
+[lib]
+name = "tvision"
+path = "src/lib.rs"
+
+[[example]]
+name = "hello"
+
+[[example]]
+name = "demo"
