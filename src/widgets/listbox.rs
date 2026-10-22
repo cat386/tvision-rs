@@ -28,6 +28,8 @@ pub struct ListBox {
     indent: usize,
     /// Последние параметры, отправленные полосе (чтобы не слать лишнего).
     last_sent: Option<(usize, usize)>,
+    /// Палитра (у списка истории своя — `cpHistoryViewer`).
+    pub palette: &'static [u8],
 }
 
 impl ListBox {
@@ -45,6 +47,7 @@ impl ListBox {
             h_scroll: None,
             indent: 0,
             last_sent: None,
+            palette: palettes::LIST_VIEWER,
         }
     }
 
@@ -170,7 +173,7 @@ impl View for ListBox {
     }
 
     fn palette(&self) -> &'static [u8] {
-        palettes::LIST_VIEWER
+        self.palette
     }
 
     fn handle_event(&mut self, ev: &mut Event, ctx: &mut Ctx) {

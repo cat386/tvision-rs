@@ -187,8 +187,8 @@ impl View for Desktop {
         self.group.set_group_state(flag, enable);
     }
 
-    fn valid(&mut self, command: u16) -> bool {
-        self.group.valid(command)
+    fn valid(&mut self, command: u16, ctx: &mut Ctx) -> bool {
+        self.group.valid(command, ctx)
     }
 }
 

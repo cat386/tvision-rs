@@ -106,9 +106,9 @@ impl View for Dialog {
         self.win.set_window_state(flag, enable);
     }
 
-    fn valid(&mut self, command: u16) -> bool {
+    fn valid(&mut self, command: u16, ctx: &mut Ctx) -> bool {
         // «Отмена» допустима всегда (как в `TDialog::valid`).
-        command == cm::CANCEL || self.win.group.valid(command)
+        command == cm::CANCEL || self.win.group.valid(command, ctx)
     }
 
     fn size_limits(&self, owner_size: Point) -> (Point, Point) {

@@ -153,6 +153,10 @@ pub enum Info {
     Int(i64),
     /// Строка.
     Str(String),
+    /// Текст для конкретного представления (например, выбор из истории ввода).
+    Text { id: ViewId, text: String },
+    /// Позиция в редакторе для индикатора строки/столбца.
+    Indicator { id: ViewId, line: usize, col: usize, modified: bool },
     /// Параметры полосы прокрутки: id полосы, значение, мин, макс, шаг страницы, шаг строки.
     Scroll { id: ViewId, value: i32, min: i32, max: i32, page: i32, arrow: i32 },
 }
@@ -325,6 +329,28 @@ pub mod cm {
     /// из нижнего диапазона; пользовательские команды рекомендуется
     /// нумеровать от 100 до 255 или от 1000 и выше.
     pub const SCROLL_BAR_SET: u16 = 0xFF10;
+    /// Внутреннее: установить текст строки ввода из истории (`Info::Text`).
+    pub const HISTORY_SET: u16 = 0xFF11;
+    /// Внутреннее: обновить индикатор редактора (`Info::Indicator`).
+    pub const INDICATOR_SET: u16 = 0xFF12;
+
+    // Команды редактора (`editors.h`)
+    pub const FIND: u16 = 82;
+    pub const REPLACE: u16 = 83;
+    pub const SEARCH_AGAIN: u16 = 84;
+    /// Обновить заголовок окна редактора (имя файла).
+    pub const UPDATE_TITLE: u16 = 523;
+    pub const SELECT_ALL: u16 = 524;
+
+    // Команды файловых диалогов (`stddlg.h`)
+    pub const FILE_OPEN: u16 = 1001;
+    pub const FILE_REPLACE: u16 = 1002;
+    pub const FILE_CLEAR: u16 = 1003;
+    pub const FILE_INIT: u16 = 1004;
+    pub const CHANGE_DIR: u16 = 1005;
+    pub const REVERT: u16 = 1006;
+    pub const FILE_FOCUSED: u16 = 102;
+    pub const FILE_DOUBLE_CLICKED: u16 = 103;
 }
 
 /// Удобные константы для частых сочетаний клавиш (аналог `kbXXX` из `tkeys.h`).

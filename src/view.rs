@@ -303,7 +303,20 @@ pub enum Request {
     MenuBar { item: Option<usize>, mouse: bool },
     /// Показать всплывающее (контекстное) меню в абсолютной позиции.
     Popup { menu: Rc<crate::widgets::menu::Menu>, pos: Point },
+    /// Выполнить представление модально (`owner->execView(view)` из C++).
+    /// Если задан `anchor`, границы `view` заданы в системе координат
+    /// владельца представления `anchor` (например, окно истории — рядом со
+    /// строкой ввода в диалоге); иначе — в координатах рабочего стола.
+    /// По завершении у представления `reply_to` вызывается `exec_result`.
+    Exec { view: Box<dyn View>, reply_to: Option<ViewId>, tag: u16, anchor: Option<ViewId>, place: Option<PlaceFn> },
+    /// Передать фокус представлению (выбрать его и всех его владельцев).
+    Focus(ViewId),
 }
+
+/// Функция размещения модального окна относительно представления-якоря:
+/// получает границы якоря и размер его владельца, возвращает границы окна
+/// (в координатах того же владельца).
+pub type PlaceFn = Box<dyn Fn(Rect, Point) -> Rect>;
 
 /// Набор запрещённых команд (аналог `TCommandSet`).
 #[derive(Clone, Debug, Default)]
@@ -472,6 +485,29 @@ impl Ctx {
     /// Отправить запрос программе.
     pub fn request(&mut self, r: Request) {
         self.requests.push(r);
+    }
+
+    /// Запустить представление модально. Результат придёт в
+    /// `View::exec_result` представления `reply_to` с меткой `tag`.
+    pub fn exec(&mut self, view: Box<dyn View>, reply_to: Option<ViewId>, tag: u16) {
+        self.requests.push(Request::Exec { view, reply_to, tag, anchor: None, place: None });
+    }
+
+    /// Как [`Ctx::exec`], но границы `view` заданы относительно владельца `anchor`.
+    pub fn exec_near(&mut self, view: Box<dyn View>, reply_to: Option<ViewId>, tag: u16, anchor: ViewId) {
+        self.requests.push(Request::Exec { view, reply_to, tag, anchor: Some(anchor), place: None });
+    }
+
+    /// Как [`Ctx::exec_near`], но границы окна вычисляются функцией `place`
+    /// по границам якоря и размеру его владельца (так `THistory` ставит
+    /// окно истории под строкой ввода).
+    pub fn exec_placed(&mut self, view: Box<dyn View>, reply_to: Option<ViewId>, tag: u16, anchor: ViewId, place: PlaceFn) {
+        self.requests.push(Request::Exec { view, reply_to, tag, anchor: Some(anchor), place: Some(place) });
+    }
+
+    /// Передать фокус представлению `id` (где бы оно ни находилось).
+    pub fn focus(&mut self, id: ViewId) {
+        self.requests.push(Request::Focus(id));
     }
 
     /// Показать контекстное меню в абсолютной позиции экрана.
@@ -711,9 +747,19 @@ pub trait View: Any {
     }
 
     /// Можно ли завершить работу с представлением командой `command` (`valid`).
-    fn valid(&mut self, _command: u16) -> bool {
+    fn valid(&mut self, _command: u16, _ctx: &mut Ctx) -> bool {
         true
     }
+
+    /// Результат модального окна, запущенного этим представлением через
+    /// [`Ctx::exec`]: `tag` — метка запроса, `command` — код завершения,
+    /// `view` — само окно (его можно привести к нужному типу через `into_any`).
+    fn exec_result(&mut self, _tag: u16, _command: u16, _view: Box<dyn View>, _ctx: &mut Ctx) {}
+
+    /// Обновить разрешённые команды (`updateCommands`). Программа вызывает
+    /// этот метод после каждого события: сначала у всех представлений вне
+    /// фокуса, затем у представлений в фокусе — так команды «в фокусе» побеждают.
+    fn update_commands(&self, _ctx: &mut Ctx) {}
 
     /// Изменить границы (`changeBounds`). Группы пересчитывают детей.
     fn change_bounds(&mut self, bounds: Rect) {

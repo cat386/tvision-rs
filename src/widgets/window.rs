@@ -283,7 +283,7 @@ impl Window {
                 if self.group.vs.state & sf::MODAL != 0 {
                     // Модальное окно закрывается как «Отмена».
                     ctx.post_command(cm::CANCEL, Info::None);
-                } else if self.valid(cm::CLOSE) {
+                } else if self.valid(cm::CLOSE, ctx) {
                     ctx.close(id);
                 }
             }
@@ -359,8 +359,8 @@ impl View for Window {
         self.set_window_state(flag, enable);
     }
 
-    fn valid(&mut self, command: u16) -> bool {
-        self.group.valid(command)
+    fn valid(&mut self, command: u16, ctx: &mut Ctx) -> bool {
+        self.group.valid(command, ctx)
     }
 
     /// Окно не может быть меньше 16×6 (`minWinSize`).

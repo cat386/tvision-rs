@@ -109,6 +109,10 @@ pub mod palettes {
     pub const SCROLL_BAR: &[u8] = b"\x04\x05\x05";
     pub const SCROLLER: &[u8] = b"\x06\x07";
     pub const HISTORY: &[u8] = b"\x16\x17";
+    /// `cpHistoryWindow`, уже пересчитанная через палитру серого диалога:
+    /// в C++ окно истории вставлялось в диалог, а здесь — на рабочий стол.
+    pub const HISTORY_WINDOW: &[u8] = b"\x32\x32\x34\x37\x36\x32\x33";
+    pub const HISTORY_VIEWER: &[u8] = b"\x06\x06\x07\x06\x06";
     pub const INDICATOR: &[u8] = b"\x02\x03";
     pub const EDITOR: &[u8] = b"\x06\x07";
     pub const MEMO: &[u8] = b"\x1A\x1B";

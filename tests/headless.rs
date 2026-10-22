@@ -283,3 +283,53 @@ fn resize_terminal() {
     assert_eq!(app.desktop().group.vs.size, Point::new(100, 28));
     assert!(lines[29].starts_with(" Alt-X Exit"));
 }
+
+/// Диалог с одной строкой ввода (с валидатором и историей) и кнопками.
+struct FormApp {
+    results: Vec<(u16, Value)>,
+}
+
+impl AppHandler for FormApp {
+    fn handle_event(&mut self, app: &mut Program, ev: &mut Event) {
+        if ev.command() == Some(cm::NEW) {
+            let mut d = Dialog::centered(40, 10, "Form");
+            let mut il = InputLine::new(Rect::new(3, 2, 30, 3), 20).with_validator(RangeValidator::new(1, 10));
+            il.history_id = Some(7);
+            let il = d.add(il);
+            d.add(History::new(Rect::new(30, 2, 33, 3), il, 7));
+            d.add(Button::new(Rect::new(3, 6, 13, 8), "O~K~", cm::OK, bf::DEFAULT));
+            d.add(Button::new(Rect::new(15, 6, 25, 8), "Cancel", cm::CANCEL, bf::NORMAL));
+            let (cmd, d) = app.exec_dialog(d);
+            self.results.push((cmd, d.get_data()));
+            ev.clear();
+        }
+    }
+}
+
+#[test]
+fn validator_rejects_and_reports() {
+    let mut input = vec![key(kb::F2)];
+    // Буквы фильтр не пропускает; «50» вне диапазона → сообщение об ошибке.
+    input.extend("a5b0".chars().map(ch));
+    input.push(key(kb::ENTER)); // OK → ошибка валидатора
+    input.push(key(kb::ENTER)); // закрыть сообщение
+    input.push(key(KeyEvent::new(Key::Backspace, Mods::NONE)));
+    input.push(key(kb::ENTER)); // теперь «5» — OK
+    let mut app = app_with(input);
+    let mut h = FormApp { results: vec![] };
+    app.pump(&mut h);
+    assert_eq!(h.results, vec![(cm::OK, Value::List(vec![Value::Str("5".into())]))]);
+}
+
+#[test]
+fn history_window() {
+    let down = key(KeyEvent::new(Key::Down, Mods::NONE));
+    let mut input = vec![key(kb::F2), ch('7'), key(kb::ENTER)];
+    // Второй раз: стрелка вниз открывает историю, Enter выбирает «7», Enter — OK.
+    input.extend([key(kb::F2), down, key(kb::ENTER), key(kb::ENTER)]);
+    let mut app = app_with(input);
+    let mut h = FormApp { results: vec![] };
+    app.pump(&mut h);
+    assert_eq!(h.results.len(), 2);
+    assert_eq!(h.results[1], (cm::OK, Value::List(vec![Value::Str("7".into())])));
+}

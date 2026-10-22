@@ -47,11 +47,20 @@ pub fn message_box(app: &mut Program, msg: &str, options: u16) -> u16 {
 
 /// Окно сообщения заданного размера (`messageBoxRect`).
 pub fn message_box_rect(app: &mut Program, r: Rect, msg: &str, options: u16, centered: bool) -> u16 {
+    let mut d = build_message_box(r, msg, options);
+    if !centered {
+        d.win.group.vs.options &= !of::CENTERED;
+    }
+    let (cmd, _) = app.exec_dialog(d);
+    cmd
+}
+
+/// Строит диалог сообщения (отцентрированный), не запуская его.
+/// Пригодится, когда сообщение нужно показать из представления через `ctx.exec`.
+pub fn build_message_box(r: Rect, msg: &str, options: u16) -> Dialog {
     let titles = [MsgBoxText::WARNING, MsgBoxText::ERROR, MsgBoxText::INFORMATION, MsgBoxText::CONFIRM];
     let mut d = Dialog::new(r, titles[(options & 3) as usize]);
-    if centered {
-        d.win.group.vs.options |= of::CENTERED;
-    }
+    d.win.group.vs.options |= of::CENTERED;
     let w = r.width();
     let h = r.height();
     d.add(StaticText::new(Rect::new(3, 2, w - 2, h - 3), msg));
@@ -74,8 +83,7 @@ pub fn message_box_rect(app: &mut Program, r: Rect, msg: &str, options: u16, cen
     if let Some(id) = first {
         d.select(id);
     }
-    let (cmd, _) = app.exec_dialog(d);
-    cmd
+    d
 }
 
 /// Окно ввода строки (`inputBox`). Возвращает `Some(текст)` при OK.

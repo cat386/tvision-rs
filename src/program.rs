@@ -160,7 +160,7 @@ impl Program {
     }
 
     pub fn insert_window_boxed(&mut self, mut w: Box<dyn View>) -> ViewId {
-        if !w.valid(cm::VALID) {
+        if !w.valid(cm::VALID, &mut self.ctx) {
             return 0;
         }
         let id = w.vs().id;
@@ -186,6 +186,10 @@ impl Program {
             self.ctx.owner_sizes = vec![self.ctx.screen_size];
             let mut e = Event::Broadcast(Message::new(cm::COMMAND_SET_CHANGED));
             desk.dispatch(i, &mut e, &mut self.ctx);
+            if let Some(g) = desk.children[i].as_group_mut() {
+                self.ctx.depth = 2;
+                g.announce_focus(&mut self.ctx);
+            }
             self.ctx.owner_sizes.clear();
         }
         self.ctx.depth = 0;
@@ -289,7 +293,8 @@ impl Program {
             self.handle(ev, None);
             if let Some(c) = self.ctx.end_state.take() {
                 // Перед завершением спрашиваем `valid` (как `TGroup::execute`).
-                let ok = self.group.view_mut(id).map(|v| v.valid(c)).unwrap_or(true);
+                let ctx = &mut self.ctx;
+                let ok = self.group.view_mut(id).map(|v| v.valid(c, ctx)).unwrap_or(true);
                 if ok {
                     break c;
                 }
@@ -420,7 +425,7 @@ impl Program {
             self.group.handle_group_event(&mut ev, &mut self.ctx);
 
             if ev.command() == Some(cm::QUIT) {
-                if self.group.valid(cm::QUIT) {
+                if self.group.valid(cm::QUIT, &mut self.ctx) {
                     self.running = false;
                 }
                 ev.clear();
@@ -506,9 +511,16 @@ impl Program {
                 Request::Popup { menu, pos } => {
                     self.menu = Some(MenuSession::popup(menu, pos, self.ctx.screen_size));
                 }
+                Request::Exec { view, reply_to, tag, anchor, place } => self.exec_request(view, reply_to, tag, anchor, place),
+                Request::Focus(id) => {
+                    self.ctx.depth = 0;
+                    self.group.focus_path(id, &mut self.ctx);
+                    self.ctx.outbox.clear();
+                }
             }
         }
         self.update_window_commands();
+        self.update_view_commands();
         if self.ctx.commands_changed {
             self.ctx.commands_changed = false;
             let mut b = Event::Broadcast(Message::new(cm::COMMAND_SET_CHANGED));
@@ -516,6 +528,62 @@ impl Program {
             self.group.broadcast_children(&mut b, &mut self.ctx);
             self.ctx.outbox.clear();
         }
+    }
+
+    /// Выполняет запрос `Ctx::exec`: модальный запуск и доставка результата.
+    fn exec_request(
+        &mut self,
+        mut view: Box<dyn View>,
+        reply_to: Option<ViewId>,
+        tag: u16,
+        anchor: Option<ViewId>,
+        place: Option<crate::view::PlaceFn>,
+    ) {
+        // Размещение относительно якоря.
+        if let (Some(a), Some(f)) = (anchor, place) {
+            if let Some((b, owner)) = self.group.geometry_of(a) {
+                let nb = f(b, owner);
+                // `change_bounds`, чтобы дети окна подстроились под новый размер.
+                view.change_bounds(nb);
+            }
+        }
+        // Перевод координат: от владельца `anchor` к рабочему столу.
+        if let Some(a) = anchor {
+            if let Some(o) = self.group.owner_origin_of(a) {
+                let desk_origin = self.group.children[self.desktop_index()].vs().origin;
+                let shift = o - desk_origin;
+                let b = view.vs().bounds().moved(shift.x, shift.y);
+                view.vs_mut().set_bounds(b);
+            }
+        }
+        let (cmd, v) = self.exec_view(view);
+        if let Some(id) = reply_to {
+            self.ctx.depth = 0;
+            self.ctx.owner_sizes.clear();
+            let mut slot = Some(v);
+            self.group.call_on(id, &mut self.ctx, &mut |target, ctx| {
+                if let Some(v) = slot.take() {
+                    target.exec_result(tag, cmd, v, ctx);
+                }
+            });
+            self.ctx.outbox.clear();
+        }
+    }
+
+    /// Даёт представлениям обновить свои команды: сначала тем, что вне фокуса,
+    /// затем тем, что в фокусе (`updateCommands` в C++).
+    fn update_view_commands(&mut self) {
+        let ctx = &mut self.ctx;
+        self.group.for_each_view(&mut |v| {
+            if !v.vs().is_focused() {
+                v.update_commands(ctx);
+            }
+        });
+        self.group.for_each_view(&mut |v| {
+            if v.vs().is_focused() {
+                v.update_commands(ctx);
+            }
+        });
     }
 
     /// Разрешает команды окна в зависимости от активного окна

@@ -82,11 +82,24 @@ pub struct HeadlessBackend {
     pub cursor: Option<Point>,
     /// Сколько раз был вызван `flush` (для проверок в тестах).
     pub flushes: usize,
+    /// Защита тестов от зависания: когда ввод кончился, после нескольких
+    /// пустых чтений терминал начинает «нажимать» Esc (не больше
+    /// `esc_budget` раз), чтобы закрыть забытые модальные окна.
+    pub esc_budget: usize,
+    empty_reads: usize,
 }
 
 impl HeadlessBackend {
     pub fn new(width: i32, height: i32) -> Self {
-        HeadlessBackend { size: Point::new(width, height), input: VecDeque::new(), frame: None, cursor: None, flushes: 0 }
+        HeadlessBackend {
+            size: Point::new(width, height),
+            input: VecDeque::new(),
+            frame: None,
+            cursor: None,
+            flushes: 0,
+            esc_budget: 50,
+            empty_reads: 0,
+        }
     }
 
     /// Добавляет нажатие клавиши в очередь ввода.
@@ -108,7 +121,17 @@ impl Backend for HeadlessBackend {
     }
 
     fn read(&mut self, _timeout: Duration) -> Option<RawEvent> {
-        self.input.pop_front()
+        if let Some(e) = self.input.pop_front() {
+            self.empty_reads = 0;
+            return Some(e);
+        }
+        self.empty_reads += 1;
+        if self.empty_reads > 5 && self.esc_budget > 0 {
+            self.esc_budget -= 1;
+            self.empty_reads = 0;
+            return Some(RawEvent::Key(KeyEvent::new(crate::event::Key::Esc, Mods::NONE)));
+        }
+        None
     }
 
     fn flush(&mut self, screen: &ScreenBuffer, cursor: Option<Point>, _insert: bool) {

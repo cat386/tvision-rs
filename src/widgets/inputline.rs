@@ -7,13 +7,12 @@
 
 use crate::color::palettes;
 use crate::drawbuf::DrawBuffer;
-use crate::event::{Event, Key, Mods};
+use crate::event::{cm, Event, Info, Key, Mods};
 use crate::geometry::Rect;
 use crate::text::char_width;
 use crate::view::{default_handle_event, of, sf, Ctx, DrawCtx, Value, View, ViewState};
 
-/// Проверка допустимости содержимого (упрощённый аналог `TValidator`).
-pub type Validator = Box<dyn Fn(&str) -> bool>;
+use crate::widgets::validate::Validator;
 
 /// Стрелки прокрутки (`TInputLine::leftArrow` / `rightArrow`).
 const LEFT_ARROW: char = '◄';
@@ -33,8 +32,11 @@ pub struct InputLine {
     sel_end: usize,
     /// Опорная точка выделения (откуда начали выделять).
     anchor: Option<usize>,
-    /// Проверка ввода: если вернёт `false`, `valid()` не даст закрыть диалог.
-    pub validator: Option<Validator>,
+    /// Проверка ввода (`TValidator`): некорректный набор откатывается,
+    /// а некорректное значение не даёт закрыть диалог.
+    pub validator: Option<Box<dyn Validator>>,
+    /// Номер списка истории ввода (связанный значок [`crate::History`]).
+    pub history_id: Option<u16>,
 }
 
 impl InputLine {
@@ -53,6 +55,49 @@ impl InputLine {
             sel_end: 0,
             anchor: None,
             validator: None,
+            history_id: None,
+        }
+    }
+
+    /// Задать валидатор (аналог `setValidator`).
+    pub fn with_validator(mut self, v: impl Validator + 'static) -> Self {
+        self.validator = Some(Box::new(v));
+        self
+    }
+
+    /// Проверка после правки (`checkValid`): некорректная правка откатывается,
+    /// автозаполнение маски дописывает литералы.
+    fn check_valid(&mut self, no_auto_fill: bool, old: &(Vec<char>, usize, usize, usize, usize)) {
+        let v = match &self.validator {
+            Some(v) => v,
+            None => return,
+        };
+        let old_len = old.0.len();
+        let mut s: String = self.data.iter().collect();
+        if !v.is_valid_input(&mut s, no_auto_fill) {
+            // Откат к состоянию до правки (`restoreState`).
+            self.data = old.0.clone();
+            self.cur_pos = old.1;
+            self.first_pos = old.2;
+            self.sel_start = old.3;
+            self.sel_end = old.4;
+        } else {
+            let new: Vec<char> = s.chars().take(self.max_len).collect();
+            if new != self.data {
+                self.data = new;
+                if self.cur_pos >= old_len && self.data.len() > old_len {
+                    self.cur_pos = self.data.len();
+                }
+            }
+        }
+        self.cur_pos = self.cur_pos.min(self.data.len());
+        self.adjust_first();
+    }
+
+    /// Запомнить текст в истории ввода.
+    fn record_history(&self) {
+        if let Some(h) = self.history_id {
+            crate::widgets::history::history_add(h, &self.text());
         }
     }
 
@@ -256,8 +301,24 @@ impl View for InputLine {
                 ctx.release_mouse();
                 ev.clear();
             }
+            Event::Broadcast(m) => match (&m.command, &m.info) {
+                // Кнопка нажата или фокус ушёл — запомнить в истории (как `THistory`).
+                (&cm::RECORD_HISTORY, Info::None) => self.record_history(),
+                (&cm::RECORD_HISTORY, Info::Id(x)) if *x == id => self.record_history(),
+                (&cm::RELEASED_FOCUS, Info::Id(x)) if *x == id => self.record_history(),
+                // Выбор из окна истории.
+                (&cm::HISTORY_SET, Info::Text { id: target, text }) if *target == id => {
+                    let t = text.clone();
+                    self.set_text(&t);
+                    ev.clear();
+                }
+                _ => {}
+            },
             Event::KeyDown(k) if self.vs.is_focused() => {
                 let k = *k;
+                let saved = (self.data.clone(), self.cur_pos, self.first_pos, self.sel_start, self.sel_end);
+                let deleting = matches!(k.key, Key::Backspace | Key::Del)
+                    || (k.mods.ctrl && matches!(k.key, Key::Char('x') | Key::Char('X') | Key::Char('y') | Key::Char('Y')));
                 let shift = k.mods.shift;
                 let plain = k.mods == Mods::NONE || k.mods == Mods::SHIFT;
                 let handled = match k.key {
@@ -386,6 +447,9 @@ impl View for InputLine {
                     _ => false,
                 };
                 if handled {
+                    if self.data != saved.0 {
+                        self.check_valid(deleting, &saved);
+                    }
                     ev.clear();
                 }
             }
@@ -397,14 +461,28 @@ impl View for InputLine {
         self.vs.set_cursor(x, 0);
     }
 
-    fn valid(&mut self, command: u16) -> bool {
-        if command == crate::event::cm::CANCEL || command == crate::event::cm::VALID {
+    /// `TInputLine::valid`: при ошибке показывается сообщение валидатора
+    /// и фокус возвращается в строку ввода.
+    fn valid(&mut self, command: u16, ctx: &mut Ctx) -> bool {
+        let v = match &self.validator {
+            Some(v) => v,
+            None => return true,
+        };
+        if command == cm::VALID {
+            return v.status_ok();
+        }
+        if command == cm::CANCEL || v.is_valid(&self.text()) {
             return true;
         }
-        match &self.validator {
-            Some(f) => f(&self.text()),
-            None => true,
-        }
+        let msg = v.error_message();
+        let dlg = crate::widgets::msgbox::build_message_box(
+            Rect::new(0, 0, 40, 9),
+            &msg,
+            crate::widgets::msgbox::mf::ERROR | crate::widgets::msgbox::mf::OK_BUTTON,
+        );
+        ctx.exec(Box::new(dlg), None, 0);
+        ctx.focus(self.vs.id);
+        false
     }
 
     fn has_data(&self) -> bool {

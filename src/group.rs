@@ -282,7 +282,7 @@ impl Group {
             if vs.is_visible() && vs.is_selectable() && !vs.is_disabled() {
                 // Перед уходом проверяем текущий элемент, если он этого требует.
                 if let Some(c) = self.current {
-                    if self.children[c].vs().options & of::VALIDATE != 0 && !self.children[c].valid(cm::RELEASED_FOCUS) {
+                    if self.children[c].vs().options & of::VALIDATE != 0 && !self.children[c].valid(cm::RELEASED_FOCUS, ctx) {
                         return;
                     }
                 }
@@ -335,16 +335,122 @@ impl Group {
 
     /// `TGroup::valid`: для `cm::RELEASED_FOCUS` проверяется только текущий
     /// ребёнок, иначе — все.
-    pub fn valid(&mut self, command: u16) -> bool {
+    pub fn valid(&mut self, command: u16, ctx: &mut Ctx) -> bool {
         if command == cm::RELEASED_FOCUS {
             if let Some(i) = self.current {
                 if self.children[i].vs().options & of::VALIDATE != 0 {
-                    return self.children[i].valid(command);
+                    return self.children[i].valid(command, ctx);
                 }
             }
             return true;
         }
-        self.children.iter_mut().all(|c| c.valid(command))
+        // Как `firstThat(isInvalid)`: останавливаемся на первом отказе.
+        self.children.iter_mut().all(|c| c.valid(command, ctx))
+    }
+
+    /// Вызывает `f` для представления `id` в поддереве так, будто оно
+    /// обрабатывает событие: с правильной глубиной и последующей обработкой
+    /// его сообщений владельцу. Возвращает `false`, если представление не найдено.
+    pub fn call_on(&mut self, id: ViewId, ctx: &mut Ctx, f: &mut dyn FnMut(&mut dyn View, &mut Ctx)) -> bool {
+        for i in 0..self.children.len() {
+            let found = if self.children[i].vs().id == id {
+                ctx.depth += 1;
+                ctx.owner_sizes.push(self.vs.size);
+                f(self.children[i].as_mut(), ctx);
+                ctx.owner_sizes.pop();
+                ctx.depth -= 1;
+                true
+            } else if let Some(g) = self.children[i].as_group_mut() {
+                ctx.depth += 1;
+                ctx.owner_sizes.push(self.vs.size);
+                let r = g.call_on(id, ctx, f);
+                ctx.owner_sizes.pop();
+                ctx.depth -= 1;
+                r
+            } else {
+                false
+            };
+            if found {
+                self.process_outbox(ctx);
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Выбирает представление `id` и всех его владельцев в поддереве
+    /// (окно становится текущим на рабочем столе, элемент — в окне).
+    pub fn focus_path(&mut self, id: ViewId, ctx: &mut Ctx) -> bool {
+        for i in 0..self.children.len() {
+            let here = self.children[i].vs().id == id;
+            let inside = !here && self.children[i].as_group_mut().map(|g| g.focus_path(id, ctx)).unwrap_or(false);
+            if here || inside {
+                let cid = self.children[i].vs().id;
+                self.select_id(cid, ctx);
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Абсолютное (относительно этой группы) начало координат владельца
+    /// представления `id`, то есть точка, от которой отсчитывается его `origin`.
+    pub fn owner_origin_of(&self, id: ViewId) -> Option<Point> {
+        for c in &self.children {
+            if c.vs().id == id {
+                return Some(Point::default());
+            }
+            if let Some(g) = c.as_group() {
+                if let Some(p) = g.owner_origin_of(id) {
+                    return Some(p + c.vs().origin);
+                }
+            }
+        }
+        None
+    }
+
+    /// Границы представления `id` (в координатах его владельца) и размер владельца.
+    pub fn geometry_of(&self, id: ViewId) -> Option<(Rect, Point)> {
+        for c in &self.children {
+            if c.vs().id == id {
+                return Some((c.vs().bounds(), self.vs.size));
+            }
+            if let Some(g) = c.as_group() {
+                if let Some(r) = g.geometry_of(id) {
+                    return Some(r);
+                }
+            }
+        }
+        None
+    }
+
+    /// Рассылает детям `cm::RECEIVED_FOCUS` для текущего ребёнка (и так
+    /// рекурсивно вниз). Нужно после построения диалога: при вставке фокус
+    /// назначается без сообщений, а меткам и значкам истории важно знать,
+    /// кто в фокусе изначально.
+    pub fn announce_focus(&mut self, ctx: &mut Ctx) {
+        if let Some(c) = self.current {
+            let id = self.children[c].vs().id;
+            let mut e = Event::Broadcast(crate::event::Message::with(cm::RECEIVED_FOCUS, Info::Id(id)));
+            self.broadcast_children(&mut e, ctx);
+            if let Some(c) = self.current {
+                if let Some(g) = self.children[c].as_group_mut() {
+                    ctx.depth += 1;
+                    g.announce_focus(ctx);
+                    ctx.depth -= 1;
+                }
+            }
+        }
+    }
+
+    /// Обходит всё поддерево (без самой группы).
+    pub fn for_each_view(&self, f: &mut dyn FnMut(&dyn View)) {
+        for c in &self.children {
+            f(c.as_ref());
+            if let Some(g) = c.as_group() {
+                g.for_each_view(f);
+            }
+        }
     }
 
     pub fn has_data(&self) -> bool {
@@ -572,8 +678,8 @@ impl View for Group {
         self.set_group_state(flag, enable);
     }
 
-    fn valid(&mut self, command: u16) -> bool {
-        Group::valid(self, command)
+    fn valid(&mut self, command: u16, ctx: &mut Ctx) -> bool {
+        Group::valid(self, command, ctx)
     }
 
     fn change_bounds(&mut self, bounds: Rect) {
