@@ -262,7 +262,7 @@ impl View for Cluster {
         let rows = self.rows();
         for i in 0..rows {
             let mut b = DrawBuffer::new(w);
-            b.move_char(0, ' ', (c_norm & 0xFF) as u8, w);
+            b.move_char(0, ' ', crate::color::lo(c_norm), w);
             let cols = (self.strings.len().saturating_sub(1)) / rows + 1;
             for j in 0..=cols {
                 let cur = j * rows + i;
@@ -281,7 +281,7 @@ impl View for Cluster {
                 } else {
                     c_norm
                 };
-                b.move_char(col, ' ', (color & 0xFF) as u8, w - col);
+                b.move_char(col, ' ', crate::color::lo(color), w - col);
                 b.move_cstr(col, icon, color);
                 b.put_char(col + 2, mark_char(cur));
                 b.move_cstr(col + 5, &self.strings[cur], color);

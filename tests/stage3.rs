@@ -126,6 +126,7 @@ fn color_dialog_changes_palette() {
     // Группа «Desktop», элемент «Color»: Tab, Tab → сетка текста, стрелка вправо (синий → зелёный).
     let input = vec![key(kb::F3), key(kb::TAB), key(kb::TAB), plain(Key::Right), key(kb::ENTER)];
     let mut app = program(input);
+    app.palette = color::palettes::APP_COLOR.to_vec(); // классическая палитра
     let mut h = App::default();
     app.pump(&mut h);
     assert!(h.applied);

@@ -27,6 +27,14 @@ name = "tvedit"
 name = "tvhc"
 
 [[example]]
+name = "table"
+test = true
+
+[[example]]
+name = "colors"
+test = true
+
+[[example]]
 name = "tvdemo"
 path = "examples/tvdemo/main.rs"
 test = true

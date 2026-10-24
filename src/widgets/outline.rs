@@ -252,7 +252,7 @@ impl View for Outline {
                     } else {
                         nrm
                     };
-                    let lo = (color & 0xFF) as u8;
+                    let lo = crate::color::lo(color);
                     b.move_char(0, ' ', lo, w);
                     let graph = self.graph(r);
                     // Горизонтальный сдвиг: пропускаем `delta.x` столбцов графики и текста.
@@ -261,13 +261,13 @@ impl View for Outline {
                     let gw = str_width(&graph);
                     let visible: String = full.chars().skip(skip).collect();
                     // Графика — основным цветом, текст свёрнутого узла — цветом подсветки.
-                    let text_attr = if r.flags & ov::EXPANDED != 0 { lo } else { (color >> 8) as u8 };
+                    let text_attr = if r.flags & ov::EXPANDED != 0 { lo } else { crate::color::hi(color) };
                     let g_vis = gw.saturating_sub(skip);
                     let (gpart, tpart): (String, String) = (visible.chars().take(g_vis).collect(), visible.chars().skip(g_vis).collect());
                     let x = b.move_str(0, &gpart, lo);
                     b.move_str(x, &tpart, text_attr);
                 }
-                None => b.move_char(0, ' ', (nrm & 0xFF) as u8, w),
+                None => b.move_char(0, ' ', crate::color::lo(nrm), w),
             }
             dc.write_line(0, y, self.vs.size.x, 1, &b);
         }

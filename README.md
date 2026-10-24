@@ -4,7 +4,11 @@
 
 * без внешних зависимостей (работа с терминалом реализована внутри, как в оригинале);
 * Linux / macOS / BSD (termios + ANSI) и Windows 10+ (Console API + VT);
-* мышь, Unicode (кириллица, широкие символы), 16 цветов с оригинальными палитрами;
+* мышь, Unicode (кириллица, широкие символы), 16 цветов с оригинальными палитрами
+  и 256 цветов xterm (`color::attr256`, темы, выбор из 256 в `ColorDialog`);
+* тема [gruvbox](https://github.com/morhetz/gruvbox) по умолчанию
+  (`color::palettes::GRUVBOX`; классическая — `APP_COLOR`, она же ставится
+  в 16-цветных терминалах);
 * комментарии в коде — на русском.
 
 ## Документация
@@ -22,6 +26,8 @@ cargo run --example hello   # порт hello.cpp
 cargo run --example demo    # окна, меню, диалог со всеми элементами, список, контекстное меню
 cargo run --example tvedit  # порт примера tvedit: многооконный редактор файлов
 cargo run --example tvhc -- examples/demohelp.txt hc.rs   # проверка справки и константы контекстов
+cargo run --example table   # таблица: миллион строк, своя модель, правка, сортировка, диалог
+cargo run --example colors  # 256 цветов: палитра xterm, темы gruvbox/классика/сумерки, выбор цвета, режим 16/256
 cargo run --example tvdemo  # порт tvdemo: калькулятор, календарь, пятнашки, ASCII, просмотр файлов...
 cargo test --all-targets    # все тесты, включая тесты tvdemo
 cargo test                  # тесты на «невидимом» терминале
@@ -48,6 +54,7 @@ cargo test                  # тесты на «невидимом» терми�
 | `TCheckBoxes`, `TRadioButtons`        | `Cluster::check_boxes`, `Cluster::radio_buttons` |
 | `TScrollBar`                          | `ScrollBar`                                 |
 | `TListViewer`, `TListBox`             | `ListBox` (несколько столбцов)              |
+| — (нет в оригинале)                   | `Table` — таблица: модель данных, правка, сортировка, закреплённые столбцы |
 | `messageBox`, `inputBox`              | `message_box`, `message_box_rect`, `input_box` |
 | `platform/*`                          | `platform::{unix, windows, ansi}`           |
 | `TValidator`, `TPXPictureValidator`, `TFilterValidator`, `TRangeValidator`, `TStringLookupValidator` | трейт `Validator`, `PictureValidator`, `FilterValidator`, `RangeValidator`, `StringLookupValidator` |
@@ -63,12 +70,13 @@ cargo test                  # тесты на «невидимом» терми�
 | утилита `tvhc`                        | пример `tvhc` (проверка + константы `HC_*`) |
 | `TMultiCheckBoxes`                    | `Cluster::multi_check_boxes`                |
 | `TInputLong`, `TColoredText`, `TCombo` (Dialog Design) | `InputLong`, `StaticText::colored`, `Combo` |
+| `TColorAttr`, `TColorXTerm`           | `Attr` (`u32`): байт BIOS + 256 цветов xterm |
 
 ## Чего ещё нет (следующие этапы)
 
 * `TMonoSelector` (выбор цвета в монохромном режиме);
 * `TStreamable` / ресурсы (сохранение объектов в поток);
-* 256 цветов и TrueColor (`TColorAttr` с RGB);
+* TrueColor (24-битные RGB-цвета; 256 цветов xterm уже есть);
 * кодировки, отличные от UTF-8, в редакторе; время в `FileInfoPane` пока в UTC.
 
 ## Системный буфер обмена

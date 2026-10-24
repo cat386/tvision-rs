@@ -26,7 +26,7 @@
 
 use std::time::{Duration, Instant};
 
-use crate::color::palettes;
+use crate::color::{palettes, Attr};
 use crate::drawbuf::ScreenBuffer;
 use crate::event::{cm, Event, Info, Message, MouseEvent};
 use crate::geometry::{Point, Rect};
@@ -62,9 +62,10 @@ pub struct Program {
     pub ctx: Ctx,
     backend: Box<dyn Backend>,
     screen: ScreenBuffer,
-    /// Палитра приложения (цветная, ч/б или монохромная).
+    /// Палитра приложения: по умолчанию [`palettes::GRUVBOX`]; классическая
+    /// цветная — [`palettes::APP_COLOR`], а также ч/б и монохромная.
     /// Палитру можно менять во время работы (см. [`crate::ColorDialog`]).
-    pub palette: Vec<u8>,
+    pub palette: Vec<Attr>,
     pub desktop_id: ViewId,
     pub menu_bar_id: Option<ViewId>,
     pub status_line_id: Option<ViewId>,
@@ -93,8 +94,16 @@ pub struct Program {
 
 impl Program {
     /// Создаёт программу в настоящем терминале.
+    ///
+    /// Палитра — [`palettes::GRUVBOX`]; если терминал умеет только 16
+    /// цветов ([`crate::color::color_mode`]), — классическая
+    /// [`palettes::APP_COLOR`]: в 16 цветах оттенки gruvbox сливаются.
     pub fn with_terminal(menu: Option<Menu>, status: Option<Vec<StatusDef>>) -> std::io::Result<Self> {
-        Ok(Program::new(default_backend()?, menu, status))
+        let mut app = Program::new(default_backend()?, menu, status);
+        if crate::color::color_mode() == crate::color::ColorMode::Ansi16 {
+            app.palette = palettes::APP_COLOR.to_vec();
+        }
+        Ok(app)
     }
 
     /// Создаёт программу с заданным терминалом (например, `HeadlessBackend` для тестов).
@@ -126,7 +135,7 @@ impl Program {
             ctx,
             backend,
             screen: ScreenBuffer::new(size.x.max(1) as usize, size.y.max(1) as usize),
-            palette: palettes::APP_COLOR.to_vec(),
+            palette: palettes::GRUVBOX.to_vec(),
             desktop_id,
             menu_bar_id,
             status_line_id,

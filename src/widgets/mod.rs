@@ -22,13 +22,16 @@ pub mod scrollbar;
 pub mod scroller;
 pub mod statictext;
 pub mod statusline;
+pub mod table;
 pub mod validate;
 pub mod window;
 
 pub use background::Background;
 pub use button::{bf, Button};
 pub use cluster::{cf, CheckBoxes, Cluster, ClusterKind, MultiCheckBoxes, RadioButtons};
-pub use colorsel::{standard_color_groups, ColorDialog, ColorDisplay, ColorGroup, ColorItem, ColorSel, ColorSelector};
+pub use colorsel::{
+    standard_color_groups, Color256Dialog, Color256Selector, ColorDialog, ColorDisplay, ColorGroup, ColorItem, ColorSel, ColorSelector,
+};
 pub use combo::{cbx, Combo, ComboWindow};
 pub use desktop::Desktop;
 pub use dialog::{Dialog, DialogPalette};
@@ -47,5 +50,8 @@ pub use scrollbar::ScrollBar;
 pub use scroller::{Scroller, Terminal};
 pub use statictext::{ColoredText, Label, StaticText};
 pub use statusline::{StatusDef, StatusItem, StatusLine};
+pub use table::{
+    column_letters, natural_cmp, Align, FnTableModel, SelectionMode, Table, TableColors, TableColumn, TableModel, VecTableModel, DEFAULT_TABLE_COLORS,
+};
 pub use validate::{FilterValidator, FnValidator, PictureValidator, RangeValidator, StringLookupValidator, Validator};
 pub use window::{wf, Window};

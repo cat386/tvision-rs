@@ -99,7 +99,7 @@ impl View for StatusLine {
         let c_sel_dis = dc.get_color(0x0505);
         let w = self.vs.size.x.max(0) as usize;
         let mut b = DrawBuffer::new(w);
-        b.move_char(0, ' ', (c_normal & 0xFF) as u8, w);
+        b.move_char(0, ' ', crate::color::lo(c_normal), w);
         let mut i = 0usize;
         for (n, it) in self.items().iter().enumerate() {
             if it.text.is_empty() {
@@ -116,17 +116,17 @@ impl View for StatusLine {
                 (false, true) => c_normal,
                 (false, false) => c_norm_dis,
             };
-            b.move_char(i, ' ', (color & 0xFF) as u8, 1);
+            b.move_char(i, ' ', crate::color::lo(color), 1);
             b.move_cstr(i + 1, &it.text, color);
-            b.move_char(i + l + 1, ' ', (color & 0xFF) as u8, 1);
+            b.move_char(i + l + 1, ' ', crate::color::lo(color), 1);
             i += l + 2;
         }
         // Подсказка справа от пунктов через разделитель «│ ».
         if let Some(h) = &self.hint {
             let text = h(self.help_ctx);
             if !text.is_empty() && i + 2 < w {
-                b.move_str(i, "│ ", (c_normal & 0xFF) as u8);
-                b.move_str_limited(i + 2, &text, (c_normal & 0xFF) as u8, w - i - 2);
+                b.move_str(i, "│ ", crate::color::lo(c_normal));
+                b.move_str_limited(i + 2, &text, crate::color::lo(c_normal), w - i - 2);
             }
         }
         dc.write_line(0, 0, self.vs.size.x, 1, &b);

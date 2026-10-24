@@ -536,7 +536,10 @@ pub struct DrawCtx<'a> {
     origin: Point,
     /// Абсолютная область, в которую можно рисовать.
     clip: Rect,
-    /// Цепочка палитр от приложения (первая) до текущего представления (последняя).
+    /// Палитра приложения: номер цвета → атрибут (в том числе 256-цветный).
+    app_palette: &'a [Attr],
+    /// Цепочка палитр представлений от самого внешнего (первая) до текущего
+    /// (последняя): номер цвета → номер цвета владельца.
     palettes: Vec<&'a [u8]>,
     /// Разрешённые команды (нужны, например, строке состояния и кнопкам).
     pub commands: &'a CommandSet,
@@ -546,13 +549,14 @@ pub struct DrawCtx<'a> {
 
 impl<'a> DrawCtx<'a> {
     /// Корневой контекст на весь экран.
-    pub fn new(screen: &'a mut ScreenBuffer, app_palette: &'a [u8], commands: &'a CommandSet) -> Self {
+    pub fn new(screen: &'a mut ScreenBuffer, app_palette: &'a [Attr], commands: &'a CommandSet) -> Self {
         let size = Point::new(screen.width as i32, screen.height as i32);
         DrawCtx {
             screen,
             origin: Point::default(),
             clip: Rect::from_origin_size(Point::default(), size),
-            palettes: vec![app_palette],
+            app_palette,
+            palettes: Vec::new(),
             commands,
             size,
         }
@@ -564,12 +568,28 @@ impl<'a> DrawCtx<'a> {
         let abs = bounds.moved(self.origin.x, self.origin.y);
         let mut palettes = self.palettes.clone();
         palettes.push(palette);
-        DrawCtx { screen: self.screen, origin: abs.a, clip: self.clip.intersect(&abs), palettes, commands: self.commands, size: bounds.size() }
+        DrawCtx {
+            screen: self.screen,
+            origin: abs.a,
+            clip: self.clip.intersect(&abs),
+            app_palette: self.app_palette,
+            palettes,
+            commands: self.commands,
+            size: bounds.size(),
+        }
     }
 
     /// Абсолютная позиция представления на экране.
     pub fn origin(&self) -> Point {
         self.origin
+    }
+
+    /// Длина ближайшей непустой палитры в цепочке (своей или владельца).
+    /// Представление с пустой палитрой может по ней понять, где оно
+    /// находится: 8 — в окне, 32 — в диалоге, 135 — прямо на рабочем столе
+    /// (палитра приложения). Так устроена таблица [`crate::Table`].
+    pub fn owner_palette_len(&self) -> usize {
+        self.palettes.iter().rev().find(|p| !p.is_empty()).map(|p| p.len()).unwrap_or(self.app_palette.len())
     }
 
     /// Перевод номера цвета через цепочку палитр (`mapColor`).
@@ -595,16 +615,24 @@ impl<'a> DrawCtx<'a> {
                 return ERROR_ATTR;
             }
         }
-        c
+        // Последнее звено — палитра приложения: номер → атрибут.
+        if self.app_palette.is_empty() {
+            return c as Attr;
+        }
+        match self.app_palette.get(c as usize - 1) {
+            Some(&a) if a != 0 => a,
+            _ => ERROR_ATTR,
+        }
     }
 
-    /// Пара цветов (`getColor`): младший байт — номер обычного цвета,
-    /// старший — номер цвета подсветки.
+    /// Пара цветов (`getColor`): `pair` — два номера цвета (младший байт —
+    /// обычный цвет, старший — цвет подсветки; 0 — как обычный). Результат
+    /// — пара атрибутов для `move_cstr` (см. [`crate::color::pair`]).
     pub fn get_color(&self, pair: u16) -> AttrPair {
-        let lo = self.map_color((pair & 0xFF) as u8) as u16;
+        let lo = self.map_color((pair & 0xFF) as u8);
         let hi_idx = (pair >> 8) as u8;
-        let hi = if hi_idx == 0 { lo } else { self.map_color(hi_idx) as u16 };
-        lo | (hi << 8)
+        let hi = if hi_idx == 0 { lo } else { self.map_color(hi_idx) };
+        crate::color::pair(lo, hi)
     }
 
     /// Атрибут по номеру цвета (младший байт `get_color`).
@@ -709,6 +737,12 @@ impl<'a> DrawCtx<'a> {
     /// Рисует тень справа и снизу от прямоугольника `r` (локальные координаты):
     /// 2 столбца справа и 1 строка снизу, со сдвигом — как в оригинале.
     pub fn shadow(&mut self, r: Rect) {
+        // У 256-цветной палитры (фон рабочего стола — цвет xterm) тень тоже
+        // 256-цветная: чёрный фон терминала мог бы оказаться светлее стола.
+        let attr = match self.app_palette.first() {
+            Some(&d) if crate::color::is_bg256(d) => crate::color::SHADOW_ATTR_256,
+            _ => SHADOW_ATTR,
+        };
         let right = Rect::new(r.b.x, r.a.y + 1, r.b.x + 2, r.b.y + 1);
         let bottom = Rect::new(r.a.x + 2, r.b.y, r.b.x, r.b.y + 1);
         for rr in [right, bottom] {
@@ -716,7 +750,7 @@ impl<'a> DrawCtx<'a> {
             for y in abs.a.y..abs.b.y {
                 for x in abs.a.x..abs.b.x {
                     let c = self.screen.get_mut(x as usize, y as usize);
-                    c.attr = SHADOW_ATTR;
+                    c.attr = attr;
                 }
             }
         }

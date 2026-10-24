@@ -57,8 +57,9 @@ fn f2_greets() {
     let lines: Vec<&str> = screen.lines().collect();
     assert!(lines[0].starts_with("  Файл"), "строка меню: {:?}", lines[0]);
     assert!(lines[24].contains("F2 Привет"));
-    // Цвет ячейки: строка меню — чёрный на сером.
-    assert_eq!(app.screen().get(1, 0).attr, 0x70);
+    // Цвет ячейки: строка меню — цвет №2 палитры приложения
+    // (по умолчанию gruvbox; в классической APP_COLOR это 0x70).
+    assert_eq!(app.screen().get(1, 0).attr, app.palette[1]);
 }
 
 fn main() {}

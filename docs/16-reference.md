@@ -62,7 +62,9 @@
 | `SCROLL_BAR_CHANGED` | 53 | `Info::Scroll` |
 | `SCROLL_BAR_CLICKED` | 54 | `Info::Id` полосы |
 | `SELECT_WINDOW_NUM` | 55 | `Info::Int` номер окна |
-| `LIST_ITEM_SELECTED` | 56 | `Info::Id` списка или дерева |
+| `LIST_ITEM_SELECTED` | 56 | `Info::Id` списка, дерева или таблицы |
+| `TABLE_CURSOR_MOVED` | 57 | `Info::Id` таблицы |
+| `TABLE_CELL_EDITED` | 58 | `Info::Id` таблицы |
 | `RECORD_HISTORY` | 60 | — или `Info::Id` строки ввода |
 | `GRAB_DEFAULT` | 61 | — |
 | `RELEASE_DEFAULT` | 62 | — |
@@ -80,7 +82,8 @@
 | `FILE_DOUBLE_CLICKED` | 103 | | | |
 
 Внутренние сообщения библиотеки (не используйте эти номера):
-`SCROLL_BAR_SET` (`0xFF10`), `HISTORY_SET` (`0xFF11`), `INDICATOR_SET` (`0xFF12`).
+`SCROLL_BAR_SET` (`0xFF10`), `HISTORY_SET` (`0xFF11`), `INDICATOR_SET` (`0xFF12`);
+кнопки «256…» диалога цветов — `0xFF20`, `0xFF21`.
 Внутренние команды редактора `editor::ec::*` занимают 500–525.
 
 ## `kb` — клавиши
@@ -198,8 +201,15 @@
 | `editor::TAB_SIZE` | 8 |
 | `program::DOUBLE_CLICK` | 400 мс — интервал двойного щелчка по умолчанию |
 | `color::ERROR_ATTR` | `0xCF` — ошибка палитры |
+| `color::FG_256`, `color::BG_256` | `1 << 24`, `1 << 25` — флаги «цвет текста / фона задан номером xterm» |
+| `color::VGA_RGB` | RGB 16 цветов BIOS (как у VGA) |
+| `color::GRUVBOX_RGB` | RGB 16 цветов терминальной темы gruvbox (порядок BIOS) |
+| `color::SHADOW_ATTR_256` | тень при 256-цветной палитре |
+| `color::palettes::GRUVBOX` | палитра приложения по умолчанию (тема gruvbox) |
+| `color::palettes::gruvbox::*` | номера цветов gruvbox в палитре xterm: `BG0H`…`BG4`, `GRAY`, `FG4`…`FG0`, `RED`…`ORANGE`, `NRED`…`NORANGE` |
 | `color::SHADOW_ATTR` | `0x08` — тень |
-| `listbox::EMPTY_TEXT` | `"<empty>"` |
+| `listbox::EMPTY_TEXT` | `"<empty>"` (и в пустой таблице) |
+| `table::DEFAULT_TABLE_COLORS` | цвета таблицы, если у владельца нет подходящей палитры |
 | `editor::UNTITLED` | `"Untitled"` |
 | `help::HELP_WIN_TITLE`, `help::NO_HELP` | заголовок окна справки, текст «нет справки» |
 | `validate::PICTURE_ERROR` | текст ошибки маски |

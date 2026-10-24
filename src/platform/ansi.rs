@@ -8,7 +8,7 @@
 
 use std::fmt::Write as _;
 
-use crate::color::{back, bios_to_ansi, fore, Attr};
+use crate::color::{back, bg256, bios_to_ansi, color_mode, fg256, fore, is_bg256, is_fg256, Attr, ColorMode};
 use crate::drawbuf::ScreenBuffer;
 use crate::event::{Key, KeyEvent, Mods};
 use crate::geometry::Point;
@@ -26,11 +26,20 @@ pub const LEAVE_SEQ: &str = "\x1b[?1006l\x1b[?1003l\x1b[?1002l\x1b[?1000l\x1b[0m
 #[derive(Default)]
 pub struct AnsiWriter {
     prev: Option<ScreenBuffer>,
+    /// Режим цвета, в котором выведен `prev` (при смене — полная перерисовка).
+    prev_mode: Option<ColorMode>,
+    /// Свой режим цвета; `None` — общий [`crate::color::color_mode`].
+    pub mode: Option<ColorMode>,
 }
 
 impl AnsiWriter {
     pub fn new() -> Self {
-        AnsiWriter { prev: None }
+        AnsiWriter { prev: None, prev_mode: None, mode: None }
+    }
+
+    /// Писатель с заданным режимом цвета (например, для тестов).
+    pub fn with_mode(mode: ColorMode) -> Self {
+        AnsiWriter { prev: None, prev_mode: None, mode: Some(mode) }
     }
 
     /// Забыть предыдущий кадр — следующий `render` перерисует всё
@@ -46,10 +55,12 @@ impl AnsiWriter {
         // Пока рисуем — прячем курсор, чтобы он не «бегал» по экрану.
         out.push_str("\x1b[?25l");
 
+        let mode = self.mode.unwrap_or_else(color_mode);
         let full = match &self.prev {
-            Some(p) => p.width != screen.width || p.height != screen.height,
+            Some(p) => p.width != screen.width || p.height != screen.height || self.prev_mode != Some(mode),
             None => true,
         };
+        self.prev_mode = Some(mode);
         if full {
             out.push_str("\x1b[0m\x1b[2J");
         }
@@ -78,7 +89,7 @@ impl AnsiWriter {
                     let _ = write!(out, "\x1b[{};{}H", y + 1, start + 1);
                 }
                 if cur_attr != Some(c.attr) {
-                    push_sgr(&mut out, c.attr);
+                    push_sgr(&mut out, c.attr, mode);
                     cur_attr = Some(c.attr);
                 }
                 if c.is_wide_tail() {
@@ -110,12 +121,26 @@ impl AnsiWriter {
 }
 
 /// Добавляет последовательность SGR для установки цвета.
-fn push_sgr(out: &mut String, a: Attr) {
-    let fg = bios_to_ansi(fore(a));
-    let bg = bios_to_ansi(back(a));
-    let fg_code = if fg < 8 { 30 + fg as u32 } else { 90 + (fg - 8) as u32 };
-    let bg_code = if bg < 8 { 40 + bg as u32 } else { 100 + (bg - 8) as u32 };
-    let _ = write!(out, "\x1b[0;{};{}m", fg_code, bg_code);
+///
+/// Цвета BIOS всегда выводятся 16-цветными кодами (`30–37`, `90–97`,
+/// `40–47`, `100–107`) — цветами темы терминала, как в оригинале. Цвета
+/// xterm-256 в режиме [`ColorMode::Xterm256`] выводятся как `38;5;N` /
+/// `48;5;N`, в режиме [`ColorMode::Ansi16`] — ближайшим цветом BIOS.
+pub fn push_sgr(out: &mut String, a: Attr, mode: ColorMode) {
+    let x256 = mode == ColorMode::Xterm256;
+    out.push_str("\x1b[0;");
+    if x256 && is_fg256(a) {
+        let _ = write!(out, "38;5;{}", fg256(a));
+    } else {
+        let fg = bios_to_ansi(fore(a));
+        let _ = write!(out, "{}", if fg < 8 { 30 + fg as u32 } else { 90 + (fg - 8) as u32 });
+    }
+    if x256 && is_bg256(a) {
+        let _ = write!(out, ";48;5;{}m", bg256(a));
+    } else {
+        let bg = bios_to_ansi(back(a));
+        let _ = write!(out, ";{}m", if bg < 8 { 40 + bg as u32 } else { 100 + (bg - 8) as u32 });
+    }
 }
 
 /// Результат попытки разобрать начало входного буфера.
@@ -379,6 +404,38 @@ mod tests {
             }
             other => panic!("{:?}", other),
         }
+    }
+
+    #[test]
+    fn colors_256() {
+        use crate::color::{attr256, with_bg256, ColorMode};
+        let mut s = String::new();
+        push_sgr(&mut s, 0x1E, ColorMode::Xterm256);
+        assert_eq!(s, "\x1b[0;93;44m"); // BIOS — старые коды
+        s.clear();
+        push_sgr(&mut s, attr256(208, 236), ColorMode::Xterm256);
+        assert_eq!(s, "\x1b[0;38;5;208;48;5;236m");
+        s.clear();
+        push_sgr(&mut s, with_bg256(0x0F, 17), ColorMode::Xterm256);
+        assert_eq!(s, "\x1b[0;97;48;5;17m");
+        s.clear();
+        // 16-цветный терминал: ближайшие цвета BIOS.
+        push_sgr(&mut s, attr256(203, 16), ColorMode::Ansi16);
+        assert_eq!(s, "\x1b[0;91;40m");
+    }
+
+    #[test]
+    fn mode_change_redraws_all() {
+        use crate::color::{attr256, ColorMode};
+        use crate::drawbuf::Cell;
+        let mut scr = ScreenBuffer::new(4, 1);
+        *scr.get_mut(0, 0) = Cell::new('A', attr256(208, 17));
+        let mut w = AnsiWriter::with_mode(ColorMode::Xterm256);
+        assert!(w.render(&scr, None, false).contains("38;5;208"));
+        assert!(!w.render(&scr, None, false).contains('A')); // ничего не изменилось
+        w.mode = Some(ColorMode::Ansi16);
+        let out = w.render(&scr, None, false);
+        assert!(out.contains('A') && !out.contains("38;5"));
     }
 
     #[test]

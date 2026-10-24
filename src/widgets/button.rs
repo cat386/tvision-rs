@@ -70,7 +70,7 @@ impl Button {
             dc.get_color(0x0501)
         };
         let c_shadow = dc.color(8);
-        let c_lo = (c_button & 0xFF) as u8;
+        let c_lo = crate::color::lo(c_button);
         let w = self.vs.size.x.max(1) as usize;
         let s = w - 1;
         let t = self.vs.size.y / 2 - 1;

@@ -19,6 +19,7 @@
 | `TInputLine` | `InputLine` |
 | `TCheckBoxes`, `TRadioButtons`, `TMultiCheckBoxes` | `Cluster::check_boxes`, `Cluster::radio_buttons`, `Cluster::multi_check_boxes` |
 | `TListViewer`, `TListBox`, `TSortedListBox` | `ListBox` |
+| — (в оригинале нет) | `Table`, `TableModel`, `VecTableModel`, `FnTableModel` — таблица ([глава 7](07-dialogs.md#таблица-table)) |
 | `TScrollBar`, `TScroller` | `ScrollBar`, `Scroller` (встраиваемый движок) |
 | `TTextDevice`, `TTerminal` | `Terminal` |
 | `THistory`, `THistoryWindow`, `historyAdd` | `History`, `HistoryWindow`, `history_add` |
@@ -34,7 +35,8 @@
 | `TInputLong`, `TColoredText`, `TCombo` (Dialog Design) | `InputLong`, `StaticText::colored`, `Combo` |
 | `TEvent` | `Event` (перечисление) |
 | `TDrawBuffer` | `DrawBuffer` |
-| `TPalette`, `cpXXX` | `&'static [u8]`, `color::palettes::*` |
+| `TPalette`, `cpXXX` | `&'static [u8]`, `color::palettes::*` (палитра приложения — `Vec<Attr>`) |
+| `TColorAttr`, `TColorBIOS`, `TColorXTerm`, `TAttrPair` | `Attr` (`u32`: байт BIOS + номера xterm-256), `color::attr`, `color::attr256`, `AttrPair` (`u64`) |
 | `TCommandSet` | `CommandSet` (через `enable_command`/`disable_command`) |
 | `TStreamable`, ресурсы | нет (сохраняйте данные сами: serde, свой формат) |
 
@@ -163,7 +165,7 @@ do { … } while (mouseEvent(event, evMouseMove));
 * Значку истории нужен номер и у строки ввода: `il.history_id = Some(n)`
   (в C++ его хранил только `THistory`).
 * Пользовательские команды: 100–255 (запрещаемые) или ≥ 1000. Номера
-  `0xFF10`–`0xFF12` заняты внутренними сообщениями.
+  `0xFF10`–`0xFF12`, `0xFF20`, `0xFF21` заняты внутренними сообщениями.
 * `ofCentered` центрирует при вставке — для `Dialog::centered` это уже
   сделано.
 * Кнопка `bfBroadcast` рассылает сообщение соседям (`ctx.message`), а не

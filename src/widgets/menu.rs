@@ -173,7 +173,7 @@ impl Menu {
 
 /// Цвета меню: обычный, выбранный, запрещённый, выбранный запрещённый.
 /// Номера цветов как в `TMenuBar::draw` / `TMenuBox::draw`.
-fn menu_colors(dc: &DrawCtx) -> [u16; 4] {
+fn menu_colors(dc: &DrawCtx) -> [crate::color::AttrPair; 4] {
     [dc.get_color(0x0301), dc.get_color(0x0604), dc.get_color(0x0202), dc.get_color(0x0505)]
 }
 
@@ -207,7 +207,7 @@ impl View for MenuBar {
         let [c_normal, c_select, c_norm_dis, c_sel_dis] = menu_colors(dc);
         let w = self.vs.size.x.max(0) as usize;
         let mut b = DrawBuffer::new(w);
-        b.move_char(0, ' ', (c_normal & 0xFF) as u8, w);
+        b.move_char(0, ' ', crate::color::lo(c_normal), w);
         for (i, (it, (x, l))) in self.menu.items.iter().zip(self.menu.bar_positions()).enumerate() {
             let (x, l) = (x as usize, l as usize);
             if x + l > w {
@@ -220,9 +220,9 @@ impl View for MenuBar {
                 (false, true) => c_normal,
                 (false, false) => c_norm_dis,
             };
-            b.move_char(x, ' ', (color & 0xFF) as u8, 1);
+            b.move_char(x, ' ', crate::color::lo(color), 1);
             b.move_cstr(x + 1, it.name(), color);
-            b.move_char(x + l - 1, ' ', (color & 0xFF) as u8, 1);
+            b.move_char(x + l - 1, ' ', crate::color::lo(color), 1);
         }
         dc.write_line(0, 0, self.vs.size.x, 1, &b);
     }
@@ -652,10 +652,10 @@ pub fn draw_menu_box(dc: &mut DrawCtx, menu: &Menu, sel: Option<usize>) {
     let [c_normal, c_select, c_norm_dis, c_sel_dis] = menu_colors(dc);
     let size = dc.size;
     let w = size.x.max(4) as usize;
-    let normal = (c_normal & 0xFF) as u8;
+    let normal = crate::color::lo(c_normal);
 
     // frameLine(n): 2 символа слева, заполнитель, 2 символа справа.
-    let frame_line = |b: &mut DrawBuffer, left: &str, fill: char, right: &str, color: u8| {
+    let frame_line = |b: &mut DrawBuffer, left: &str, fill: char, right: &str, color: crate::color::Attr| {
         b.move_str(0, left, normal);
         b.move_char(2, fill, color, w - 4);
         b.move_str(w - 2, right, normal);
@@ -677,13 +677,13 @@ pub fn draw_menu_box(dc: &mut DrawCtx, menu: &Menu, sel: Option<usize>) {
                     (false, true) => c_normal,
                     (false, false) => c_norm_dis,
                 };
-                frame_line(&mut b, " │", ' ', "│ ", (color & 0xFF) as u8);
+                frame_line(&mut b, " │", ' ', "│ ", crate::color::lo(color));
                 b.move_cstr(3, it.name(), color);
                 match it {
                     MenuItem::SubMenu { .. } => b.put_char(w - 4, '►'),
                     MenuItem::Command { param, .. } if !param.is_empty() => {
                         let pw = str_width(param);
-                        b.move_str(w.saturating_sub(3 + pw), param, (color & 0xFF) as u8);
+                        b.move_str(w.saturating_sub(3 + pw), param, crate::color::lo(color));
                     }
                     _ => {}
                 }

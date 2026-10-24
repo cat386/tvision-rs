@@ -1,6 +1,7 @@
 //! Статический текст (`TStaticText`) и метка (`TLabel`).
 
 use crate::color::palettes;
+use crate::color::Attr;
 use crate::drawbuf::DrawBuffer;
 use crate::event::{cm, Event, Info};
 use crate::geometry::Rect;
@@ -16,7 +17,7 @@ pub struct StaticText {
     pub text: String,
     /// Собственный атрибут цвета (`TColoredText` из Dialog Design): если
     /// задан, текст рисуется этим атрибутом, а не цветом из палитры.
-    pub attr: Option<u8>,
+    pub attr: Option<Attr>,
 }
 
 /// Цветной текст (`TColoredText`) — тот же [`StaticText`] с атрибутом.
@@ -28,8 +29,9 @@ impl StaticText {
     }
 
     /// Цветной текст (`TColoredText(bounds, text, attr)`): `attr` — байт
-    /// BIOS (фон << 4 | цвет). Атрибут 0 (чёрным по чёрному) не годится.
-    pub fn colored(bounds: Rect, text: &str, attr: u8) -> Self {
+    /// BIOS (фон << 4 | цвет) или 256-цветный атрибут ([`crate::color::attr256`]).
+    /// Атрибут 0 (чёрным по чёрному) не годится.
+    pub fn colored(bounds: Rect, text: &str, attr: Attr) -> Self {
         StaticText { vs: ViewState::new(bounds), text: text.into(), attr: Some(attr) }
     }
 }
@@ -100,7 +102,7 @@ impl View for Label {
         let color = if self.light { dc.get_color(0x0402) } else { dc.get_color(0x0301) };
         let w = self.vs.size.x.max(0) as usize;
         let mut b = DrawBuffer::new(w);
-        b.move_char(0, ' ', (color & 0xFF) as u8, w);
+        b.move_char(0, ' ', crate::color::lo(color), w);
         b.move_cstr(1, &self.text, color);
         dc.write_line(0, 0, self.vs.size.x, 1, &b);
     }

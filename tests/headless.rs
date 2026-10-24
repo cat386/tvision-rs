@@ -100,7 +100,13 @@ fn initial_screen() {
     assert!(lines[0].starts_with("  File  Window "), "строка меню: {:?}", lines[0]);
     assert!(lines[1].chars().all(|c| c == '░'), "фон рабочего стола");
     assert!(lines[24].starts_with(" Alt-X Exit  F2 New "), "строка состояния: {:?}", lines[24]);
-    // Цвета: меню — чёрный на сером (0x70), горячая буква — красная (0x74).
+    // Цвета меню — из палитры приложения (по умолчанию gruvbox):
+    // №2 — обычный пункт, №4 — горячая буква.
+    assert_eq!(app.screen().get(1, 0).attr, app.palette[1]);
+    assert_eq!(app.screen().get(2, 0).attr, app.palette[3]);
+    // В классической палитре — чёрный на сером (0x70) и красная буква (0x74).
+    app.palette = color::palettes::APP_COLOR.to_vec();
+    app.redraw();
     assert_eq!(app.screen().get(1, 0).attr, 0x70);
     assert_eq!(app.screen().get(2, 0).attr, 0x74);
     assert_eq!(app.screen().get(2, 0).ch, 'F');
@@ -121,8 +127,11 @@ fn new_window_via_hotkey() {
     assert!(top.contains("[■]"), "кнопка закрытия: {:?}", top);
     assert!(top.contains("[↑]"), "кнопка распахивания: {:?}", top);
     assert!(top.contains('1'), "номер окна");
-    // Тень справа от окна.
-    assert_eq!(app.screen().get(40, 5).attr, 0x08);
+    // Тень справа от окна: у 256-цветной палитры — 256-цветная.
+    assert_eq!(app.screen().get(40, 5).attr, color::SHADOW_ATTR_256);
+    app.palette = color::palettes::APP_COLOR.to_vec();
+    app.redraw();
+    assert_eq!(app.screen().get(40, 5).attr, color::SHADOW_ATTR);
 }
 
 #[test]
@@ -146,8 +155,8 @@ fn menu_drawing() {
     assert!(lines[1].starts_with(" ┌"), "рамка меню: {:?}", lines[1]);
     assert!(lines[2].contains("New") && lines[2].contains("F2"), "пункт New: {:?}", lines[2]);
     assert!(lines[4].contains("├"), "разделитель: {:?}", lines[4]);
-    // Выбранный пункт — чёрный на зелёном (0x20).
-    assert_eq!(app.screen().get(4, 2).attr, 0x20);
+    // Выбранный пункт — цвет №5 палитры (в классической — чёрный на зелёном 0x20).
+    assert_eq!(app.screen().get(4, 2).attr, app.palette[4]);
 }
 
 #[test]

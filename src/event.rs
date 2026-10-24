@@ -315,6 +315,10 @@ pub mod cm {
     pub const RECORD_HISTORY: u16 = 60;
     pub const GRAB_DEFAULT: u16 = 61;
     pub const RELEASE_DEFAULT: u16 = 62;
+    /// Таблица: курсор перешёл в другую ячейку (`Info::Id` таблицы).
+    pub const TABLE_CURSOR_MOVED: u16 = 57;
+    /// Таблица: пользователь изменил значение ячейки (`Info::Id` таблицы).
+    pub const TABLE_CELL_EDITED: u16 = 58;
 
     /// Внутреннее сообщение этого порта: «установить параметры полосы прокрутки».
     /// В C++ список вызывал `vScrollBar->setParams(...)` напрямую.

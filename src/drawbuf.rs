@@ -99,11 +99,12 @@ impl DrawBuffer {
         x - indent
     }
 
-    /// Пишет C-строку: текст между `~` выводится цветом из старшего байта `attrs`,
-    /// остальной — из младшего. Аналог `TDrawBuffer::moveCStr`.
+    /// Пишет C-строку: текст между `~` выводится цветом подсветки из пары
+    /// `attrs`, остальной — обычным цветом. Пара — из `DrawCtx::get_color`,
+    /// [`crate::color::pair`] или старой 16-битной записи `0xHHLL` (байты
+    /// BIOS). Аналог `TDrawBuffer::moveCStr`.
     pub fn move_cstr(&mut self, indent: usize, s: &str, attrs: AttrPair) -> usize {
-        let lo = (attrs & 0xFF) as Attr;
-        let hi = (attrs >> 8) as Attr;
+        let (lo, hi) = crate::color::unpair(attrs);
         let mut cur = lo;
         let mut x = indent;
         for ch in s.chars() {

@@ -68,7 +68,7 @@ impl Frame {
         } else {
             (dc.get_color(0x0503), dc.get_color(0x0004), &DOUBLE)
         };
-        let lo = (c_frame & 0xFF) as u8;
+        let lo = crate::color::lo(c_frame);
 
         // --- Верхняя строка: линия, номер, заголовок, кнопки ---
         let mut b = DrawBuffer::new(width);
@@ -96,7 +96,7 @@ impl Frame {
             let i = (width - tl) / 2;
             if i >= 1 {
                 b.put_char(i - 1, ' ');
-                b.move_str(i, t, (c_title & 0xFF) as u8);
+                b.move_str(i, t, crate::color::lo(c_title));
                 b.put_char(i + tl, ' ');
                 // Пробелы вокруг заголовка — цветом рамки.
                 b.put_attribute(i - 1, lo);
