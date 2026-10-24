@@ -656,6 +656,18 @@ impl<'a> DrawCtx<'a> {
         }
     }
 
+    /// Перекрашивает уже нарисованные ячейки прямоугольника `r` (локальные
+    /// координаты) в атрибут `attr`, не трогая символы. Нужно, например,
+    /// чтобы подсветить выделенный элемент в редакторе диалогов.
+    pub fn recolor(&mut self, r: Rect, attr: Attr) {
+        let abs = r.moved(self.origin.x, self.origin.y).intersect(&self.clip);
+        for y in abs.a.y..abs.b.y {
+            for x in abs.a.x..abs.b.x {
+                self.screen.get_mut(x as usize, y as usize).attr = attr;
+            }
+        }
+    }
+
     /// Выводит ячейки (аналог `writeBuf` для одной строки).
     pub fn write_cells(&mut self, x: i32, y: i32, cells: &[Cell]) {
         for (dx, c) in cells.iter().enumerate() {

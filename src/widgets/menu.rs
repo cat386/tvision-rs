@@ -13,7 +13,7 @@ use crate::color::palettes;
 use crate::drawbuf::DrawBuffer;
 use crate::event::{cm, Event, Info, Key, KeyEvent};
 use crate::geometry::{Point, Rect};
-use crate::text::{cstr_width, hotkey, str_width, to_upper};
+use crate::text::{cstr_width, hotkey, same_hotkey, str_width, to_upper};
 use crate::view::{gf, of, CommandSet, Ctx, DrawCtx, Request, View, ViewState};
 
 /// Пункт меню.
@@ -134,8 +134,12 @@ impl Menu {
 
     /// Пункт с горячей буквой `c` (`findItem`).
     pub fn find_item(&self, c: char) -> Option<usize> {
+        // Сначала точное совпадение, затем — с учётом раскладки клавиатуры.
         let c = to_upper(c);
-        self.items.iter().position(|it| !it.is_separator() && hotkey(it.name()) == Some(c))
+        self.items
+            .iter()
+            .position(|it| !it.is_separator() && hotkey(it.name()) == Some(c))
+            .or_else(|| self.items.iter().position(|it| !it.is_separator() && hotkey(it.name()).map(|h| same_hotkey(c, h)).unwrap_or(false)))
     }
 
     /// Размер выпадающего окна (`TMenuBox::getRect`).

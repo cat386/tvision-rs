@@ -6,6 +6,7 @@
 //! Вместо `findfirst`/`findnext` из DOS используется `std::fs::read_dir`;
 //! шаблоны имён (`*.txt`, `data?.csv`) сопоставляются функцией [`wild_match`].
 
+use crate::locale::tr;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
 use std::time::SystemTime;
 
@@ -283,7 +284,12 @@ impl View for FileInfoPane {
                 if let Some(t) = e.modified {
                     let (y, mo, d, h, mi) = civil_time(t);
                     let (h12, pm) = (if h % 12 == 0 { 12 } else { h % 12 }, h >= 12);
-                    let s = format!("{} {:02}, {} {:2}:{:02}{}", MONTHS[(mo - 1) as usize], d, y, h12, mi, if pm { "pm" } else { "am" });
+                    let s = if crate::locale::language() == crate::locale::Language::Ru {
+                        // По-русски: день.месяц.год часы:минуты.
+                        format!("{:02}.{:02}.{} {:2}:{:02}", d, mo, y, h, mi)
+                    } else {
+                        format!("{} {:02}, {} {:2}:{:02}{}", MONTHS[(mo - 1) as usize], d, y, h12, mi, if pm { "pm" } else { "am" })
+                    };
                     b.move_str(w - 22, &s, color);
                 }
             }
@@ -348,7 +354,7 @@ impl FileDialog {
         let mut list = FileList::new(Rect::new(3, 6, 34, 14), Some(sb));
         list.lb.vs.grow_mode = gf::GROW_HI_X | gf::GROW_HI_Y;
         let list_id = dlg.add(list);
-        dlg.add(Label::new(Rect::new(2, 5, 8, 6), FileDialogText::FILES, Some(list_id)));
+        dlg.add(Label::new(Rect::new(2, 5, 8, 6), tr(FileDialogText::FILES), Some(list_id)));
 
         // Кнопки справа, первая — по умолчанию.
         let mut opt = bf::DEFAULT;
@@ -360,23 +366,23 @@ impl FileDialog {
             *r = r.moved(0, 3);
         };
         if options & fd::OPEN_BUTTON != 0 {
-            add_button(&mut dlg, &mut r, FileDialogText::OPEN, cm::FILE_OPEN, opt);
+            add_button(&mut dlg, &mut r, tr(FileDialogText::OPEN), cm::FILE_OPEN, opt);
             opt = bf::NORMAL;
         }
         if options & fd::OK_BUTTON != 0 {
-            add_button(&mut dlg, &mut r, FileDialogText::OK, cm::FILE_OPEN, opt);
+            add_button(&mut dlg, &mut r, tr(FileDialogText::OK), cm::FILE_OPEN, opt);
             opt = bf::NORMAL;
         }
         if options & fd::REPLACE_BUTTON != 0 {
-            add_button(&mut dlg, &mut r, FileDialogText::REPLACE, cm::FILE_REPLACE, opt);
+            add_button(&mut dlg, &mut r, tr(FileDialogText::REPLACE), cm::FILE_REPLACE, opt);
             opt = bf::NORMAL;
         }
         if options & fd::CLEAR_BUTTON != 0 {
-            add_button(&mut dlg, &mut r, FileDialogText::CLEAR, cm::FILE_CLEAR, opt);
+            add_button(&mut dlg, &mut r, tr(FileDialogText::CLEAR), cm::FILE_CLEAR, opt);
         }
-        add_button(&mut dlg, &mut r, FileDialogText::CANCEL, cm::CANCEL, bf::NORMAL);
+        add_button(&mut dlg, &mut r, tr(FileDialogText::CANCEL), cm::CANCEL, bf::NORMAL);
         if options & fd::HELP_BUTTON != 0 {
-            add_button(&mut dlg, &mut r, FileDialogText::HELP, cm::HELP, bf::NORMAL);
+            add_button(&mut dlg, &mut r, tr(FileDialogText::HELP), cm::HELP, bf::NORMAL);
         }
 
         let mut info = FileInfoPane::new(Rect::new(1, 16, 48, 18));
@@ -568,7 +574,7 @@ impl View for FileDialog {
                 }
                 self.read_directory();
             } else {
-                self.error(ctx, FileDialogText::INVALID_DRIVE, &dir);
+                self.error(ctx, tr(FileDialogText::INVALID_DRIVE), &dir);
             }
             false
         } else if f.is_dir() {
@@ -581,7 +587,7 @@ impl View for FileDialog {
         } else if f.parent().map(|p| p.is_dir()).unwrap_or(false) && !fname.is_empty() {
             true
         } else {
-            self.error(ctx, FileDialogText::INVALID_FILE, &f);
+            self.error(ctx, tr(FileDialogText::INVALID_FILE), &f);
             false
         }
     }
@@ -714,21 +720,21 @@ pub mod cd {
 impl ChDirDialog {
     /// Аналог `TChDirDialog(options, histId)`.
     pub fn new(options: u16, hist_id: u16) -> Self {
-        let mut dlg = Dialog::new(Rect::new(16, 2, 64, 20), "Change Directory");
+        let mut dlg = Dialog::new(Rect::new(16, 2, 64, 20), tr("Change Directory"));
         dlg.win.group.vs.options |= of::CENTERED;
         let mut il = InputLine::new(Rect::new(3, 3, 30, 4), 260);
         il.history_id = Some(hist_id);
         let input_id = dlg.add(il);
-        dlg.add(Label::new(Rect::new(2, 2, 17, 3), "Directory ~n~ame", Some(input_id)));
+        dlg.add(Label::new(Rect::new(2, 2, 19, 3), tr("Directory ~n~ame"), Some(input_id)));
         dlg.add(History::new(Rect::new(30, 3, 33, 4), input_id, hist_id));
         let sb = dlg.add(ScrollBar::new(Rect::new(32, 6, 33, 16)));
         let list_id = dlg.add(DirListBox::new(Rect::new(3, 6, 32, 16), Some(sb)));
-        dlg.add(Label::new(Rect::new(2, 5, 17, 6), "Directory ~t~ree", Some(list_id)));
+        dlg.add(Label::new(Rect::new(2, 5, 20, 6), tr("Directory ~t~ree"), Some(list_id)));
         let ok_id = dlg.add(Button::new(Rect::new(35, 6, 45, 8), "O~K~", cm::OK, bf::DEFAULT));
-        dlg.add(Button::new(Rect::new(35, 9, 45, 11), "~C~hdir", cm::CHANGE_DIR, bf::NORMAL));
-        dlg.add(Button::new(Rect::new(35, 12, 45, 14), "~R~evert", cm::REVERT, bf::NORMAL));
+        dlg.add(Button::new(Rect::new(35, 9, 45, 11), tr("~C~hdir"), cm::CHANGE_DIR, bf::NORMAL));
+        dlg.add(Button::new(Rect::new(35, 12, 45, 14), tr("~R~evert"), cm::REVERT, bf::NORMAL));
         if options & cd::HELP_BUTTON != 0 {
-            dlg.add(Button::new(Rect::new(35, 15, 45, 17), "Help", cm::HELP, bf::NORMAL));
+            dlg.add(Button::new(Rect::new(35, 15, 45, 17), tr("Help"), cm::HELP, bf::NORMAL));
         }
         dlg.select(input_id);
         let mut d = ChDirDialog { dlg, input_id, list_id, ok_id };
@@ -817,7 +823,11 @@ impl View for ChDirDialog {
         match std::env::set_current_dir(&dir) {
             Ok(()) => true,
             Err(_) => {
-                let d = build_message_box(Rect::new(0, 0, 50, 9), &format!("Invalid directory: '{}'", dir.display()), mf::ERROR | mf::OK_BUTTON);
+                let d = build_message_box(
+                    Rect::new(0, 0, 50, 9),
+                    &format!("{} '{}'", tr("Invalid directory:"), dir.display()),
+                    mf::ERROR | mf::OK_BUTTON,
+                );
                 ctx.exec(Box::new(d), None, 0);
                 ctx.focus(self.input_id);
                 false

@@ -77,6 +77,52 @@ pub fn to_upper(c: char) -> char {
     c.to_uppercase().next().unwrap_or(c)
 }
 
+/// Пары «латинская буква — русская буква на той же клавише» (US QWERTY и
+/// русская раскладка ЙЦУКЕН).
+const JCUKEN: [(char, char); 33] = [
+    ('Q', 'Й'),
+    ('W', 'Ц'),
+    ('E', 'У'),
+    ('R', 'К'),
+    ('T', 'Е'),
+    ('Y', 'Н'),
+    ('U', 'Г'),
+    ('I', 'Ш'),
+    ('O', 'Щ'),
+    ('P', 'З'),
+    ('[', 'Х'),
+    (']', 'Ъ'),
+    ('A', 'Ф'),
+    ('S', 'Ы'),
+    ('D', 'В'),
+    ('F', 'А'),
+    ('G', 'П'),
+    ('H', 'Р'),
+    ('J', 'О'),
+    ('K', 'Л'),
+    ('L', 'Д'),
+    (';', 'Ж'),
+    ('\'', 'Э'),
+    ('Z', 'Я'),
+    ('X', 'Ч'),
+    ('C', 'С'),
+    ('V', 'М'),
+    ('B', 'И'),
+    ('N', 'Т'),
+    ('M', 'Ь'),
+    (',', 'Б'),
+    ('.', 'Ю'),
+    ('`', 'Ё'),
+];
+
+/// Совпадает ли нажатая буква с горячей буквой без учёта регистра и
+/// раскладки: Alt+буква в Windows приходит латинской (по коду клавиши), а
+/// горячая буква может быть русской — `A` подходит к `Ф`, и наоборот.
+pub fn same_hotkey(pressed: char, hot: char) -> bool {
+    let (p, h) = (to_upper(pressed), to_upper(hot));
+    p == h || JCUKEN.iter().any(|&(l, r)| (p == l && h == r) || (p == r && h == l))
+}
+
 /// Убирает тильды из C-строки: `"~F~ile"` → `"File"`.
 pub fn strip_tildes(s: &str) -> String {
     s.chars().filter(|&c| c != '~').collect()
@@ -159,5 +205,18 @@ mod tests {
     fn wrap() {
         let l = wrap_text("один два три четыре", 9);
         assert_eq!(l, vec!["один два", "три", "четыре"]);
+    }
+}
+
+#[cfg(test)]
+mod hotkey_layout_tests {
+    use super::*;
+
+    #[test]
+    fn layout_insensitive() {
+        assert!(same_hotkey('a', 'Ф'));
+        assert!(same_hotkey('ф', 'A'));
+        assert!(same_hotkey('ф', 'ф'));
+        assert!(!same_hotkey('a', 'П'));
     }
 }

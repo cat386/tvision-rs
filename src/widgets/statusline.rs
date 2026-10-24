@@ -163,7 +163,8 @@ impl View for StatusLine {
                 ctx.release_mouse();
                 if let Some(n) = self.pressed.take() {
                     let c = self.items()[n].command;
-                    if ctx.command_enabled(c) {
+                    // Команда 0 — пункт-надпись (подсказка без действия).
+                    if c != 0 && ctx.command_enabled(c) {
                         ctx.post_command(c, Info::None);
                     }
                 }

@@ -112,6 +112,20 @@ impl InputLine {
         self.select_all(true);
     }
 
+    /// Позиция курсора (номер символа, `curPos`).
+    pub fn cursor_pos(&self) -> usize {
+        self.cur_pos
+    }
+
+    /// Поставить курсор (выделение снимается).
+    pub fn set_cursor_pos(&mut self, pos: usize) {
+        self.cur_pos = pos.min(self.data.len());
+        self.sel_start = 0;
+        self.sel_end = 0;
+        self.anchor = None;
+        self.adjust_first();
+    }
+
     /// Выделить всё / снять выделение (`selectAll`).
     pub fn select_all(&mut self, enable: bool) {
         self.sel_start = 0;

@@ -8,7 +8,7 @@ use crate::color::palettes;
 use crate::drawbuf::DrawBuffer;
 use crate::event::{cm, Event, Info, Key};
 use crate::geometry::Rect;
-use crate::text::{cstr_width, hotkey, to_upper};
+use crate::text::{cstr_width, hotkey, same_hotkey, to_upper};
 use crate::view::{default_handle_event, of, sf, Ctx, DrawCtx, Phase, View, ViewState};
 
 /// Флаги кнопки (`bfXXX`).
@@ -157,7 +157,7 @@ impl View for Button {
             }
             Event::KeyDown(k) => {
                 let hot = hotkey(&self.title);
-                let by_alt = hot.is_some() && k.alt_char() == hot;
+                let by_alt = matches!((k.alt_char(), hot), (Some(a), Some(h)) if same_hotkey(a, h));
                 let by_letter = ctx.phase == Phase::PostProcess && hot.is_some() && k.text_char().map(to_upper) == hot;
                 let by_space = self.vs.is_focused() && k.key == Key::Char(' ') && k.mods == Default::default();
                 if (by_alt || by_letter || by_space) && enabled {

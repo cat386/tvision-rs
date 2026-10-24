@@ -2,6 +2,7 @@
 
 use crate::event::cm;
 use crate::geometry::Rect;
+use crate::locale::tr;
 use crate::program::Program;
 use crate::view::{of, Value};
 use crate::widgets::button::{bf, Button};
@@ -58,14 +59,14 @@ pub fn message_box_rect(app: &mut Program, r: Rect, msg: &str, options: u16, cen
 /// Строит диалог сообщения (отцентрированный), не запуская его.
 /// Пригодится, когда сообщение нужно показать из представления через `ctx.exec`.
 pub fn build_message_box(r: Rect, msg: &str, options: u16) -> Dialog {
-    let titles = [MsgBoxText::WARNING, MsgBoxText::ERROR, MsgBoxText::INFORMATION, MsgBoxText::CONFIRM];
+    let titles = [tr(MsgBoxText::WARNING), tr(MsgBoxText::ERROR), tr(MsgBoxText::INFORMATION), tr(MsgBoxText::CONFIRM)];
     let mut d = Dialog::new(r, titles[(options & 3) as usize]);
     d.win.group.vs.options |= of::CENTERED;
     let w = r.width();
     let h = r.height();
     d.add(StaticText::new(Rect::new(3, 2, w - 2, h - 3), msg));
 
-    let names = [MsgBoxText::YES, MsgBoxText::NO, MsgBoxText::OK, MsgBoxText::CANCEL];
+    let names = [tr(MsgBoxText::YES), tr(MsgBoxText::NO), tr(MsgBoxText::OK), tr(MsgBoxText::CANCEL)];
     let commands = [cm::YES, cm::NO, cm::OK, cm::CANCEL];
     let chosen: Vec<usize> = (0..4).filter(|i| options & (0x0100 << i) != 0).collect();
     // Кнопки шириной 10 через 2 столбца, по центру (как в оригинале).
@@ -93,8 +94,8 @@ pub fn input_box(app: &mut Program, title: &str, label: &str, initial: &str, lim
     let mut d = Dialog::centered(w, 8, title);
     let il = d.add(InputLine::new(Rect::new(4 + label_w, 2, w - 3, 3), limit));
     d.add(Label::new(Rect::new(2, 2, 3 + label_w, 3), label, Some(il)));
-    d.add(Button::new(Rect::new(w - 24, 5, w - 14, 7), MsgBoxText::OK, cm::OK, bf::DEFAULT));
-    d.add(Button::new(Rect::new(w - 12, 5, w - 2, 7), MsgBoxText::CANCEL, cm::CANCEL, bf::NORMAL));
+    d.add(Button::new(Rect::new(w - 24, 5, w - 14, 7), tr(MsgBoxText::OK), cm::OK, bf::DEFAULT));
+    d.add(Button::new(Rect::new(w - 12, 5, w - 2, 7), tr(MsgBoxText::CANCEL), cm::CANCEL, bf::NORMAL));
     d.select(il);
     if let Some(v) = d.win.group.find_mut::<InputLine>(il) {
         v.set_text(initial);

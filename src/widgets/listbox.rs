@@ -161,7 +161,7 @@ impl View for ListBox {
                     let text: String = self.items[item].chars().skip(self.indent).collect();
                     b.move_str_limited(cur_col + 1, &text, color, col_width.saturating_sub(1));
                 } else if i == 0 && j == 0 {
-                    b.move_str(cur_col + 1, EMPTY_TEXT, dc.color(1));
+                    b.move_str(cur_col + 1, crate::locale::tr(EMPTY_TEXT), dc.color(1));
                 }
                 // Разделитель столбцов.
                 if self.num_cols > 1 && cur_col + col_width >= 1 {

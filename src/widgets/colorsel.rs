@@ -18,6 +18,7 @@ use crate::color::{back, fore, ERROR_ATTR};
 use crate::drawbuf::DrawBuffer;
 use crate::event::{cm, Event, Key, Mods};
 use crate::geometry::Rect;
+use crate::locale::tr;
 use crate::view::{default_handle_event, of, Ctx, DrawCtx, Value, View, ViewId, ViewState};
 use crate::widgets::button::{bf, Button};
 use crate::widgets::dialog::Dialog;
@@ -296,25 +297,25 @@ pub struct ColorDialog {
 impl ColorDialog {
     /// Аналог `TColorDialog(palette, groups)`.
     pub fn new(palette: &[u8], groups: Vec<ColorGroup>) -> Self {
-        let mut dlg = Dialog::centered(61, 18, ColorDialogText::COLORS);
+        let mut dlg = Dialog::centered(61, 18, tr(ColorDialogText::COLORS));
         let sb = dlg.add(ScrollBar::new(Rect::new(18, 3, 19, 14)));
         let mut gl = ListBox::new(Rect::new(3, 3, 18, 14), 1, Some(sb));
         gl.set_items(groups.iter().map(|g| g.name.clone()).collect());
         let group_list = dlg.add(gl);
-        dlg.add(Label::new(Rect::new(2, 2, 8, 3), ColorDialogText::GROUP, Some(group_list)));
+        dlg.add(Label::new(Rect::new(2, 2, 9, 3), tr(ColorDialogText::GROUP), Some(group_list)));
 
         let sb = dlg.add(ScrollBar::new(Rect::new(41, 3, 42, 14)));
         let item_list = dlg.add(ListBox::new(Rect::new(21, 3, 41, 14), 1, Some(sb)));
-        dlg.add(Label::new(Rect::new(20, 2, 25, 3), ColorDialogText::ITEM, Some(item_list)));
+        dlg.add(Label::new(Rect::new(20, 2, 28, 3), tr(ColorDialogText::ITEM), Some(item_list)));
 
         let fore_sel = dlg.add(ColorSelector::new(Rect::new(45, 3, 57, 7), ColorSel::Foreground));
-        dlg.add(Label::new(Rect::new(45, 2, 57, 3), ColorDialogText::FOREGROUND, Some(fore_sel)));
+        dlg.add(Label::new(Rect::new(45, 2, 57, 3), tr(ColorDialogText::FOREGROUND), Some(fore_sel)));
         let back_sel = dlg.add(ColorSelector::new(Rect::new(45, 9, 57, 11), ColorSel::Background));
-        dlg.add(Label::new(Rect::new(45, 8, 57, 9), ColorDialogText::BACKGROUND, Some(back_sel)));
-        let display = dlg.add(ColorDisplay::new(Rect::new(44, 12, 58, 14), ColorDialogText::TEXT));
+        dlg.add(Label::new(Rect::new(45, 8, 57, 9), tr(ColorDialogText::BACKGROUND), Some(back_sel)));
+        let display = dlg.add(ColorDisplay::new(Rect::new(44, 12, 58, 14), tr(ColorDialogText::TEXT)));
 
-        dlg.add(Button::new(Rect::new(36, 15, 46, 17), ColorDialogText::OK, cm::OK, bf::DEFAULT));
-        dlg.add(Button::new(Rect::new(48, 15, 58, 17), ColorDialogText::CANCEL, cm::CANCEL, bf::NORMAL));
+        dlg.add(Button::new(Rect::new(36, 15, 46, 17), tr(ColorDialogText::OK), cm::OK, bf::DEFAULT));
+        dlg.add(Button::new(Rect::new(48, 15, 58, 17), tr(ColorDialogText::CANCEL), cm::CANCEL, bf::NORMAL));
         dlg.select(group_list);
 
         let mut d = ColorDialog { dlg, palette: palette.to_vec(), groups, group_list, item_list, fore_sel, back_sel, display, shown: None };

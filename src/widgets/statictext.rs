@@ -4,7 +4,7 @@ use crate::color::palettes;
 use crate::drawbuf::DrawBuffer;
 use crate::event::{cm, Event, Info};
 use crate::geometry::Rect;
-use crate::text::{hotkey, str_width, to_upper, wrap_text};
+use crate::text::{hotkey, same_hotkey, str_width, to_upper, wrap_text};
 use crate::view::{of, Ctx, DrawCtx, Phase, View, ViewId, ViewState};
 
 /// Статический текст с переносом по словам.
@@ -14,11 +14,23 @@ use crate::view::{of, Ctx, DrawCtx, Phase, View, ViewId, ViewState};
 pub struct StaticText {
     pub vs: ViewState,
     pub text: String,
+    /// Собственный атрибут цвета (`TColoredText` из Dialog Design): если
+    /// задан, текст рисуется этим атрибутом, а не цветом из палитры.
+    pub attr: Option<u8>,
 }
+
+/// Цветной текст (`TColoredText`) — тот же [`StaticText`] с атрибутом.
+pub type ColoredText = StaticText;
 
 impl StaticText {
     pub fn new(bounds: Rect, text: &str) -> Self {
-        StaticText { vs: ViewState::new(bounds), text: text.into() }
+        StaticText { vs: ViewState::new(bounds), text: text.into(), attr: None }
+    }
+
+    /// Цветной текст (`TColoredText(bounds, text, attr)`): `attr` — байт
+    /// BIOS (фон << 4 | цвет). Атрибут 0 (чёрным по чёрному) не годится.
+    pub fn colored(bounds: Rect, text: &str, attr: u8) -> Self {
+        StaticText { vs: ViewState::new(bounds), text: text.into(), attr: Some(attr) }
     }
 }
 
@@ -27,7 +39,7 @@ impl View for StaticText {
 
     /// Порт `TStaticText::draw`.
     fn draw(&self, dc: &mut DrawCtx) {
-        let color = dc.color(1);
+        let color = self.attr.unwrap_or_else(|| dc.color(1));
         let w = self.vs.size.x.max(0) as usize;
         dc.fill(self.vs.extent(), ' ', color);
         let mut y = 0;
@@ -108,7 +120,7 @@ impl View for Label {
                 if hot.is_none() {
                     return;
                 }
-                let by_alt = k.alt_char() == hot;
+                let by_alt = matches!((k.alt_char(), hot), (Some(a), Some(h)) if same_hotkey(a, h));
                 let by_letter = ctx.phase == Phase::PostProcess && k.text_char().map(to_upper) == hot;
                 if by_alt || by_letter {
                     self.focus_link(ctx);

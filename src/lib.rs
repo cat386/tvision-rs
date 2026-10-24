@@ -57,6 +57,7 @@ pub mod drawbuf;
 pub mod event;
 pub mod geometry;
 pub mod group;
+pub mod locale;
 pub mod platform;
 pub mod program;
 pub mod text;

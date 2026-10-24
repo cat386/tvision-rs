@@ -10,6 +10,8 @@
 //! изменения (некорректный ввод откатывается) и `is_valid` при закрытии диалога
 //! (при ошибке показывается сообщение и фокус возвращается в строку).
 
+use crate::locale::tr;
+
 /// Проверка ввода.
 pub trait Validator {
     /// Синтаксис самого валидатора корректен (`status == vsOk`).
@@ -429,7 +431,7 @@ impl Validator for PictureValidator {
     }
 
     fn error_message(&self) -> String {
-        format!("{}\n {}", PICTURE_ERROR, self.pic.iter().collect::<String>())
+        format!("{}\n {}", tr(PICTURE_ERROR), self.pic.iter().collect::<String>())
     }
 }
 
@@ -460,7 +462,7 @@ impl Validator for FilterValidator {
         self.check(s)
     }
     fn error_message(&self) -> String {
-        "Invalid character in input".into()
+        tr("Invalid character in input").into()
     }
 }
 
@@ -492,7 +494,7 @@ impl Validator for RangeValidator {
         }
     }
     fn error_message(&self) -> String {
-        format!("Value not in the range {} to {}", self.min, self.max)
+        format!("{} {} {} {}", tr("Value not in the range"), self.min, tr("to"), self.max)
     }
 }
 
@@ -512,7 +514,7 @@ impl Validator for StringLookupValidator {
         self.strings.iter().any(|x| x == s)
     }
     fn error_message(&self) -> String {
-        "Input is not in list of valid strings".into()
+        tr("Input is not in list of valid strings").into()
     }
 }
 

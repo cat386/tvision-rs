@@ -241,9 +241,14 @@ fn main() -> std::io::Result<()> {
     ])];
 
     let mut app = Program::with_terminal(Some(menu), Some(status))?;
+
     let help = Rc::new(HelpFile::parse(include_str!("demohelp.txt")).expect("справка"));
+
     let mut demo = Demo { windows: 0, dialog_data: Value::None, help };
+
     demo.new_window(&mut app);
+
     app.run(&mut demo);
+
     Ok(())
 }

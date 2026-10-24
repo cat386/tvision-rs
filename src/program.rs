@@ -84,6 +84,11 @@ pub struct Program {
     /// Представление, которому показываются все события (как `printEvent`
     /// в `tvdemo`): у него вызывается `View::monitor_event`.
     pub event_monitor: Option<ViewId>,
+    /// Обработчик событий, которые не обработало модальное окно (во время
+    /// `exec_view` обычный [`AppHandler`] не вызывается). Через него можно,
+    /// например, показывать справку по F1 или открывать вложенные диалоги
+    /// по командам кнопок модального окна.
+    pub modal_hook: Option<Box<dyn FnMut(&mut Program, &mut Event)>>,
 }
 
 impl Program {
@@ -134,6 +139,7 @@ impl Program {
             double_delay: DOUBLE_CLICK,
             reverse_buttons: false,
             event_monitor: None,
+            modal_hook: None,
         }
     }
 
@@ -347,6 +353,11 @@ impl Program {
         (cmd, v)
     }
 
+    /// Верхнее модальное представление (если сейчас идёт `exec_view`).
+    pub fn modal_top(&self) -> Option<ViewId> {
+        self.modal_stack.last().copied()
+    }
+
     /// Модальное выполнение с возвратом исходного типа:
     /// `let (cmd, dlg) = app.exec_dialog(dlg);`
     pub fn exec_dialog<T: View>(&mut self, v: T) -> (u16, T) {
@@ -461,6 +472,14 @@ impl Program {
 
         if let Some(&modal) = self.modal_stack.last() {
             self.handle_modal(modal, &mut ev);
+            if !ev.is_nothing() && !ev.is_mouse() {
+                if let Some(mut h) = self.modal_hook.take() {
+                    h(self, &mut ev);
+                    if self.modal_hook.is_none() {
+                        self.modal_hook = Some(h);
+                    }
+                }
+            }
         } else {
             // Alt+1..9 — выбор окна по номеру.
             if let Some(k) = ev.key() {

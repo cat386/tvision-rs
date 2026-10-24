@@ -14,6 +14,7 @@
 //! буфер обмена, Ctrl+Q F/A — поиск/замена, Ctrl+L — искать дальше,
 //! Ctrl+K B/K/C/Y/H — блочные команды, Ctrl+O — автоотступ.
 
+use crate::locale::tr;
 use std::cmp::{max, min};
 use std::path::{Path, PathBuf};
 
@@ -633,7 +634,7 @@ impl Editor {
         loop {
             if !self.search(&self.find_str.clone(), self.editor_flags) {
                 if self.editor_flags & (ef::REPLACE_ALL | ef::DO_REPLACE) != (ef::REPLACE_ALL | ef::DO_REPLACE) {
-                    let d = build_message_box(Rect::new(0, 0, 40, 9), "\x03Search string not found.", mf::ERROR | mf::OK_BUTTON);
+                    let d = build_message_box(Rect::new(0, 0, 40, 9), tr("\x03Search string not found."), mf::ERROR | mf::OK_BUTTON);
                     ctx.exec(Box::new(d), Some(self.vs.id), tag::INFO);
                 }
                 return;
@@ -642,7 +643,7 @@ impl Editor {
                 return;
             }
             if self.editor_flags & ef::PROMPT_ON_REPLACE != 0 {
-                let mut d = build_message_box(Rect::new(0, 0, 40, 9), "\x03Replace this occurrence?", mf::YES_NO_CANCEL | mf::INFORMATION);
+                let mut d = build_message_box(Rect::new(0, 0, 40, 9), tr("\x03Replace this occurrence?"), mf::YES_NO_CANCEL | mf::INFORMATION);
                 // Окно вопроса не должно закрывать найденный текст (как `replacePrompt`).
                 d.win.group.vs.options &= !of::CENTERED;
                 let cy = self.vs.cursor.y;
@@ -1321,7 +1322,7 @@ impl FileEditor {
                 true
             }
             Err(e) => {
-                self.last_error = Some(format!("Error reading file {}.\n{}", self.file_name.display(), e));
+                self.last_error = Some(format!("{} {}.\n{}", tr("Error reading file"), self.file_name.display(), e));
                 false
             }
         }
@@ -1342,7 +1343,7 @@ impl FileEditor {
                 true
             }
             Err(e) => {
-                self.last_error = Some(format!("Error writing file {}.\n{}", self.file_name.display(), e));
+                self.last_error = Some(format!("{} {}.\n{}", tr("Error writing file"), self.file_name.display(), e));
                 false
             }
         }
@@ -1364,7 +1365,7 @@ impl FileEditor {
 
     /// Открывает диалог «Сохранить как» (`saveAs`).
     fn save_as(&mut self, ctx: &mut Ctx) {
-        let d = crate::widgets::filedlg::FileDialog::new("*", "Save file as", "~N~ame", crate::widgets::filedlg::fd::OK_BUTTON, 101);
+        let d = crate::widgets::filedlg::FileDialog::new("*", tr("Save file as"), tr("~N~ame"), crate::widgets::filedlg::fd::OK_BUTTON, 101);
         ctx.exec(Box::new(d), Some(self.editor.vs.id), tag::SAVE_AS);
     }
 
@@ -1378,7 +1379,7 @@ impl FileEditor {
     /// Имя для заголовка окна.
     pub fn title(&self) -> String {
         if self.file_name.as_os_str().is_empty() {
-            UNTITLED.into()
+            tr(UNTITLED).into()
         } else {
             self.file_name.display().to_string()
         }
@@ -1440,9 +1441,13 @@ impl View for FileEditor {
             return true;
         }
         let msg = if self.file_name.as_os_str().is_empty() {
-            "\x03Save untitled file?".to_string()
+            tr("\x03Save untitled file?").to_string()
         } else {
-            format!("\x03{} has been modified. Save?", self.file_name.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default())
+            format!(
+                "\x03{} {}",
+                self.file_name.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default(),
+                tr("has been modified. Save?")
+            )
         };
         let d = build_message_box(Rect::new(0, 0, 50, 9), &msg, mf::INFORMATION | mf::YES_NO_CANCEL);
         self.pending = Some(command);
@@ -1653,15 +1658,15 @@ impl View for EditWindow {
 
 /// Диалог «Find». Данные: [текст, флажки].
 pub fn find_dialog(find: &str, flags: u16) -> Dialog {
-    let mut d = Dialog::centered(38, 12, "Find");
+    let mut d = Dialog::centered(38, 12, tr("Find"));
     let mut il = InputLine::new(Rect::new(3, 3, 32, 4), 80);
     il.history_id = Some(10);
     let il = d.add(il);
-    d.add(Label::new(Rect::new(2, 2, 15, 3), "~T~ext to find", Some(il)));
+    d.add(Label::new(Rect::new(2, 2, 15, 3), tr("~T~ext to find"), Some(il)));
     d.add(crate::widgets::history::History::new(Rect::new(32, 3, 35, 4), il, 10));
-    d.add(Cluster::check_boxes(Rect::new(3, 5, 35, 7), &["~C~ase sensitive", "~W~hole words only"]));
-    d.add(Button::new(Rect::new(14, 9, 24, 11), "O~K~", cm::OK, bf::DEFAULT));
-    d.add(Button::new(Rect::new(26, 9, 36, 11), "Cancel", cm::CANCEL, bf::NORMAL));
+    d.add(Cluster::check_boxes(Rect::new(3, 5, 35, 7), &[tr("~C~ase sensitive"), tr("~W~hole words only")]));
+    d.add(Button::new(Rect::new(14, 9, 24, 11), tr("O~K~"), cm::OK, bf::DEFAULT));
+    d.add(Button::new(Rect::new(26, 9, 36, 11), tr("Cancel"), cm::CANCEL, bf::NORMAL));
     d.set_data(&Value::List(vec![Value::Str(find.into()), Value::U32((flags & 3) as u32)]));
     d.select(il);
     d
@@ -1669,20 +1674,23 @@ pub fn find_dialog(find: &str, flags: u16) -> Dialog {
 
 /// Диалог «Replace». Данные: [что, на что, флажки].
 pub fn replace_dialog(find: &str, replace: &str, flags: u16) -> Dialog {
-    let mut d = Dialog::centered(40, 16, "Replace");
+    let mut d = Dialog::centered(40, 16, tr("Replace"));
     let mut il = InputLine::new(Rect::new(3, 3, 34, 4), 80);
     il.history_id = Some(10);
     let il = d.add(il);
-    d.add(Label::new(Rect::new(2, 2, 15, 3), "~T~ext to find", Some(il)));
+    d.add(Label::new(Rect::new(2, 2, 15, 3), tr("~T~ext to find"), Some(il)));
     d.add(crate::widgets::history::History::new(Rect::new(34, 3, 37, 4), il, 10));
     let mut il2 = InputLine::new(Rect::new(3, 6, 34, 7), 80);
     il2.history_id = Some(11);
     let il2 = d.add(il2);
-    d.add(Label::new(Rect::new(2, 5, 12, 6), "~N~ew text", Some(il2)));
+    d.add(Label::new(Rect::new(2, 5, 16, 6), tr("~N~ew text"), Some(il2)));
     d.add(crate::widgets::history::History::new(Rect::new(34, 6, 37, 7), il2, 11));
-    d.add(Cluster::check_boxes(Rect::new(3, 8, 37, 12), &["~C~ase sensitive", "~W~hole words only", "~P~rompt on replace", "~R~eplace all"]));
-    d.add(Button::new(Rect::new(17, 13, 27, 15), "O~K~", cm::OK, bf::DEFAULT));
-    d.add(Button::new(Rect::new(28, 13, 38, 15), "Cancel", cm::CANCEL, bf::NORMAL));
+    d.add(Cluster::check_boxes(
+        Rect::new(3, 8, 37, 12),
+        &[tr("~C~ase sensitive"), tr("~W~hole words only"), tr("~P~rompt on replace"), tr("~R~eplace all")],
+    ));
+    d.add(Button::new(Rect::new(17, 13, 27, 15), tr("O~K~"), cm::OK, bf::DEFAULT));
+    d.add(Button::new(Rect::new(28, 13, 38, 15), tr("Cancel"), cm::CANCEL, bf::NORMAL));
     d.set_data(&Value::List(vec![Value::Str(find.into()), Value::Str(replace.into()), Value::U32((flags & 0x0F) as u32)]));
     d.select(il);
     d

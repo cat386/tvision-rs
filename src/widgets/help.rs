@@ -16,6 +16,7 @@
 //! Строки без пробела в начале объединяются в абзац и переносятся.
 //! ```
 
+use crate::locale::tr;
 use std::collections::HashMap;
 use std::path::Path;
 use std::rc::Rc;
@@ -233,7 +234,7 @@ impl HelpFile {
 
     /// Тема «нет справки» (`invalidContext`).
     pub fn invalid_topic() -> HelpTopic {
-        HelpTopic { paragraphs: vec![Paragraph { text: NO_HELP.chars().collect(), wrap: false }], cross_refs: vec![] }
+        HelpTopic { paragraphs: vec![Paragraph { text: tr(NO_HELP).chars().collect(), wrap: false }], cross_refs: vec![] }
     }
 
     /// Константы контекстов в виде исходника Rust (замена `.h`-файла `tvhc`).
@@ -582,7 +583,7 @@ pub struct HelpWindow {
 
 impl HelpWindow {
     pub fn new(file: Rc<HelpFile>, context: u16) -> Self {
-        let mut win = Window::new(Rect::new(0, 0, 50, 18), HELP_WIN_TITLE, 0);
+        let mut win = Window::new(Rect::new(0, 0, 50, 18), tr(HELP_WIN_TITLE), 0);
         win.group.vs.options |= of::CENTERED;
         win.palette = palettes::HELP_WINDOW;
         win.flags = wf::MOVE | wf::GROW | wf::CLOSE | wf::ZOOM;

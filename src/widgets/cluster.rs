@@ -1,4 +1,5 @@
-//! Группы флажков и переключателей (`TCluster`, `TCheckBoxes`, `TRadioButtons`).
+//! Группы флажков и переключателей (`TCluster`, `TCheckBoxes`,
+//! `TRadioButtons`, `TMultiCheckBoxes`).
 //!
 //! Элементы располагаются по столбцам: высота представления = число строк
 //! в столбце, лишние элементы переходят в следующий столбец.
@@ -7,7 +8,7 @@ use crate::color::palettes;
 use crate::drawbuf::DrawBuffer;
 use crate::event::{Event, Key, Mods};
 use crate::geometry::{Point, Rect};
-use crate::text::{cstr_width, hotkey, to_upper};
+use crate::text::{cstr_width, hotkey, same_hotkey, to_upper};
 use crate::view::{default_handle_event, of, sf, Ctx, DrawCtx, Phase, Value, View, ViewState};
 
 /// Вид группы.
@@ -17,6 +18,19 @@ pub enum ClusterKind {
     CheckBoxes,
     /// Переключатели: `value` — номер выбранного.
     RadioButtons,
+    /// Флажки с несколькими состояниями (`TMultiCheckBoxes` из TV 2.0):
+    /// на каждый элемент отводится несколько бит `value`, а символ в
+    /// скобках берётся из строки состояний.
+    MultiCheckBoxes,
+}
+
+/// Флаги `TMultiCheckBoxes`: старший байт — число бит на элемент, младший —
+/// маска значения элемента.
+pub mod cf {
+    pub const ONE_BIT: u16 = 0x0101;
+    pub const TWO_BITS: u16 = 0x0203;
+    pub const FOUR_BITS: u16 = 0x040F;
+    pub const EIGHT_BITS: u16 = 0x08FF;
 }
 
 pub struct Cluster {
@@ -29,7 +43,15 @@ pub struct Cluster {
     pub sel: usize,
     /// Маска доступных элементов (бит 1 — элемент доступен).
     pub enable_mask: u32,
+    /// Только для `MultiCheckBoxes`: число состояний, флаги `cf::*` и
+    /// символы состояний (`" X"`, `" +-"` ...).
+    pub sel_range: u8,
+    pub mcb_flags: u16,
+    pub states: Vec<char>,
 }
+
+/// Флажки с несколькими состояниями — тот же [`Cluster`].
+pub type MultiCheckBoxes = Cluster;
 
 /// Флажки (`TCheckBoxes`). Это тот же [`Cluster`] — псевдоним для удобства.
 pub type CheckBoxes = Cluster;
@@ -42,7 +64,38 @@ impl Cluster {
         vs.options |= of::SELECTABLE | of::FIRST_CLICK | of::PRE_PROCESS | of::POST_PROCESS;
         vs.state |= sf::CURSOR_VIS;
         vs.set_cursor(2, 0);
-        Cluster { vs, kind, strings: items.iter().map(|s| s.to_string()).collect(), value: 0, sel: 0, enable_mask: u32::MAX }
+        Cluster {
+            vs,
+            kind,
+            strings: items.iter().map(|s| s.to_string()).collect(),
+            value: 0,
+            sel: 0,
+            enable_mask: u32::MAX,
+            sel_range: 2,
+            mcb_flags: cf::ONE_BIT,
+            states: vec![' ', 'X'],
+        }
+    }
+
+    /// Флажки с несколькими состояниями (`TMultiCheckBoxes`): `sel_range` —
+    /// сколько состояний у элемента, `flags` — `cf::*`, `states` — символ
+    /// для каждого состояния.
+    pub fn multi_check_boxes(bounds: Rect, items: &[&str], sel_range: u8, flags: u16, states: &str) -> Self {
+        let mut c = Self::new(bounds, items, ClusterKind::MultiCheckBoxes);
+        c.sel_range = sel_range.max(1);
+        c.mcb_flags = flags;
+        c.states = states.chars().collect();
+        c
+    }
+
+    /// Состояние элемента многосостоятельных флажков (`multiMark`).
+    pub fn multi_mark(&self, item: usize) -> u32 {
+        let bits = (self.mcb_flags >> 8) as usize;
+        let shift = item * bits;
+        if shift >= 32 {
+            return 0;
+        }
+        (self.value >> shift) & (self.mcb_flags & 0xFF) as u32
     }
 
     /// Группа флажков.
@@ -60,6 +113,7 @@ impl Cluster {
         match self.kind {
             ClusterKind::CheckBoxes => item < 32 && self.value & (1 << item) != 0,
             ClusterKind::RadioButtons => item as u32 == self.value,
+            ClusterKind::MultiCheckBoxes => self.multi_mark(item) != 0,
         }
     }
 
@@ -72,6 +126,18 @@ impl Cluster {
                 }
             }
             ClusterKind::RadioButtons => self.value = item as u32,
+            ClusterKind::MultiCheckBoxes => {
+                // Состояние «прокручивается» вниз: 0 → selRange-1 → ... → 0.
+                let bits = (self.mcb_flags >> 8) as usize;
+                let shift = item * bits;
+                if shift >= 32 {
+                    return;
+                }
+                let mask = (self.mcb_flags & 0xFF) as u32;
+                let cur = ((self.value >> shift) & mask) as i32 - 1;
+                let cur = if cur < 0 || cur >= self.sel_range as i32 { self.sel_range as i32 - 1 } else { cur };
+                self.value = (self.value & !(mask << shift)) | ((cur as u32) << shift);
+            }
         }
     }
 
@@ -169,9 +235,25 @@ impl View for Cluster {
 
     /// Порт `TCluster::drawMultiBox`.
     fn draw(&self, dc: &mut DrawCtx) {
-        let (icon, marks): (&str, [char; 2]) = match self.kind {
-            ClusterKind::CheckBoxes => (" [ ] ", [' ', 'X']),
-            ClusterKind::RadioButtons => (" ( ) ", [' ', '•']),
+        let icon = if self.kind == ClusterKind::RadioButtons { " ( ) " } else { " [ ] " };
+        let mark_char = |i: usize| -> char {
+            match self.kind {
+                ClusterKind::CheckBoxes => {
+                    if self.mark(i) {
+                        'X'
+                    } else {
+                        ' '
+                    }
+                }
+                ClusterKind::RadioButtons => {
+                    if self.mark(i) {
+                        '•'
+                    } else {
+                        ' '
+                    }
+                }
+                ClusterKind::MultiCheckBoxes => self.states.get(self.multi_mark(i) as usize).copied().unwrap_or(' '),
+            }
         };
         let c_norm = dc.get_color(0x0301);
         let c_sel = dc.get_color(0x0402);
@@ -201,7 +283,7 @@ impl View for Cluster {
                 };
                 b.move_char(col, ' ', (color & 0xFF) as u8, w - col);
                 b.move_cstr(col, icon, color);
-                b.put_char(col + 2, marks[self.mark(cur) as usize]);
+                b.put_char(col + 2, mark_char(cur));
                 b.move_cstr(col + 5, &self.strings[cur], color);
             }
             dc.write_line(0, i as i32, self.vs.size.x, 1, &b);
@@ -267,13 +349,18 @@ impl View for Cluster {
                 }
                 // Горячая буква элемента: Alt+буква всегда; просто буква —
                 // в фазе пост-обработки или когда группа в фокусе.
-                let c = match k.alt_char() {
-                    Some(c) => Some(c),
-                    None if k.mods == Mods::NONE && (focused || ctx.phase == Phase::PostProcess) => k.text_char().map(to_upper),
-                    None => None,
+                let (c, by_alt) = match k.alt_char() {
+                    Some(c) => (Some(c), true),
+                    None if k.mods == Mods::NONE && (focused || ctx.phase == Phase::PostProcess) => (k.text_char().map(to_upper), false),
+                    None => (None, false),
                 };
                 if let Some(c) = c {
-                    if let Some(i) = (0..n).find(|&i| hotkey(&self.strings[i]) == Some(c)) {
+                    // Alt+буква — без учёта раскладки (в Windows она приходит латинской).
+                    let hit = |i: usize| match hotkey(&self.strings[i]) {
+                        Some(h) => h == c || (by_alt && same_hotkey(c, h)),
+                        None => false,
+                    };
+                    if let Some(i) = (0..n).find(|&i| hit(i)) {
                         if self.button_state(i) {
                             if !self.vs.is_selected() {
                                 ctx.select(self.vs.id);
