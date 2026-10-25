@@ -35,6 +35,10 @@ name = "colors"
 test = true
 
 [[example]]
+name = "json_table"
+test = true
+
+[[example]]
 name = "progress"
 test = true
 
