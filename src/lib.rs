@@ -36,6 +36,7 @@
 //! | `TOutline`, `TNode` | [`Outline`], [`Node`] |
 //! | `TColorDialog` | [`ColorDialog`] |
 //! | `THelpFile`, `THelpWindow` | [`HelpFile`], [`HelpWindow`] |
+//! | — (полоса выполнения) | [`ProgressBar`] |
 //!
 //! ## Главное архитектурное отличие от C++
 //!

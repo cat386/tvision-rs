@@ -153,6 +153,8 @@ pub enum Info {
     Text { id: ViewId, text: String },
     /// Позиция в редакторе для индикатора строки/столбца.
     Indicator { id: ViewId, line: usize, col: usize, modified: bool },
+    /// Новое значение полосы выполнения ([`crate::ProgressBar`]).
+    Progress { id: ViewId, value: i64 },
     /// Параметры полосы прокрутки: id полосы, значение, мин, макс, шаг страницы, шаг строки.
     Scroll { id: ViewId, value: i32, min: i32, max: i32, page: i32, arrow: i32 },
 }
@@ -330,6 +332,8 @@ pub mod cm {
     pub const HISTORY_SET: u16 = 0xFF11;
     /// Внутреннее: обновить индикатор редактора (`Info::Indicator`).
     pub const INDICATOR_SET: u16 = 0xFF12;
+    /// Установить значение полосы выполнения (`Info::Progress`).
+    pub const PROGRESS_SET: u16 = 0xFF13;
 
     // Команды редактора (`editors.h`)
     pub const FIND: u16 = 82;

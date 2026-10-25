@@ -82,7 +82,7 @@
 | `FILE_DOUBLE_CLICKED` | 103 | | | |
 
 Внутренние сообщения библиотеки (не используйте эти номера):
-`SCROLL_BAR_SET` (`0xFF10`), `HISTORY_SET` (`0xFF11`), `INDICATOR_SET` (`0xFF12`);
+`SCROLL_BAR_SET` (`0xFF10`), `HISTORY_SET` (`0xFF11`), `INDICATOR_SET` (`0xFF12`), `PROGRESS_SET` (`0xFF13`);
 кнопки «256…» диалога цветов — `0xFF20`, `0xFF21`.
 Внутренние команды редактора `editor::ec::*` занимают 500–525.
 

@@ -319,7 +319,39 @@ impl Program {
     /// Представление вставляется на рабочий стол и получает все события, пока
     /// не вызовет `ctx.end_modal(cmd)` (диалоги делают это на OK/Cancel/Yes/No).
     /// Возвращает код завершения и само представление (чтобы прочитать данные).
-    pub fn exec_view(&mut self, mut v: Box<dyn View>) -> (u16, Box<dyn View>) {
+    pub fn exec_view(&mut self, v: Box<dyn View>) -> (u16, Box<dyn View>) {
+        self.exec_view_impl(v, None)
+    }
+
+    /// Модальное выполнение с фоновой работой. Функция `idle` вызывается,
+    /// когда событий нет (примерно 10 раз в секунду, а также сразу после
+    /// каждого события), и получает программу и id модального окна. Вернёт
+    /// `Some(cmd)` — окно закроется с этим кодом.
+    ///
+    /// Так удобно двигать полосу выполнения в модальном диалоге:
+    /// ```ignore
+    /// let (cmd, dlg) = app.exec_dialog_idle(dlg, |app, _| {
+    ///     let bar = app.find_mut::<ProgressBar>(bar_id)?;
+    ///     bar.step(1);
+    ///     if bar.is_done() { Some(cm::OK) } else { None }
+    /// });
+    /// ```
+    pub fn exec_view_idle(&mut self, v: Box<dyn View>, idle: &mut dyn FnMut(&mut Program, ViewId) -> Option<u16>) -> (u16, Box<dyn View>) {
+        self.exec_view_impl(v, Some(idle))
+    }
+
+    /// Как [`Program::exec_view_idle`], но с возвратом исходного типа.
+    pub fn exec_dialog_idle<T: View>(&mut self, v: T, mut idle: impl FnMut(&mut Program, ViewId) -> Option<u16>) -> (u16, T) {
+        let (cmd, b) = self.exec_view_idle(Box::new(v), &mut idle);
+        let t = b.into_any().downcast::<T>().expect("тип представления");
+        (cmd, *t)
+    }
+
+    fn exec_view_impl(
+        &mut self,
+        mut v: Box<dyn View>,
+        mut idle: Option<&mut dyn FnMut(&mut Program, ViewId) -> Option<u16>>,
+    ) -> (u16, Box<dyn View>) {
         let id = v.vs().id;
         v.set_state(sf::MODAL, true);
         let di = self.desktop_index();
@@ -341,6 +373,15 @@ impl Program {
             self.redraw();
             let ev = self.get_event();
             self.handle(ev, None);
+            // Фоновая работа модального окна.
+            if self.ctx.end_state.is_none() {
+                if let Some(f) = idle.as_deref_mut() {
+                    if let Some(c) = f(self, id) {
+                        self.ctx.end_state = Some(c);
+                    }
+                    self.process_requests();
+                }
+            }
             if let Some(c) = self.ctx.end_state.take() {
                 // Перед завершением спрашиваем `valid` (как `TGroup::execute`).
                 let ctx = &mut self.ctx;

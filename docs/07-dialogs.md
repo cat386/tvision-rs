@@ -615,6 +615,75 @@ fn number(d: &mut Dialog) {
   данные — `Value::Int`. Функция `parse_long(s)` разбирает число так же,
   как `Val` в Turbo Pascal.
 
+### Полоса выполнения `ProgressBar`
+
+`ProgressBar` показывает ход долгой работы. В оригинальном Turbo Vision
+такого виджета не было; здесь он сделан в том же стиле: своя палитра,
+данные (`Value::Int` — текущее значение) и обновление сообщением.
+
+```rust
+use tvision::*;
+
+fn bars(d: &mut Dialog) {
+    // Диапазон 0..=200, по центру — «25%».
+    let a = d.add(ProgressBar::new(Rect::new(3, 2, 43, 3), 200));
+    // Блоками, как в DOS, со своей надписью.
+    d.add(ProgressBar::new(Rect::new(3, 4, 43, 5), 10)
+        .with_style(ProgressStyle::Blocks)
+        .with_caption("{value} из {max} файлов"));
+    // Неизвестная длительность — бегающий блок.
+    d.add(ProgressBar::new(Rect::new(3, 6, 43, 7), 0).indeterminate());
+    let _ = a;
+}
+```
+
+* `ProgressBar::new(bounds, max)` — диапазон `0..=max`; `with_range(min, max)`
+  / `set_range(min, max)` — другой диапазон.
+* `set_value(v)` (с подрезкой), `step(delta)`, `value()`, `fraction()`
+  (0.0–1.0), `percent()` (0–100, 100 — только в самом конце), `is_done()`.
+* Вид: `ProgressStyle::Smooth` (по умолчанию) — заполнение с точностью 1/8
+  клетки (`▏▎▍▌▋▊▉`); `ProgressStyle::Blocks` — `█` и `░`.
+* Надпись по центру: по умолчанию проценты; `with_caption("…")` — свой текст
+  с подстановками `{value}`, `{min}`, `{max}`, `{percent}`; `show_text = false`
+  — без надписи. Над заполненной частью надпись рисуется её цветом.
+* `indeterminate()` (или поле `indeterminate = true`) — блок бегает по
+  полосе, пока не станет известен объём работы; анимация идёт сама.
+* Цвета: палитра `PROGRESS_PALETTE` рассчитана на диалог (пустая часть —
+  как статический текст, заполненная — как выбранная строка ввода). В окне
+  с короткой палитрой задайте цвета явно: `with_colors(empty, filled)`.
+* Обновление: напрямую (`app.find_mut::<ProgressBar>(id)`) или из другого
+  представления сообщением
+  `ctx.message(cm::PROGRESS_SET, Info::Progress { id, value })`.
+
+Двигать полосу в **модальном** диалоге удобно функцией фоновой работы
+`Program::exec_dialog_idle`: она вызывается, когда событий нет, и может
+закрыть диалог, вернув код:
+
+```rust
+use tvision::*;
+
+fn copy(app: &mut Program, files: &[&str]) -> u16 {
+    let mut d = Dialog::centered(50, 9, "Копирование");
+    let bar = d.add(ProgressBar::new(Rect::new(3, 2, 47, 3), files.len() as i64));
+    let cancel = d.add(Button::new(Rect::new(19, 5, 31, 7), "Отмена", cm::CANCEL, bf::DEFAULT));
+    d.select(cancel);
+    let mut i = 0;
+    let (cmd, _) = app.exec_dialog_idle(d, |app, _| {
+        // …скопировать files[i]…
+        i += 1;
+        let b = app.find_mut::<ProgressBar>(bar)?;
+        b.set_value(i as i64);
+        if b.is_done() { Some(cm::OK) } else { None }
+    });
+    cmd // cm::OK — всё скопировано, cm::CANCEL — нажали «Отмена»
+}
+```
+
+Настоящую долгую работу лучше вести в отдельном потоке и присылать
+прогресс через канал (`std::sync::mpsc`), а в функции фоновой работы
+забирать сообщения `try_iter()` — так интерфейс не замирает. Полный пример
+с копированием, потоком и всеми видами полос — `examples/progress.rs`.
+
 ### Многострочное поле `Memo`
 
 `Memo::new(bounds, h_scroll, v_scroll)` — текстовый редактор внутри

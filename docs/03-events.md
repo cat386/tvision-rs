@@ -250,6 +250,7 @@ impl View for Doc {
 | `cm::SCROLL_BAR_CHANGED` | полоса прокрутки при изменении значения | `Info::Scroll` |
 | `cm::SCROLL_BAR_CLICKED` | полоса прокрутки при щелчке | `Info::Id` полосы |
 | `cm::SCROLL_BAR_SET` | список/редактор/прокрутка — полосе: новые параметры | `Info::Scroll` |
+| `cm::PROGRESS_SET` | кто угодно — полосе выполнения: новое значение | `Info::Progress` |
 | `cm::LIST_ITEM_SELECTED` | список: двойной щелчок или пробел | `Info::Id` списка |
 | `cm::DEFAULT` | диалог по Enter — кнопке по умолчанию | — |
 | `cm::GRAB_DEFAULT` / `cm::RELEASE_DEFAULT` | кнопки при смене кнопки по умолчанию | — |

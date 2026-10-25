@@ -26,6 +26,7 @@ cargo run --example hello   # порт hello.cpp
 cargo run --example demo    # окна, меню, диалог со всеми элементами, список, контекстное меню
 cargo run --example tvedit  # порт примера tvedit: многооконный редактор файлов
 cargo run --example tvhc -- examples/demohelp.txt hc.rs   # проверка справки и константы контекстов
+cargo run --example progress  # полоса выполнения: копирование, работа в потоке, все виды полос
 cargo run --example table   # таблица: миллион строк, своя модель, правка, сортировка, диалог
 cargo run --example colors  # 256 цветов: палитра xterm, темы gruvbox/классика/сумерки, выбор цвета, режим 16/256
 cargo run --example tvdemo  # порт tvdemo: калькулятор, календарь, пятнашки, ASCII, просмотр файлов...

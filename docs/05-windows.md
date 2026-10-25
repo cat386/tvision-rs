@@ -36,6 +36,7 @@ fn create() -> std::io::Result<Program> {
 | `insert_window(w)`, `insert_window_boxed(b)` | вставить окно на рабочий стол, сделать текущим; возвращает id (0, если `valid(cm::VALID)` отказал) |
 | `exec_dialog(d) -> (cmd, d)` | модально выполнить представление и вернуть его того же типа |
 | `exec_view(b) -> (cmd, b)` | то же для `Box<dyn View>` (`execView`) |
+| `exec_dialog_idle(d, f)`, `exec_view_idle(b, f)` | модально, с фоновой работой: `f(&mut Program, id) -> Option<u16>` вызывается, когда событий нет; `Some(cmd)` закрывает окно |
 | `modal_top()` | id верхнего модального представления, если идёт `exec_*` |
 | `desktop()`, `desktop_mut()` | рабочий стол |
 | `status_line_mut()` | строка состояния |
@@ -87,7 +88,8 @@ impl AppHandler for MyApp {
 выполнять диалоги, менять палитру, читать представления.
 
 > Во время модального диалога (`exec_dialog`) `AppHandler` не вызывается.
-> Для этого случая есть `Program::modal_hook` — см. ниже.
+> Для этого случая есть `Program::modal_hook` — см. ниже, а для фоновой
+> работы во время модального окна — `exec_dialog_idle`.
 
 ## Модальные диалоги
 

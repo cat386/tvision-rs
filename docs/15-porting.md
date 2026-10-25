@@ -33,6 +33,7 @@
 | `TColorDialog` и др. | `ColorDialog`, `ColorGroup`, `ColorItem`, `ColorSelector`, `ColorDisplay` |
 | `THelpFile`, `THelpWindow`, утилита `tvhc` | `HelpFile` (читает исходник напрямую), `HelpWindow`, пример `tvhc` |
 | `TInputLong`, `TColoredText`, `TCombo` (Dialog Design) | `InputLong`, `StaticText::colored`, `Combo` |
+| — (нет в оригинале; `TProgressBar` из примеров BP7) | `ProgressBar` |
 | `TEvent` | `Event` (перечисление) |
 | `TDrawBuffer` | `DrawBuffer` |
 | `TPalette`, `cpXXX` | `&'static [u8]`, `color::palettes::*` (палитра приложения — `Vec<Attr>`) |
