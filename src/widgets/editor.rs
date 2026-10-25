@@ -326,12 +326,22 @@ impl Editor {
     /// Вставить текст на место курсора, заменив выделение (`insertText`).
     pub fn insert_text(&mut self, text: &str, select: bool) {
         let before = self.cur;
-        if self.selection().is_some() {
+        let undo_len = self.undo.len();
+        let replaced = self.selection().is_some();
+        if replaced {
             self.delete_select();
         }
         let at = self.cur;
         let end = self.raw_insert(at, text);
         self.push_undo(Edit::Insert { at, text: text.replace('\r', "") }, before, false);
+        // Замена выделения (вставка поверх) — одна запись отмены, как в
+        // `TEditor`: удаление и вставка отменяются вместе.
+        if replaced && self.undo.len() == undo_len + 2 {
+            let ins = self.undo.pop().unwrap();
+            if let Some(del) = self.undo.last_mut() {
+                del.edits.extend(ins.edits);
+            }
+        }
         if let Some(r) = self.undo.last_mut() {
             r.typing = false;
         }

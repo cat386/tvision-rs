@@ -35,7 +35,15 @@ name = "colors"
 test = true
 
 [[example]]
+name = "json_parse"
+test = true
+
+[[example]]
 name = "json_table"
+test = true
+
+[[example]]
+name = "json_load"
 test = true
 
 [[example]]

@@ -27,7 +27,9 @@ cargo run --example demo    # окна, меню, диалог со всеми �
 cargo run --example tvedit  # порт примера tvedit: многооконный редактор файлов
 cargo run --example tvhc -- examples/demohelp.txt hc.rs   # проверка справки и константы контекстов
 cargo run --example progress  # полоса выполнения: копирование, работа в потоке, все виды полос
-cargo run --example json_table -- examples/data/books.json  # JSON-файл в таблице: загрузка в потоке с ProgressBar, окно записи
+cargo run --example json_parse  # разбор JSON в редакторе: проверка с переходом к ошибке, форматирование, сжатие
+cargo run --example json_table -- examples/data/books.json  # JSON-файл в таблице: сортировка, окно записи
+cargo run --example json_load   # загрузка большого JSON в потоке с диалогом ProgressBar и отменой
 cargo run --example table   # таблица: миллион строк, своя модель, правка, сортировка, диалог
 cargo run --example colors  # 256 цветов: палитра xterm, темы gruvbox/классика/сумерки, выбор цвета, режим 16/256
 cargo run --example tvdemo  # порт tvdemo: калькулятор, календарь, пятнашки, ASCII, просмотр файлов...
