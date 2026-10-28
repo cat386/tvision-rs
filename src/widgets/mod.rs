@@ -9,6 +9,7 @@ pub mod desktop;
 pub mod dialog;
 pub mod editor;
 pub mod filedlg;
+pub mod filepanel;
 pub mod frame;
 pub mod help;
 pub mod history;
@@ -38,6 +39,10 @@ pub use desktop::Desktop;
 pub use dialog::{Dialog, DialogPalette};
 pub use editor::{ef, EditWindow, Editor, FileEditor, Indicator, Memo, Pos};
 pub use filedlg::{cd, fd, ChDirDialog, DirListBox, FileDialog, FileEntry, FileInfoPane, FileList};
+pub use filepanel::{
+    available_roots, class_by_name, format_size_full, format_size_short, format_time_full, format_time_short, glob_match, DualPanel, FileClass, FileFilter,
+    FileKind, FilePanel, FilePanelColors, PanelEntry, SortMode,
+};
 pub use frame::Frame;
 pub use help::{HelpFile, HelpTopic, HelpViewer, HelpWindow};
 pub use history::{history_add, history_count, history_str, History, HistoryWindow};

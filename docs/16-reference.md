@@ -65,6 +65,7 @@
 | `LIST_ITEM_SELECTED` | 56 | `Info::Id` списка, дерева или таблицы |
 | `TABLE_CURSOR_MOVED` | 57 | `Info::Id` таблицы |
 | `TABLE_CELL_EDITED` | 58 | `Info::Id` таблицы |
+| `FILE_PANEL_DIR_CHANGED` | 63 | `Info::Id` файловой панели |
 | `RECORD_HISTORY` | 60 | — или `Info::Id` строки ввода |
 | `GRAB_DEFAULT` | 61 | — |
 | `RELEASE_DEFAULT` | 62 | — |
@@ -79,7 +80,7 @@
 | `UPDATE_TITLE` | 523 | | `FILE_INIT` | 1004 |
 | `SELECT_ALL` | 524 | | `CHANGE_DIR` | 1005 |
 | `FILE_FOCUSED` | 102 | | `REVERT` | 1006 |
-| `FILE_DOUBLE_CLICKED` | 103 | | | |
+| `FILE_DOUBLE_CLICKED` | 103 | | `FILE_PANEL_EXECUTE` | 1010 |
 
 Внутренние сообщения библиотеки (не используйте эти номера):
 `SCROLL_BAR_SET` (`0xFF10`), `HISTORY_SET` (`0xFF11`), `INDICATOR_SET` (`0xFF12`), `PROGRESS_SET` (`0xFF13`);

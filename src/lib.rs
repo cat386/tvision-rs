@@ -59,6 +59,7 @@
 pub mod color;
 pub mod drawbuf;
 pub mod event;
+pub mod fileops;
 pub mod geometry;
 pub mod group;
 pub mod locale;

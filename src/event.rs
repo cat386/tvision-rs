@@ -350,6 +350,11 @@ pub mod cm {
     pub const FILE_INIT: u16 = 1004;
     pub const CHANGE_DIR: u16 = 1005;
     pub const REVERT: u16 = 1006;
+    /// Файловая панель: Enter (или двойной щелчок) на файле. Команда
+    /// ставится в очередь; программа берёт файл у панели в фокусе.
+    pub const FILE_PANEL_EXECUTE: u16 = 1010;
+    /// Файловая панель: сменился каталог (сообщение, `Info::Id` панели).
+    pub const FILE_PANEL_DIR_CHANGED: u16 = 63;
     pub const FILE_FOCUSED: u16 = 102;
     pub const FILE_DOUBLE_CLICKED: u16 = 103;
 }

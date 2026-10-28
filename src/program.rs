@@ -249,16 +249,37 @@ impl Program {
     /// в обычный режим, запускается командный интерпретатор (`$SHELL` или
     /// `cmd.exe`), после выхода из него программа продолжает работу.
     pub fn dos_shell(&mut self, banner: &str) {
-        self.backend.suspend();
-        println!("{}", banner);
         #[cfg(windows)]
         let shell = std::env::var("COMSPEC").unwrap_or_else(|_| "cmd.exe".into());
         #[cfg(not(windows))]
         let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".into());
-        let _ = std::process::Command::new(shell).status();
+        self.suspended(|| {
+            println!("{}", banner);
+            let _ = std::process::Command::new(shell).status();
+        });
+    }
+
+    /// Выполнить `f`, временно вернув терминал в обычный режим — например,
+    /// запустить интерактивную программу (редактор, `less`). После возврата
+    /// экран перерисовывается целиком.
+    ///
+    /// ```ignore
+    /// app.suspended(|| std::process::Command::new("vim").arg(path).status());
+    /// ```
+    pub fn suspended<R>(&mut self, f: impl FnOnce() -> R) -> R {
+        self.backend.suspend();
+        let r = f();
         self.backend.resume();
         let s = self.backend.size();
         self.resize(s);
+        r
+    }
+
+    /// Передать фокус представлению `id`: оно и все его владельцы
+    /// становятся текущими (как `ctx.focus(id)` изнутри представления).
+    pub fn focus(&mut self, id: ViewId) {
+        self.ctx.focus(id);
+        self.process_requests();
     }
 
     /// Завершить главный цикл.

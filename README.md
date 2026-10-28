@@ -32,6 +32,7 @@ cargo run --example json_table -- examples/data/books.json  # JSON-файл в �
 cargo run --example json_load   # загрузка большого JSON в потоке с диалогом ProgressBar и отменой
 cargo run --example table   # таблица: миллион строк, своя модель, правка, сортировка, диалог
 cargo run --example colors  # 256 цветов: палитра xterm, темы gruvbox/классика/сумерки, выбор цвета, режим 16/256
+cargo run --example lfm     # файловый менеджер по мотивам lfm: две панели, вкладки, F5/F6/F8 с прогрессом, PowerCLI
 cargo run --example tvdemo  # порт tvdemo: калькулятор, календарь, пятнашки, ASCII, просмотр файлов...
 cargo test --all-targets    # все тесты, включая тесты tvdemo
 cargo test                  # тесты на «невидимом» терминале
@@ -59,6 +60,7 @@ cargo test                  # тесты на «невидимом» терми�
 | `TScrollBar`                          | `ScrollBar`                                 |
 | `TListViewer`, `TListBox`             | `ListBox` (несколько столбцов)              |
 | — (нет в оригинале)                   | `Table` — таблица: модель данных, правка, сортировка, закреплённые столбцы |
+| — (нет в оригинале)                   | `FilePanel`, `DualPanel`, `fileops` — файловые панели (по мотивам lfm) и операции в потоке |
 | `messageBox`, `inputBox`              | `message_box`, `message_box_rect`, `input_box` |
 | `platform/*`                          | `platform::{unix, windows, ansi}`           |
 | `TValidator`, `TPXPictureValidator`, `TFilterValidator`, `TRangeValidator`, `TStringLookupValidator` | трейт `Validator`, `PictureValidator`, `FilterValidator`, `RangeValidator`, `StringLookupValidator` |

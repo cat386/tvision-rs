@@ -51,6 +51,10 @@ name = "progress"
 test = true
 
 [[example]]
+name = "lfm"
+test = true
+
+[[example]]
 name = "tvdemo"
 path = "examples/tvdemo/main.rs"
 test = true
