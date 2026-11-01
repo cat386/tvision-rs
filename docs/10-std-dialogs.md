@@ -197,6 +197,10 @@ fn load_help() -> Rc<HelpFile> {
 
 ## Дерево `Outline`
 
+> Это порт `TOutline`. Для новых программ есть более полный
+> [`TreeView`](18-treeview.md): ленивая загрузка, флажки, быстрый поиск,
+> правка дерева.
+
 ```rust
 use tvision::*;
 

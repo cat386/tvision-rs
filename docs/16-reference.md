@@ -66,6 +66,9 @@
 | `TABLE_CURSOR_MOVED` | 57 | `Info::Id` таблицы |
 | `TABLE_CELL_EDITED` | 58 | `Info::Id` таблицы |
 | `FILE_PANEL_DIR_CHANGED` | 63 | `Info::Id` файловой панели |
+| `TREE_CURSOR_MOVED` | 64 | `Info::Id` дерева `TreeView` |
+| `TREE_NODE_TOGGLED` | 65 | `Info::Id` дерева: узел раскрыт или свёрнут |
+| `TREE_CHECK_CHANGED` | 66 | `Info::Id` дерева: изменились флажки |
 | `RECORD_HISTORY` | 60 | — или `Info::Id` строки ввода |
 | `GRAB_DEFAULT` | 61 | — |
 | `RELEASE_DEFAULT` | 62 | — |
@@ -211,6 +214,8 @@
 | `color::SHADOW_ATTR` | `0x08` — тень |
 | `listbox::EMPTY_TEXT` | `"<empty>"` (и в пустой таблице) |
 | `table::DEFAULT_TABLE_COLORS` | цвета таблицы, если у владельца нет подходящей палитры |
+| `treeview::DEFAULT_TREE_COLORS` | то же для дерева `TreeView` |
+| `TreeGlyphs::UNICODE`, `TreeGlyphs::ASCII` | символы дерева |
 | `editor::UNTITLED` | `"Untitled"` |
 | `help::HELP_WIN_TITLE`, `help::NO_HELP` | заголовок окна справки, текст «нет справки» |
 | `validate::PICTURE_ERROR` | текст ошибки маски |

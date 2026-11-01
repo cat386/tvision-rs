@@ -25,6 +25,7 @@ pub mod scroller;
 pub mod statictext;
 pub mod statusline;
 pub mod table;
+pub mod treeview;
 pub mod validate;
 pub mod window;
 
@@ -52,6 +53,7 @@ pub use listbox::ListBox;
 pub use menu::{Menu, MenuBar, MenuItem};
 pub use msgbox::{build_message_box, input_box, message_box, message_box_rect, mf};
 pub use outline::{Node, Outline};
+pub use treeview::{CheckState, TreeColors, TreeGlyphs, TreeLoader, TreeNode, TreePath, TreeView, DEFAULT_TREE_COLORS};
 pub use progress::{ProgressBar, ProgressStyle, PROGRESS_PALETTE};
 pub use scrollbar::ScrollBar;
 pub use scroller::{Scroller, Terminal};

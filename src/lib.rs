@@ -34,6 +34,7 @@
 //! | `TEditor`, `TMemo`, `TFileEditor`, `TEditWindow`, `TIndicator` | [`Editor`], [`Memo`], [`FileEditor`], [`EditWindow`], [`Indicator`] |
 //! | `TFileDialog`, `TChDirDialog` | [`FileDialog`], [`ChDirDialog`] |
 //! | `TOutline`, `TNode` | [`Outline`], [`Node`] |
+//! | — (нет в оригинале) | [`TreeView`], [`TreeNode`] — дерево с ленивой загрузкой и флажками |
 //! | `TColorDialog` | [`ColorDialog`] |
 //! | `THelpFile`, `THelpWindow` | [`HelpFile`], [`HelpWindow`] |
 //! | — (полоса выполнения) | [`ProgressBar`] |

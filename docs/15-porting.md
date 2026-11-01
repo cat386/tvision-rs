@@ -29,7 +29,7 @@
 | `TValidator`, `TPXPictureValidator`, `TFilterValidator`, `TRangeValidator`, `TStringLookupValidator` | трейт `Validator`, `PictureValidator`, `FilterValidator`, `RangeValidator`, `StringLookupValidator` (+ `FnValidator`) |
 | `TEditor`, `TMemo`, `TFileEditor`, `TEditWindow`, `TIndicator` | `Editor`, `Memo`, `FileEditor`, `EditWindow`, `Indicator` |
 | `TFileDialog`, `TChDirDialog`, `TFileList`, `TDirListBox`, `TFileInfoPane` | `FileDialog`, `ChDirDialog`, `FileList`, `DirListBox`, `FileInfoPane` |
-| `TOutline`, `TNode` | `Outline`, `Node` |
+| `TOutline`, `TNode` | `Outline`, `Node` (для новых программ — [`TreeView`](18-treeview.md)) |
 | `TColorDialog` и др. | `ColorDialog`, `ColorGroup`, `ColorItem`, `ColorSelector`, `ColorDisplay` |
 | `THelpFile`, `THelpWindow`, утилита `tvhc` | `HelpFile` (читает исходник напрямую), `HelpWindow`, пример `tvhc` |
 | `TInputLong`, `TColoredText`, `TCombo` (Dialog Design) | `InputLong`, `StaticText::colored`, `Combo` |

@@ -35,6 +35,10 @@ name = "colors"
 test = true
 
 [[example]]
+name = "treeview"
+test = true
+
+[[example]]
 name = "json_parse"
 test = true
 

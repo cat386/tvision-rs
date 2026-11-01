@@ -321,6 +321,12 @@ pub mod cm {
     pub const TABLE_CURSOR_MOVED: u16 = 57;
     /// Таблица: пользователь изменил значение ячейки (`Info::Id` таблицы).
     pub const TABLE_CELL_EDITED: u16 = 58;
+    /// Дерево: курсор встал на другой узел (`Info::Id` дерева).
+    pub const TREE_CURSOR_MOVED: u16 = 64;
+    /// Дерево: узел раскрыт или свёрнут (`Info::Id` дерева).
+    pub const TREE_NODE_TOGGLED: u16 = 65;
+    /// Дерево: изменились флажки (`Info::Id` дерева).
+    pub const TREE_CHECK_CHANGED: u16 = 66;
 
     /// Внутреннее сообщение этого порта: «установить параметры полосы прокрутки».
     /// В C++ список вызывал `vScrollBar->setParams(...)` напрямую.
