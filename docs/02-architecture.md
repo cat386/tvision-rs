@@ -283,6 +283,7 @@ fn geometry() {
     let inner = r.grown(-1, -1); // (3,2)-(11,3): сжать на 1 с каждой стороны
     let moved = r.moved(5, 0); // (7,1)-(17,4)
     assert!(!inner.intersect(&moved).is_empty());
+    assert_eq!(r.union(&moved), Rect::new(2, 1, 17, 4)); // охватывающий прямоугольник
     let _ = Rect::from_origin_size(Point::new(0, 0), Point::new(80, 25));
 }
 ```

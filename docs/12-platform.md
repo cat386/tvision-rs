@@ -145,6 +145,9 @@ fn clock() -> String {
 * `text::char_width(c)` — ширина символа в ячейках: 0 (комбинирующие и
   управляющие), 1, 2 (иероглифы, многие эмодзи). `text::str_width(s)`,
   `text::cstr_width(s)` (без тильд), `text::truncate_width(s, max)`.
+* C-строки: `text::strip_tildes("~F~ile")` → `"File"`, `text::hotkey(s)` —
+  горячая буква, `text::same_hotkey(нажата, горячая)` — сравнение с учётом
+  раскладки ([глава 13](13-locale.md)).
 * Экранная ячейка `Cell { ch, attr }`; вторая половина широкого символа
   хранит `'\0'` (`is_wide_tail()`).
 * `text::wrap_text(text, width)` — перенос по словам (как у `StaticText`).

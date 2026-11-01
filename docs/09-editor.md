@@ -167,6 +167,29 @@ fn fill(ed: &mut Editor) {
 | `delta` | прокрутка (x — столбец, y — строка) |
 | `h_scroll`, `v_scroll`, `indicator` | id связанных полос и индикатора |
 
+Вставка поверх выделения (`insert_text` при выделенном тексте, вставка из
+буфера обмена) — **одна** запись отмены: Ctrl+U сразу возвращает прежний
+текст, как в `TEditor`. Поэтому заменять весь текст из программы так,
+чтобы пользователь мог отменить замену, удобно через выделение
+(`set_text` отмену сбрасывает):
+
+```rust
+use tvision::*;
+
+/// Заменить весь текст с сохранением отмены (так форматирует `json_parse`).
+fn replace_all(ed: &mut Editor, new_text: &str) {
+    let last = ed.line_count() - 1;
+    let end = Pos::new(last, ed.line(last).chars().count());
+    ed.set_select(Pos::new(0, 0), end);
+    ed.insert_text(new_text, false);
+    ed.set_select(Pos::new(0, 0), Pos::new(0, 0)); // курсор в начало
+    ed.track_cursor(false);
+}
+```
+
+Перейти к месту (например, к ошибке в тексте): `ed.set_select(p, p)` и
+`ed.track_cursor(true)` — курсор встанет на `p`, строка окажется по центру.
+
 Ширина табуляции — `editor::TAB_SIZE` (8); `display_width(s)` считает
 ширину строки на экране с табуляциями.
 
