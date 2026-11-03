@@ -62,3 +62,7 @@ test = true
 name = "tvdemo"
 path = "examples/tvdemo/main.rs"
 test = true
+
+[[example]]
+name = "three_panes"
+test = true
