@@ -35,6 +35,10 @@ name = "colors"
 test = true
 
 [[example]]
+name = "guide_contacts"
+test = true
+
+[[example]]
 name = "treeview"
 test = true
 
