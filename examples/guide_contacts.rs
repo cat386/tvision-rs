@@ -191,13 +191,15 @@ impl ContactsWindow {
         let model = VecTableModel::new(&["Имя", "Телефон", "Почта", "Группа", "★"], Vec::new());
         let cols =
             vec![TableColumn::new(22), TableColumn::new(18), TableColumn::new(22), TableColumn::new(8), TableColumn::new(3).align(Align::Center)];
-        let table = Table::new(win.interior(), Box::new(model), Some(v), Some(h))
+        let mut table = Table::new(win.interior(), Box::new(model), Some(v), Some(h))
             .with_columns(cols)
             .selection(SelectionMode::Row)
             .striped(true)
             // Порядок строк задаём сами (команда «Сортировать»), чтобы номер
             // строки таблицы всегда совпадал с номером в `contacts`.
             .sortable(false);
+        // Растягиваться вместе с окном (F5, мышь) — таблица сама этого не делает.
+        table.vs.grow_mode = gf::GROW_HI_X | gf::GROW_HI_Y;
         let table = win.add(table);
         let mut w = ContactsWindow { win, table, contacts, file, modified: false };
         w.reload();

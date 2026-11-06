@@ -187,11 +187,12 @@ pub fn new(bounds: Rect, contacts: Vec<Contact>, file: Option<PathBuf>) -> Self 
         TableColumn::new(8),
         TableColumn::new(3).align(Align::Center),
     ];
-    let table = Table::new(win.interior(), Box::new(model), Some(v), Some(h))
+    let mut table = Table::new(win.interior(), Box::new(model), Some(v), Some(h))
         .with_columns(cols)
         .selection(SelectionMode::Row)
         .striped(true)
         .sortable(false);
+    table.vs.grow_mode = gf::GROW_HI_X | gf::GROW_HI_Y;
     let table = win.add(table);
     let mut w = ContactsWindow { win, table, contacts, file, modified: false };
     w.reload();
@@ -207,7 +208,9 @@ pub fn new(bounds: Rect, contacts: Vec<Contact>, file: Option<PathBuf>) -> Self 
   рамке; возвращает id полосы. Таблица получает эти id и сама двигает
   полосы.
 * `win.interior()` — внутренность окна без рамки: таблица занимает её
-  целиком и растягивается вместе с окном.
+  целиком. `grow_mode = GROW_HI_X | GROW_HI_Y` — растягиваться вместе с
+  окном (у таблицы по умолчанию размер не меняется). Подробно о
+  координатах и растягивании — [тема «Координаты»](02-coordinates.md).
 * `Table` берёт строки из **модели** (`VecTableModel` — строки в памяти).
   Столбцы описывает `TableColumn`: ширина и выравнивание.
 * `.sortable(false)` — щелчок по заголовку не сортирует. Мы будем

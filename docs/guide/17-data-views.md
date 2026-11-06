@@ -35,6 +35,7 @@ fn people_window(app: &mut Program) -> ViewId {
         .striped(true)
         .editable(true); // F2, Enter или буква — правка ячейки
     t.auto_width(100); // ширина по первым 100 строкам
+    t.vs.grow_mode = gf::GROW_HI_X | gf::GROW_HI_Y; // растягиваться вместе с окном
     let id = w.add(t);
     app.insert_window(w);
     id
