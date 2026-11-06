@@ -174,7 +174,8 @@ fn ask(app: &mut Program) {
 | `cargo run --example json_table -- examples/data/books.json` | файл JSON в таблице: вложенные объекты — столбцы `a.b`, сортировка, окно записи по Enter/F4 |
 | `cargo run --example json_load` | загрузка большого JSON в потоке: диалог с `ProgressBar`, три этапа, отмена, сводка |
 | `cargo run --example colors` | 256 цветов: таблица палитры xterm, темы gruvbox / классическая / «Сумерки», диалог цветов с выбором из 256, переключение режима 16/256 |
-| `cargo run --example guide_contacts` | приложение из [урока](guide/01-tutorial.md): записная книжка — таблица контактов, диалог с проверкой ввода, файлы, вопрос о сохранении, тесты |
+| `cargo run --example learn_01_hello` … `learn_08_todo` | маленькие программы к [урокам руководства](guide/README.md): от пустого экрана до своего окна с данными |
+| `cargo run --example guide_contacts` | приложение из [урока 9](guide/09-contacts.md): записная книжка — таблица контактов, диалог с проверкой ввода, файлы, вопрос о сохранении, тесты |
 | `cargo run --example treeview` | дерево `TreeView`: каталоги с ленивой загрузкой и сведениями о файле, дерево для правки (F7, Ins, F2, Del), JSON в виде дерева, диалог с флажками |
 | `cargo run --example lfm` | двухпанельный файловый менеджер по мотивам lfm: вкладки, фильтры, закладки, поиск, копирование в потоке с прогрессом, PowerCLI |
 | `cargo run --example tvhc -- examples/demohelp.txt hc.rs` | проверка исходника справки и генерация констант контекстов |

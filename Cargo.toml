@@ -35,6 +35,38 @@ name = "colors"
 test = true
 
 [[example]]
+name = "learn_01_hello"
+test = true
+
+[[example]]
+name = "learn_02_menu"
+test = true
+
+[[example]]
+name = "learn_03_windows"
+test = true
+
+[[example]]
+name = "learn_04_coords"
+test = true
+
+[[example]]
+name = "learn_05_dialog"
+test = true
+
+[[example]]
+name = "learn_06_form"
+test = true
+
+[[example]]
+name = "learn_07_view"
+test = true
+
+[[example]]
+name = "learn_08_todo"
+test = true
+
+[[example]]
 name = "guide_contacts"
 test = true
 

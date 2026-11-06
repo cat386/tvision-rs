@@ -13,9 +13,10 @@
 
 ## Документация
 
-**[Руководство пользователя](docs/guide/README.md)** — урок (приложение
-«Контакты» шаг за шагом) и справочник по каждому классу с примерами
-использования.
+**[Руководство пользователя](docs/guide/README.md)** — для начинающих:
+десять уроков от пустой программы до приложения (у каждого — готовый
+пример `cargo run --example learn_…`) и справочник по каждому классу
+простым языком.
 
 
 Подробное руководство на русском — в каталоге [`docs/`](docs/README.md):
@@ -37,6 +38,7 @@ cargo run --example json_table -- examples/data/books.json  # JSON-файл в �
 cargo run --example json_load   # загрузка большого JSON в потоке с диалогом ProgressBar и отменой
 cargo run --example table   # таблица: миллион строк, своя модель, правка, сортировка, диалог
 cargo run --example colors  # 256 цветов: палитра xterm, темы gruvbox/классика/сумерки, выбор цвета, режим 16/256
+cargo run --example learn_01_hello   # … learn_08_todo — программы к урокам руководства
 cargo run --example guide_contacts  # приложение из урока руководства: таблица, диалог с проверкой, файлы
 cargo run --example treeview  # дерево TreeView: файловая система с ленивой загрузкой, правка, JSON, флажки
 cargo run --example lfm     # файловый менеджер по мотивам lfm: две панели, вкладки, F5/F6/F8 с прогрессом, PowerCLI

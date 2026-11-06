@@ -1,127 +1,147 @@
 # Руководство пользователя tvision-rs
 
-Полное руководство по библиотеке: урок, в котором шаг за шагом строится
-настоящее приложение, и справочник по **каждому** публичному типу — что
-это, чему соответствует в оригинальном Turbo Vision, как создать, какие
-у него поля и методы, пример использования.
+`tvision-rs` — библиотека для программ с **текстовым интерфейсом**:
+окнами, меню, диалогами и кнопками прямо в терминале, как в
+Norton Commander или Turbo Pascal. Это перевод на Rust знаменитой
+библиотеки Turbo Vision.
 
-Все примеры кода в руководстве проверены: они компилируются с текущей
-версией библиотеки, а проверки `assert!` в них выполняются.
-
-## С чего начать
-
-1. **[Урок: записная книжка «Контакты»](01-tutorial.md)** — программа с
-   меню, окном-таблицей, диалогом с проверкой ввода, файлами и тестами.
-   Готовый код — `examples/guide_contacts.rs`
-   (`cargo run --example guide_contacts`).
-2. **[Координаты](02-coordinates.md)** — системы координат, раскладка
-   окон и диалогов, мышь, рисование, прокрутка, растягивание и частые
-   ошибки. Прочитайте до того, как раскладывать свои диалоги.
-3. Справочник ниже — по мере надобности. Каждая страница начинается со
-   списка типов со ссылками.
-4. За подробностями «как это устроено» — [тематические главы](../README.md)
-   (архитектура, события, цвета, перенос программ с C++).
-
-Если вы знаете Turbo Vision для C++ или Pascal, почти все типы называются
-так же без буквы `T`: `TButton` → `Button`, `TDialog` → `Dialog`. Главное
-отличие — представления не хранят указатель на владельца, а действуют
-через контекст `Ctx` ([шаг 0 урока](01-tutorial.md#шаг-0-как-устроена-программа-на-tvision-rs),
-[глава 15](../15-porting.md)).
-
-## Справочник по классам
-
-| Страница | Что внутри |
-|----------|-----------|
-| [Геометрия, цвета, буферы, текст](10-basics.md) | `Point`, `Rect`, `Attr`, `AttrPair`, `ColorMode`, палитры, `Cell`, `DrawBuffer`, `ScreenBuffer`, функции текста |
-| [События, клавиши, команды](11-events.md) | `Key`, `Mods`, `KeyEvent`, `kb`, `MouseEvent`, `Event`, `Message`, `Info`, `cm` |
-| [Представления](12-views.md) | `View`, `ViewState`, `ViewId`, флаги `sf` `of` `gf` `dm`, `Value`, `Ctx`, `Request`, `CommandSet`, `Phase`, `DrawCtx`, `Group`, макросы |
-| [Программа, рабочий стол, окна, диалоги](13-program.md) | `Program`, `AppHandler`, `NoHandler`, `Desktop`, `Background`, `Window`, `wf`, `Frame`, `Dialog`, `DialogPalette` |
-| [Меню и строка состояния](14-menus.md) | `Menu`, `MenuItem`, `MenuBar`, контекстное меню, `MenuSession`, `StatusLine`, `StatusDef`, `StatusItem`, `HintFn` |
-| [Проверка ввода](15-validators.md) | `Validator`, `PictureValidator`, `PicResult`, `FilterValidator`, `RangeValidator`, `StringLookupValidator`, `FnValidator` |
-| [Элементы управления](16-controls.md) | `Button`, `StaticText`, `Label`, `InputLine`, `InputLong`, `Cluster`, `ScrollBar`, `ListBox`, `History`, `Combo`, `ProgressBar`, окна сообщений |
-| [Таблица, дерево, прокрутка](17-data-views.md) | `Table`, `TableModel`, `VecTableModel`, `FnTableModel`, `TableColumn`, `TreeView`, `TreeNode`, `Outline`, `Scroller`, `Terminal` |
-| [Текстовый редактор](18-editor.md) | `Editor`, `Pos`, `Memo`, `FileEditor`, `EditWindow`, `Indicator` |
-| [Стандартные диалоги](19-std-dialogs.md) | `FileDialog`, `ChDirDialog`, `ColorDialog`, `Color256Dialog`, `HelpFile`, `HelpWindow` и их части |
-| [Файловые панели и операции](20-files.md) | `FilePanel`, `DualPanel`, `PanelEntry`, `FileFilter`, `FileJob`, `JobProgress` |
-| [Терминал, буфер обмена, время, язык](21-platform.md) | `Backend`, `HeadlessBackend`, `UnixBackend`, `WindowsBackend`, `Clipboard`, `DateTime`, `Language` |
-
-## Указатель типов
-
-**A** — [`Align`](17-data-views.md#tablecolumn-и-align) · [`AnsiWriter`](21-platform.md#ansiwriter-inputparser-parsed) · [`AppHandler`](13-program.md#apphandler) · [`Attr`](10-basics.md#attr-и-attrpair) · [`AttrPair`](10-basics.md#attr-и-attrpair)
-
-**B** — [`Backend`](21-platform.md#backend) · [`Background`](13-program.md#background) · [`Button`](16-controls.md#button)
-
-**C** — [`Cell`](10-basics.md#cell) · [`ChDirDialog`](19-std-dialogs.md#chdirdialog) · [`CheckBoxes`](16-controls.md#cluster) · [`CheckState`](17-data-views.md#checkstate) · [`Clipboard`](21-platform.md#clipboard) · [`ClipboardBackend`](21-platform.md#clipboardbackend) · [`Cluster`](16-controls.md#cluster) · [`ClusterKind`](16-controls.md#cluster) · [`Color256Dialog`](19-std-dialogs.md#color256dialog) · [`Color256Selector`](19-std-dialogs.md#color256selector) · [`ColorDialog`](19-std-dialogs.md#colordialog) · [`ColorDialogText`](19-std-dialogs.md#colordialogtext) · [`ColorDisplay`](19-std-dialogs.md#colordisplay) · [`ColoredText`](16-controls.md#statictext-и-coloredtext) · [`ColorGroup`](19-std-dialogs.md#colorgroup-и-coloritem) · [`ColorItem`](19-std-dialogs.md#colorgroup-и-coloritem) · [`ColorMode`](10-basics.md#colormode) · [`ColorSel`](19-std-dialogs.md#colorselector-и-colorsel) · [`ColorSelector`](19-std-dialogs.md#colorselector-и-colorsel) · [`Combo`](16-controls.md#combo-и-combowindow) · [`ComboWindow`](16-controls.md#combo-и-combowindow) · [`CommandSet`](12-views.md#commandset) · [`Conflict`](20-files.md#conflict) · [`CrossRef`](19-std-dialogs.md#helptopic-paragraph-crossref) · [`Ctx`](12-views.md#ctx)
-
-**D** — [`DateTime`](21-platform.md#datetime-и-функции-времени) · [`Desktop`](13-program.md#desktop) · [`Dialog`](13-program.md#dialog) · [`DialogPalette`](13-program.md#dialogpalette) · [`DirListBox`](19-std-dialogs.md#dirlistbox) · [`DrawBuffer`](10-basics.md#drawbuffer) · [`DrawCtx`](12-views.md#drawctx) · [`DualPanel`](20-files.md#dualpanel)
-
-**E** — [`Editor`](18-editor.md#editor) · [`EditWindow`](18-editor.md#editwindow) · [`Event`](11-events.md#event)
-
-**F** — [`FileClass`](20-files.md#fileclass) · [`FileDialog`](19-std-dialogs.md#filedialog) · [`FileDialogText`](19-std-dialogs.md#filedialogtext) · [`FileEditor`](18-editor.md#fileeditor) · [`FileEntry`](19-std-dialogs.md#fileentry) · [`FileFilter`](20-files.md#filefilter) · [`FileInfoPane`](19-std-dialogs.md#fileinfopane) · [`FileJob`](20-files.md#filejob) · [`FileKind`](20-files.md#filekind) · [`FileList`](19-std-dialogs.md#filelist) · [`FilePanel`](20-files.md#filepanel) · [`FilePanelColors`](20-files.md#filepanelcolors) · [`FilterValidator`](15-validators.md#filtervalidator) · [`FnTableModel`](17-data-views.md#fntablemodel) · [`FnValidator`](15-validators.md#fnvalidator) · [`Frame`](13-program.md#frame-и-frameinfo) · [`FrameInfo`](13-program.md#frame-и-frameinfo)
-
-**G** — [`Group`](12-views.md#group)
-
-**H** — [`HeadlessBackend`](21-platform.md#headlessbackend) · [`HelpFile`](19-std-dialogs.md#helpfile) · [`HelpTopic`](19-std-dialogs.md#helptopic-paragraph-crossref) · [`HelpViewer`](19-std-dialogs.md#helpviewer) · [`HelpWindow`](19-std-dialogs.md#helpwindow) · [`HintFn`](14-menus.md#hintfn) · [`History`](16-controls.md#history-и-historywindow) · [`HistoryWindow`](16-controls.md#history-и-historywindow)
-
-**I** — [`Indicator`](18-editor.md#indicator) · [`Info`](11-events.md#info) · [`InputLine`](16-controls.md#inputline) · [`InputLong`](16-controls.md#inputlong) · [`InputParser`](21-platform.md#ansiwriter-inputparser-parsed)
-
-**J** — [`JobKind`](20-files.md#jobkind) · [`JobProgress`](20-files.md#jobprogress)
-
-**K** — [`Key`](11-events.md#key) · [`KeyEvent`](11-events.md#keyevent)
-
-**L** — [`Label`](16-controls.md#label) · [`Language`](21-platform.md#язык-интерфейса) · [`ListBox`](16-controls.md#listbox)
-
-**M** — [`Memo`](18-editor.md#memo) · [`Menu`](14-menus.md#menu) · [`MenuBar`](14-menus.md#menubar) · [`MenuItem`](14-menus.md#menuitem) · [`MenuOutcome`](14-menus.md#menusession-и-menuoutcome) · [`MenuSession`](14-menus.md#menusession-и-menuoutcome) · [`Message`](11-events.md#message) · [`Mods`](11-events.md#mods) · [`MouseEvent`](11-events.md#mouseevent) · [`MsgBoxText`](16-controls.md#окна-сообщений) · [`MultiCheckBoxes`](16-controls.md#cluster)
-
-**N** — [`Node`](17-data-views.md#outline-и-node) · [`NoHandler`](13-program.md#nohandler)
-
-**O** — [`Outline`](17-data-views.md#outline-и-node)
-
-**P** — [`PanelEntry`](20-files.md#panelentry) · [`Paragraph`](19-std-dialogs.md#helptopic-paragraph-crossref) · [`Parsed`](21-platform.md#ansiwriter-inputparser-parsed) · [`Phase`](12-views.md#phase) · [`PicResult`](15-validators.md#picresult) · [`PictureValidator`](15-validators.md#picturevalidator) · [`PlaceFn`](12-views.md#request-и-placefn) · [`Point`](10-basics.md#point) · [`Pos`](18-editor.md#pos) · [`Program`](13-program.md#program) · [`ProgressBar`](16-controls.md#progressbar) · [`ProgressStyle`](16-controls.md#progressbar)
-
-**R** — [`RadioButtons`](16-controls.md#cluster) · [`RangeValidator`](15-validators.md#rangevalidator) · [`RawEvent`](21-platform.md#rawevent) · [`Rect`](10-basics.md#rect) · [`Request`](12-views.md#request-и-placefn)
-
-**S** — [`ScreenBuffer`](10-basics.md#screenbuffer) · [`ScrollBar`](16-controls.md#scrollbar) · [`Scroller`](17-data-views.md#scroller) · [`SelectionMode`](17-data-views.md#selectionmode) · [`SortMode`](20-files.md#sortmode) · [`StaticText`](16-controls.md#statictext-и-coloredtext) · [`StatusDef`](14-menus.md#statusdef) · [`StatusItem`](14-menus.md#statusitem) · [`StatusLine`](14-menus.md#statusline) · [`StringLookupValidator`](15-validators.md#stringlookupvalidator)
-
-**T** — [`Table`](17-data-views.md#table) · [`TableColors`](17-data-views.md#tablecolors) · [`TableColumn`](17-data-views.md#tablecolumn-и-align) · [`TableModel`](17-data-views.md#tablemodel) · [`Terminal`](17-data-views.md#terminal) · [`TreeColors`](17-data-views.md#treecolors) · [`TreeGlyphs`](17-data-views.md#treeglyphs) · [`TreeLoader`](17-data-views.md#treepath-и-treeloader) · [`TreeNode`](17-data-views.md#treenode) · [`TreePath`](17-data-views.md#treepath-и-treeloader) · [`TreeView`](17-data-views.md#treeview)
-
-**U** — [`UnixBackend`](21-platform.md#unixbackend)
-
-**V** — [`Validator`](15-validators.md#validator) · [`Value`](12-views.md#value) · [`VecTableModel`](17-data-views.md#vectablemodel) · [`View`](12-views.md#view) · [`ViewId`](12-views.md#viewid) · [`ViewState`](12-views.md#viewstate)
-
-**W** — [`Window`](13-program.md#window) · [`WindowsBackend`](21-platform.md#windowsbackend)
-
-## Модули констант
-
-| Модуль | Что | Где описан |
-|--------|-----|-----------|
-| `cm` | команды | [события](11-events.md#cm--команды), [номера](../16-reference.md#cm--команды) |
-| `kb` | клавиши | [события](11-events.md#kb--константы-клавиш) |
-| `sf`, `of`, `gf`, `dm` | состояние, параметры, растяжение, перетаскивание | [представления](12-views.md#флаги) |
-| `wf` | флаги окна | [окна](13-program.md#wf--флаги-окна) |
-| `bf` | флаги кнопки | [Button](16-controls.md#button) |
-| `mf` | окна сообщений | [окна сообщений](16-controls.md#окна-сообщений) |
-| `cf` | многосостоятельные флажки | [Cluster](16-controls.md#cluster) |
-| `cbx`, `il` | `Combo`, `InputLong` | [Combo](16-controls.md#combo-и-combowindow), [InputLong](16-controls.md#inputlong) |
-| `ef`, `ec` | поиск в редакторе, команды редактора | [редактор](18-editor.md#ef-и-ec) |
-| `fd`, `cd` | файловый диалог, смена каталога | [диалоги](19-std-dialogs.md#filedialog) |
-| `color::palettes` | палитры | [цвета](10-basics.md#палитры-colorpalettes) |
-
-Все константы с номерами — [глава 16](../16-reference.md).
-
-## Как подключить
-
-```toml
-[dependencies]
-tvision-rs = { git = "https://github.com/cat386/tvision-rs" }
+```text
+  Файл  Контакт                                                       ← меню
+╔═[■]══════════════ Контакты — без имени ═════════════════1═[↑]═╗
+║         Имя          │     Телефон      │       Почта         ▲    ← окно с таблицей
+║──────────────────────┼──────────────────┼─────────────────────▒
+║Анна Петрова          │+7 900 111-22-33  │anna@example.ru      ▒
+║Борис Смирнов         │+7 900 222-33-44  │boris@example.ru     ▼
+ Ins Добавить  F4 Изменить  Del Удалить  F2 Сохранить  Alt-X Выход   ← подсказки клавиш
 ```
 
-```rust,ignore
-use tvision::*; // крейт называется `tvision`
-```
+## Для кого это руководство
 
-`use tvision::*;` подключает все типы и модули констант. Отдельно
-импортируются только редкие вещи: `tvision::event::MB_LEFT`,
-`tvision::platform::{HeadlessBackend, RawEvent}`,
-`tvision::platform::clipboard::*`, `tvision::fileops::*`,
-`tvision::program::NoHandler`.
+Для тех, кто **немного знает Rust** (умеет создать проект через `cargo
+new`, понимает структуры, `impl` и `match`), но **никогда не работал** с
+Turbo Vision и текстовыми интерфейсами. Всё остальное объясняется по
+ходу дела.
+
+Если вы знаете Turbo Vision для C++ или Pascal, почти все классы
+называются так же, только без буквы `T`: `TButton` → `Button`,
+`TDialog` → `Dialog`. Отличия собраны в [главе «Перенос
+программ»](../15-porting.md).
+
+## Часть 1. Уроки
+
+Уроки идут по порядку, каждый — на 15–30 минут. В каждом — готовая
+маленькая программа: её можно запустить одной командой
+(`cargo run --example …`) и разобрать строку за строкой. В конце урока
+— задания «Попробуйте» и короткий список «Важно запомнить».
+
+| Урок | Чему научитесь | Программа |
+|------|----------------|-----------|
+| [1. Первая программа](01-first-program.md) | создать проект, запустить пустую программу, словарик терминов | `learn_01_hello` |
+| [2. Меню и команды](02-menu.md) | меню, строка состояния, свои команды, окно сообщения | `learn_02_menu` |
+| [3. Окна](03-windows.md) | открывать, двигать, распахивать и закрывать окна | `learn_03_windows` |
+| [4. Координаты](04-coordinates.md) | где что находится; раскладка без ошибок «на одну клетку» | `learn_04_coords` |
+| [5. Первый диалог](05-dialog.md) | спросить у пользователя имя и прочитать ответ | `learn_05_dialog` |
+| [6. Анкета](06-form.md) | флажки, переключатели, список, проверка ввода, обмен данными | `learn_06_form` |
+| [7. Своё представление](07-own-view.md) | нарисовать свой элемент и научить его отвечать на клавиши и мышь | `learn_07_view` |
+| [8. Своё окно с данными](08-own-window.md) | окно, которое хранит данные и отвечает на команды | `learn_08_todo` |
+| [9. «Контакты»](09-contacts.md) | всё вместе: таблица, файлы, запрет команд, вопрос при выходе | `guide_contacts` |
+| [10. Тесты](10-tests.md) | проверять интерфейс через `cargo test` | — |
+
+Как запустить программу урока: скачайте репозиторий библиотеки и
+выполните в его каталоге, например, `cargo run --example learn_02_menu`.
+
+## Часть 2. Справочник
+
+Когда уроки пройдены — здесь можно найти любой класс. Для каждого: **что
+это**, **когда нужен**, **как создать**, **что важно знать**, главные
+методы и пример. Редко нужные методы перечислены отдельно, чтобы не
+мешать.
+
+| Страница | Что там |
+|----------|---------|
+| [Точки, прямоугольники, цвета, текст](20-basics.md) | `Point`, `Rect`, цвета, палитры, ширина текста |
+| [События, клавиши, команды](21-events.md) | `Event`, `Key`, `KeyEvent`, `MouseEvent`, `cm`, `kb`; куда попадает событие |
+| [Представления](22-views.md) | `View`, `ViewState`, `Ctx`, `DrawCtx`, `Group`, флаги, **координаты подробно** |
+| [Программа, окна, диалоги](23-program.md) | `Program`, `AppHandler`, `Desktop`, `Window`, `Dialog` |
+| [Меню и строка состояния](24-menus.md) | `Menu`, `MenuBar`, контекстное меню, `StatusLine` |
+| [Проверка ввода](25-validators.md) | маски, диапазоны, фильтры, своя проверка |
+| [Элементы управления](26-controls.md) | кнопки, поля, флажки, списки, история, выпадающий список, полоса выполнения, окна сообщений |
+| [Таблица, дерево, прокрутка](27-data-views.md) | `Table`, `TreeView`, `Outline`, `Scroller`, `Terminal` |
+| [Текстовый редактор](28-editor.md) | `EditWindow`, `Editor`, `Memo` |
+| [Готовые диалоги](29-std-dialogs.md) | выбор файла, каталога, цветов; справка по F1 |
+| [Файловые панели](30-files.md) | панели как в Norton Commander, копирование в фоне |
+| [Терминал, буфер обмена, время, язык](31-platform.md) | тестовый терминал, буфер обмена, русский язык надписей |
+
+Все примеры кода в справочнике проверены: они компилируются, а проверки
+`assert!` в них выполняются.
+
+### Указатель классов
+
+**A** — [`Align`](27-data-views.md#tablecolumn-и-align--столбцы) · [`AnsiWriter`](31-platform.md#ansiwriter-inputparser-parsed) · [`AppHandler`](23-program.md#apphandler--код-приложения) · [`Attr`](20-basics.md#attr--цвет) · [`AttrPair`](20-basics.md#attrpair--пара-цветов)
+
+**B** — [`Backend`](31-platform.md#backend--терминал) · [`Background`](23-program.md#background--фон) · [`Button`](26-controls.md#button--кнопка)
+
+**C** — [`Cell`](20-basics.md#cell--клетка-экрана) · [`ChDirDialog`](29-std-dialogs.md#chdirdialog--смена-каталога) · [`CheckBoxes`](26-controls.md#cluster--флажки-и-переключатели) · [`CheckState`](27-data-views.md#checkstate) · [`Clipboard`](31-platform.md#clipboard--буфер-обмена) · [`ClipboardBackend`](31-platform.md#clipboardbackend--свой-буфер-обмена) · [`Cluster`](26-controls.md#cluster--флажки-и-переключатели) · [`ClusterKind`](26-controls.md#cluster--флажки-и-переключатели) · [`Color256Dialog`](29-std-dialogs.md#color256dialog--выбор-одного-цвета) · [`Color256Selector`](29-std-dialogs.md#части-цветовых-диалогов) · [`ColorDialog`](29-std-dialogs.md#colordialog--настройка-цветов) · [`ColorDialogText`](29-std-dialogs.md#части-цветовых-диалогов) · [`ColorDisplay`](29-std-dialogs.md#части-цветовых-диалогов) · [`ColoredText`](26-controls.md#statictext--текст) · [`ColorGroup`](29-std-dialogs.md#colorgroup-и-coloritem) · [`ColorItem`](29-std-dialogs.md#colorgroup-и-coloritem) · [`ColorMode`](20-basics.md#colormode--сколько-цветов-у-терминала) · [`ColorSel`](29-std-dialogs.md#части-цветовых-диалогов) · [`ColorSelector`](29-std-dialogs.md#части-цветовых-диалогов) · [`Combo`](26-controls.md#combo--выпадающий-список) · [`ComboWindow`](26-controls.md#combo--выпадающий-список) · [`CommandSet`](22-views.md#commandset) · [`Conflict`](30-files.md#conflict) · [`CrossRef`](29-std-dialogs.md#helptopic-paragraph-crossref) · [`Ctx`](22-views.md#ctx)
+
+**D** — [`DateTime`](31-platform.md#datetime--местное-время) · [`Desktop`](23-program.md#desktop--рабочий-стол) · [`Dialog`](23-program.md#dialog--диалог) · [`DialogPalette`](23-program.md#dialogpalette) · [`DirListBox`](29-std-dialogs.md#части-файловых-диалогов) · [`DrawBuffer`](20-basics.md#drawbuffer--строка-для-рисования) · [`DrawCtx`](22-views.md#drawctx) · [`DualPanel`](30-files.md#dualpanel--две-панели)
+
+**E** — [`Editor`](28-editor.md#editor--редактор) · [`EditWindow`](28-editor.md#editwindow--окно-для-файла) · [`Event`](21-events.md#event--событие)
+
+**F** — [`FileClass`](30-files.md#fileclass) · [`FileDialog`](29-std-dialogs.md#filedialog--выбор-файла) · [`FileDialogText`](29-std-dialogs.md#части-файловых-диалогов) · [`FileEditor`](28-editor.md#fileeditor--редактор-файла) · [`FileEntry`](29-std-dialogs.md#части-файловых-диалогов) · [`FileFilter`](30-files.md#filefilter--что-скрыть) · [`FileInfoPane`](29-std-dialogs.md#части-файловых-диалогов) · [`FileJob`](30-files.md#filejob--копирование-перенос-удаление) · [`FileKind`](30-files.md#filekind) · [`FileList`](29-std-dialogs.md#части-файловых-диалогов) · [`FilePanel`](30-files.md#filepanel--файловая-панель) · [`FilePanelColors`](30-files.md#filepanelcolors) · [`FilterValidator`](25-validators.md#filtervalidator--только-разрешённые-символы) · [`FnTableModel`](27-data-views.md#fntablemodel--ячейки-из-функции) · [`FnValidator`](25-validators.md#fnvalidator--своя-проверка-функцией) · [`Frame`](23-program.md#frame-и-frameinfo--рамка) · [`FrameInfo`](23-program.md#frame-и-frameinfo--рамка)
+
+**G** — [`Group`](22-views.md#group)
+
+**H** — [`HeadlessBackend`](31-platform.md#headlessbackend--невидимый-терминал) · [`HelpFile`](29-std-dialogs.md#helpfile--файл-справки) · [`HelpTopic`](29-std-dialogs.md#helptopic-paragraph-crossref) · [`HelpViewer`](29-std-dialogs.md#helpviewer) · [`HelpWindow`](29-std-dialogs.md#helpwindow--окно-справки) · [`HintFn`](24-menus.md#hintfn--подсказка) · [`History`](26-controls.md#history--история-ввода) · [`HistoryWindow`](26-controls.md#history--история-ввода)
+
+**I** — [`Indicator`](28-editor.md#indicator--строка-и-столбец) · [`Info`](21-events.md#message-и-info--команда-с-данными) · [`InputLine`](26-controls.md#inputline--строка-ввода) · [`InputLong`](26-controls.md#inputlong--поле-для-числа) · [`InputParser`](31-platform.md#ansiwriter-inputparser-parsed)
+
+**J** — [`JobKind`](30-files.md#jobkind) · [`JobProgress`](30-files.md#jobprogress)
+
+**K** — [`Key`](21-events.md#key--клавиша) · [`KeyEvent`](21-events.md#keyevent--нажатие-клавиши)
+
+**L** — [`Label`](26-controls.md#label--подпись) · [`Language`](31-platform.md#язык-интерфейса-language) · [`ListBox`](26-controls.md#listbox--список)
+
+**M** — [`Memo`](28-editor.md#memo--многострочное-поле-в-диалоге) · [`Menu`](24-menus.md#menu--меню) · [`MenuBar`](24-menus.md#menubar--строка-меню) · [`MenuItem`](24-menus.md#menuitem--пункт-меню) · [`MenuOutcome`](24-menus.md#menusession-и-menuoutcome) · [`MenuSession`](24-menus.md#menusession-и-menuoutcome) · [`Message`](21-events.md#message-и-info--команда-с-данными) · [`Mods`](21-events.md#mods--shift-ctrl-alt) · [`MouseEvent`](21-events.md#mouseevent--мышь) · [`MsgBoxText`](26-controls.md#окна-сообщений) · [`MultiCheckBoxes`](26-controls.md#cluster--флажки-и-переключатели)
+
+**N** — [`Node`](27-data-views.md#outline-и-node--дерево-из-оригинала) · [`NoHandler`](23-program.md#nohandler)
+
+**O** — [`Outline`](27-data-views.md#outline-и-node--дерево-из-оригинала)
+
+**P** — [`PanelEntry`](30-files.md#panelentry--файл-в-панели) · [`Paragraph`](29-std-dialogs.md#helptopic-paragraph-crossref) · [`Parsed`](31-platform.md#ansiwriter-inputparser-parsed) · [`Phase`](22-views.md#phase) · [`PicResult`](25-validators.md#picresult) · [`PictureValidator`](25-validators.md#picturevalidator--маска) · [`PlaceFn`](22-views.md#request-и-placefn) · [`Point`](20-basics.md#point--точка) · [`Pos`](28-editor.md#pos--место-в-тексте) · [`Program`](23-program.md#program--программа) · [`ProgressBar`](26-controls.md#progressbar--полоса-выполнения) · [`ProgressStyle`](26-controls.md#progressbar--полоса-выполнения)
+
+**R** — [`RadioButtons`](26-controls.md#cluster--флажки-и-переключатели) · [`RangeValidator`](25-validators.md#rangevalidator--число-в-диапазоне) · [`RawEvent`](31-platform.md#rawevent) · [`Rect`](20-basics.md#rect--прямоугольник) · [`Request`](22-views.md#request-и-placefn)
+
+**S** — [`ScreenBuffer`](20-basics.md#screenbuffer--весь-экран) · [`ScrollBar`](26-controls.md#scrollbar--полоса-прокрутки) · [`Scroller`](27-data-views.md#scroller--прокрутка-для-своих-представлений) · [`SelectionMode`](27-data-views.md#selectionmode) · [`SortMode`](30-files.md#sortmode) · [`StaticText`](26-controls.md#statictext--текст) · [`StatusDef`](24-menus.md#statusdef--набор-пунктов) · [`StatusItem`](24-menus.md#statusitem--пункт-строки-состояния) · [`StatusLine`](24-menus.md#statusline--строка-состояния) · [`StringLookupValidator`](25-validators.md#stringlookupvalidator--значение-из-списка)
+
+**T** — [`Table`](27-data-views.md#table--таблица) · [`TableColors`](27-data-views.md#tablecolors) · [`TableColumn`](27-data-views.md#tablecolumn-и-align--столбцы) · [`TableModel`](27-data-views.md#tablemodel--откуда-таблица-берёт-данные) · [`Terminal`](27-data-views.md#terminal--окно-журнала) · [`TreeColors`](27-data-views.md#treecolors) · [`TreeGlyphs`](27-data-views.md#treeglyphs) · [`TreeLoader`](27-data-views.md#treepath-и-treeloader) · [`TreeNode`](27-data-views.md#treenode--узел-дерева) · [`TreePath`](27-data-views.md#treepath-и-treeloader) · [`TreeView`](27-data-views.md#treeview--дерево)
+
+**U** — [`UnixBackend`](31-platform.md#unixbackend-и-windowsbackend)
+
+**V** — [`Validator`](25-validators.md#validator--свой-валидатор) · [`Value`](22-views.md#value) · [`VecTableModel`](27-data-views.md#vectablemodel--данные-в-памяти) · [`View`](22-views.md#view) · [`ViewId`](22-views.md#viewid) · [`ViewState`](22-views.md#viewstate)
+
+**W** — [`Window`](23-program.md#window--окно) · [`WindowsBackend`](31-platform.md#unixbackend-и-windowsbackend)
+
+### Модули констант
+
+| Модуль | Что в нём | Где описан |
+|--------|-----------|-----------|
+| `cm` | команды | [события](21-events.md#cm--стандартные-команды) |
+| `kb` | клавиши | [события](21-events.md#kb--готовые-клавиши) |
+| `sf`, `of`, `gf`, `dm` | флаги представлений | [представления](22-views.md#флаги-sf-of-gf-dm) |
+| `wf` | что можно делать с окном | [окна](23-program.md#wf--что-можно-делать-с-окном) |
+| `bf` | флаги кнопки | [кнопка](26-controls.md#button--кнопка) |
+| `mf` | окна сообщений | [окна сообщений](26-controls.md#окна-сообщений) |
+| `cf`, `cbx`, `il` | флажки, выпадающий список, поле для числа | [элементы](26-controls.md) |
+| `ef`, `ec` | поиск в редакторе | [редактор](28-editor.md#ef-и-ec) |
+| `fd`, `cd` | файловые диалоги | [готовые диалоги](29-std-dialogs.md#filedialog--выбор-файла) |
+| `color::palettes` | палитры | [цвета](20-basics.md#палитры) |
+
+Все номера команд и константы — в [главе 16](../16-reference.md).
+
+## Что ещё почитать
+
+* **Примеры** в каталоге `examples/`: `demo` (все элементы диалогов),
+  `tvdemo` (демонстрационная программа Turbo Vision), `tvedit` (текстовый
+  редактор), `table`, `treeview`, `json_table`, `lfm` (файловый менеджер).
+* **[Тематические главы](../README.md)** — как библиотека устроена
+  внутри: архитектура, события, цвета и палитры, перенос программ.
