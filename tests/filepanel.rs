@@ -193,7 +193,9 @@ fn tabs_in_frame_and_mouse() {
 fn virtual_listing() {
     let d = tmp("listing");
     let mut p = FilePanel::new(Rect::new(0, 0, 60, 20), &d);
-    p.set_listing("*.txt", &d, vec![d.join("a.txt"), d.join("sub/inner.txt")]);
+    // Путь собирается через `join` по частям: `d.join("sub/inner.txt")` в
+    // Windows дал бы смешанные разделители (`...\sub/inner.txt`).
+    p.set_listing("*.txt", &d, vec![d.join("a.txt"), d.join("sub").join("inner.txt")]);
     let names: Vec<String> = p.entries().iter().map(|e| e.name.clone()).collect();
     let inner = Path::new("sub").join("inner.txt").to_string_lossy().into_owned();
     assert_eq!(names, vec!["..".to_string(), "a.txt".to_string(), inner]);

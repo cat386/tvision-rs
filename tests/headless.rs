@@ -343,3 +343,14 @@ fn history_window() {
     assert_eq!(h.results.len(), 2);
     assert_eq!(h.results[1], (cm::OK, Value::List(vec![Value::Str("7".into())])));
 }
+
+/// `RawEvent::Command` от «экрана» (так tvision-gui сообщает о закрытии
+/// окна) доходит до программы обычной командой.
+#[test]
+fn raw_command_from_backend() {
+    let mut app = app_with(vec![RawEvent::Command(cm::NEW), RawEvent::Command(cm::QUIT)]);
+    let mut h = TestApp::default();
+    app.run(&mut h);
+    assert!(!app.is_running());
+    assert_eq!(h.windows, 1);
+}

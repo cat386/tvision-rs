@@ -469,6 +469,7 @@ impl Program {
                 self.resize(s);
                 Event::Nothing
             }
+            Some(RawEvent::Command(c)) => Event::Command(Message::new(c)),
             None => {
                 if self.mouse_buttons != 0 {
                     Event::MouseAuto(self.last_mouse)

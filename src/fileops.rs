@@ -168,10 +168,40 @@ pub fn dir_size(path: &Path) -> (u64, u64) {
 }
 
 /// Лежит ли `inner` внутри `outer` (или совпадает с ним).
+///
+/// Пути сравниваются в каноническом виде ([`canonical`]), причём `inner`
+/// может ещё не существовать (это назначение копирования).
 pub fn is_inside(inner: &Path, outer: &Path) -> bool {
-    let a = inner.canonicalize().unwrap_or_else(|_| inner.to_path_buf());
-    let b = outer.canonicalize().unwrap_or_else(|_| outer.to_path_buf());
-    a.starts_with(&b)
+    canonical(inner).starts_with(canonical(outer))
+}
+
+/// Канонический путь, даже если его конца ещё нет на диске: каноническим
+/// делается ближайший существующий предок, а недостающие части
+/// дописываются как есть.
+///
+/// Это важно в Windows: `canonicalize` возвращает путь вида `\\?\C:\...`,
+/// и путь, который просто не удалось канонизировать (`C:\...`), не
+/// совпадал бы с ним ни в одной части. Из-за этого копирование каталога
+/// в его же подкаталог не распознавалось и шло бесконечно.
+pub fn canonical(p: &Path) -> PathBuf {
+    if let Ok(c) = p.canonicalize() {
+        return c;
+    }
+    let mut rest = Vec::new();
+    let mut cur = p;
+    while let Some(parent) = cur.parent() {
+        if let Some(name) = cur.file_name() {
+            rest.push(name.to_os_string());
+        }
+        if let Ok(mut c) = parent.canonicalize() {
+            for n in rest.iter().rev() {
+                c.push(n);
+            }
+            return c;
+        }
+        cur = parent;
+    }
+    p.to_path_buf()
 }
 
 /// Исполнитель в потоке.
@@ -548,6 +578,9 @@ mod tests {
         assert_eq!(dir_size(&d.join("src")), ((3 * BLOCK + 5 + "привет".len()) as u64, 2));
         assert!(is_inside(&d.join("src/sub"), &d.join("src")));
         assert!(!is_inside(&d.join("src"), &d.join("src/sub")));
+        // Назначение ещё не существует — всё равно распознаётся.
+        assert!(is_inside(&d.join("src/sub/src"), &d.join("src")));
+        assert!(!is_inside(&d.join("dst/src"), &d.join("src")));
         let _ = fs::remove_dir_all(&d);
     }
 }
