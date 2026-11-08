@@ -14,8 +14,8 @@
 ## Документация
 
 **[Руководство пользователя](docs/guide/README.md)** — для начинающих:
-одиннадцать уроков от пустой программы до приложения с данными в JSON
-и SQLite (у каждого — готовый
+двенадцать уроков от пустой программы до приложений с данными в JSON,
+SQLite и CSV (у каждого — готовый
 пример `cargo run --example learn_…`) и справочник по каждому классу
 простым языком.
 
@@ -42,6 +42,11 @@ cargo run --example colors  # 256 цветов: палитра xterm, темы g
 cargo run --example learn_01_hello   # … learn_08_todo — программы к урокам руководства
 cargo run --example guide_contacts  # приложение из урока руководства: таблица, диалог с проверкой, файлы
 cargo run --example mvc_contacts    # то же на каркасе MVC: записи в JSON (или SQLite: --features sqlite -- файл.db)
+cargo run --example mvc_todo        # задачи: свои команды над моделью (F5 — сделано), сводка в заголовке
+cargo run --example mvc_books       # книги: своё окно со строкой итогов, поиск Ctrl+F, статистика F9
+cargo run --example mvc_csv         # склад в CSV: своё хранилище (трейт Storage)
+cargo run --example sqlite_query --features sqlite  # консоль SQL: запрос сверху, результат в таблице
+cargo run --example json_settings   # настройки программы в JSON: значения по умолчанию, чужие ключи
 cargo run --example treeview  # дерево TreeView: файловая система с ленивой загрузкой, правка, JSON, флажки
 cargo run --example lfm     # файловый менеджер по мотивам lfm: две панели, вкладки, F5/F6/F8 с прогрессом, PowerCLI
 cargo run --example tvdemo  # порт tvdemo: калькулятор, календарь, пятнашки, ASCII, просмотр файлов...
@@ -104,7 +109,8 @@ cargo test                  # тесты на «невидимом» терми�
 * `tvision::mvc` — модель, окно-таблица и контроллер: по описанию полей
   (`Schema`, `Field`) получаются таблица, диалог правки с проверкой и
   сохранение каждого изменения в JSON или SQLite (`open_storage` выбирает
-  по расширению файла). Урок — [docs/guide/11-mvc.md](docs/guide/11-mvc.md).
+  по расширению файла). Уроки — [11. MVC](docs/guide/11-mvc.md) и
+  [12. Рецепты](docs/guide/12-data-recipes.md).
 
 Внешних крейтов по-прежнему нет.
 

@@ -293,6 +293,13 @@ impl Connection {
         Ok(Rows { columns, rows })
     }
 
+    /// Сколько строк изменила последняя команда `INSERT`, `UPDATE` или
+    /// `DELETE` (в том числе выполненная через `query`).
+    pub fn changes(&self) -> usize {
+        // SAFETY: db открыта.
+        unsafe { sqlite3_changes(self.db) as usize }
+    }
+
     /// Номер (`rowid`) последней вставленной строки.
     pub fn last_insert_rowid(&self) -> i64 {
         // SAFETY: db открыта.

@@ -111,3 +111,24 @@ test = true
 [[example]]
 name = "mvc_contacts"
 test = true
+
+[[example]]
+name = "mvc_todo"
+test = true
+
+[[example]]
+name = "mvc_books"
+test = true
+
+[[example]]
+name = "mvc_csv"
+test = true
+
+[[example]]
+name = "sqlite_query"
+required-features = ["sqlite"]
+test = true
+
+[[example]]
+name = "json_settings"
+test = true

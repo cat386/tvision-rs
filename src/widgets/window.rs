@@ -90,6 +90,14 @@ impl Window {
         self.group.vs.id
     }
 
+    /// Дать фокус элементу окна (до вставки окна на рабочий стол —
+    /// например, строке ввода в окне со строкой и таблицей).
+    pub fn select(&mut self, id: ViewId) {
+        if let Some(i) = self.group.index_of(id) {
+            self.group.set_current_raw(Some(i));
+        }
+    }
+
     /// Внутренняя область окна (без рамки) в локальных координатах.
     pub fn interior(&self) -> Rect {
         self.group.vs.extent().grown(-1, -1)

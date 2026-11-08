@@ -62,9 +62,7 @@ impl Dialog {
 
     /// Выбрать (дать фокус) элемент диалога.
     pub fn select(&mut self, id: ViewId) {
-        if let Some(i) = self.win.group.index_of(id) {
-            self.win.group.set_current_raw(Some(i));
-        }
+        self.win.select(id);
     }
 }
 
