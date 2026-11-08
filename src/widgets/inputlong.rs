@@ -112,6 +112,12 @@ impl InputLong {
 }
 
 impl View for InputLong {
+    fn size_hint(&self) -> Option<crate::Point> {
+        Some(crate::Point::new(12, 1))
+    }
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        crate::layout::SizePolicy::EXPANDING_H
+    }
     crate::impl_view_basics_field!(il);
 
     fn draw(&self, dc: &mut DrawCtx) {

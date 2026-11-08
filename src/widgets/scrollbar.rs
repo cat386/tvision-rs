@@ -124,6 +124,14 @@ impl ScrollBar {
 }
 
 impl View for ScrollBar {
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        use crate::layout::Policy;
+        if self.vs.size.x == 1 {
+            crate::layout::SizePolicy::new(Policy::Fixed, Policy::Expanding)
+        } else {
+            crate::layout::SizePolicy::new(Policy::Expanding, Policy::Fixed)
+        }
+    }
     crate::impl_view_basics!();
 
     /// Порт `TScrollBar::drawPos`.

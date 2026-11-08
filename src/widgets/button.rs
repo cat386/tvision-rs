@@ -105,6 +105,12 @@ impl Button {
 }
 
 impl View for Button {
+    fn size_hint(&self) -> Option<crate::Point> {
+        Some(crate::Point::new((crate::text::cstr_width(&self.title) as i32 + 4).max(10), 2))
+    }
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        crate::layout::SizePolicy::FIXED
+    }
     crate::impl_view_basics!();
 
     fn draw(&self, dc: &mut DrawCtx) {

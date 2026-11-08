@@ -211,6 +211,9 @@ impl Combo {
 }
 
 impl View for Combo {
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        crate::layout::SizePolicy::EXPANDING_H
+    }
     crate::impl_view_basics!();
 
     fn draw(&self, dc: &mut DrawCtx) {

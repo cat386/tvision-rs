@@ -234,6 +234,12 @@ impl InputLine {
 }
 
 impl View for InputLine {
+    fn size_hint(&self) -> Option<crate::Point> {
+        Some(crate::Point::new(self.max_len.min(28) as i32 + 2, 1))
+    }
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        crate::layout::SizePolicy::EXPANDING_H
+    }
     crate::impl_view_basics!();
 
     /// Порт `TInputLine::draw`.

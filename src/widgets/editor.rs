@@ -1204,6 +1204,9 @@ fn split_lines(s: &str) -> Vec<Vec<char>> {
 }
 
 impl View for Editor {
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        crate::layout::SizePolicy::EXPANDING
+    }
     crate::impl_view_basics!();
 
     fn draw(&self, dc: &mut DrawCtx) {
@@ -1253,6 +1256,9 @@ impl Memo {
 }
 
 impl View for Memo {
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        crate::layout::SizePolicy::EXPANDING
+    }
     crate::impl_view_basics_field!(editor);
 
     fn draw(&self, dc: &mut DrawCtx) {

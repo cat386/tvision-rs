@@ -37,6 +37,11 @@ impl StaticText {
 }
 
 impl View for StaticText {
+    fn size_hint(&self) -> Option<crate::Point> {
+        let lines: Vec<&str> = self.text.split('\n').collect();
+        let w = lines.iter().map(|l| crate::text::str_width(l.trim_start_matches('\x03'))).max().unwrap_or(0);
+        Some(crate::Point::new(w as i32, lines.len() as i32))
+    }
     crate::impl_view_basics!();
 
     /// Порт `TStaticText::draw`.
@@ -95,6 +100,9 @@ impl Label {
 }
 
 impl View for Label {
+    fn size_hint(&self) -> Option<crate::Point> {
+        Some(crate::Point::new(crate::text::cstr_width(&self.text) as i32 + 1, 1))
+    }
     crate::impl_view_basics!();
 
     /// Порт `TLabel::draw`.

@@ -14,8 +14,8 @@
 ## Документация
 
 **[Руководство пользователя](docs/guide/README.md)** ([одним PDF-файлом](docs/tvision-rs-guide.pdf)) — для начинающих:
-двенадцать уроков от пустой программы до приложений с данными в JSON,
-SQLite и CSV (у каждого — готовый
+тринадцать уроков от пустой программы до приложений с данными в JSON,
+SQLite и CSV и раскладок в духе Qt (у каждого — готовый
 пример `cargo run --example learn_…`) и справочник по каждому классу
 простым языком.
 
@@ -47,6 +47,7 @@ cargo run --example mvc_books       # книги: своё окно со стр�
 cargo run --example mvc_csv         # склад в CSV: своё хранилище (трейт Storage)
 cargo run --example sqlite_query --features sqlite  # консоль SQL: запрос сверху, результат в таблице
 cargo run --example json_settings   # настройки программы в JSON: значения по умолчанию, чужие ключи
+cargo run --example layout_demo     # раскладки как в Qt: HBox, VBox, Grid, Form, пружины — без координат
 cargo run --example treeview  # дерево TreeView: файловая система с ленивой загрузкой, правка, JSON, флажки
 cargo run --example lfm     # файловый менеджер по мотивам lfm: две панели, вкладки, F5/F6/F8 с прогрессом, PowerCLI
 cargo run --example tvdemo  # порт tvdemo: калькулятор, календарь, пятнашки, ASCII, просмотр файлов...
@@ -113,6 +114,16 @@ cargo test                  # тесты на «невидимом» терми�
   [12. Рецепты](docs/guide/12-data-recipes.md).
 
 Внешних крейтов по-прежнему нет.
+
+## Раскладки в духе Qt
+
+Модуль `tvision::layout`: `HBox`, `VBox`, `Grid`, `Form`, пружины
+(`stretch`, `Spacer`), политики размера (`Fixed`, `Preferred`,
+`Expanding`…), поля и промежутки. Элементы создаются с `Rect::default()`,
+`Window::set_layout` расставляет их и пересчитывает при каждом изменении
+размера окна, `adjust_size` подгоняет окно под содержимое. Свои
+представления сообщают желаемый размер методами `size_hint` и
+`size_policy`. Урок — [13. Раскладки](docs/guide/13-layouts.md).
 
 ## Чего ещё нет (следующие этапы)
 

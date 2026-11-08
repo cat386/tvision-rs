@@ -194,6 +194,9 @@ impl FileList {
 }
 
 impl View for FileList {
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        crate::layout::SizePolicy::EXPANDING
+    }
     crate::impl_view_basics_field!(lb);
 
     fn draw(&self, dc: &mut DrawCtx) {
@@ -677,6 +680,9 @@ impl DirListBox {
 }
 
 impl View for DirListBox {
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        crate::layout::SizePolicy::EXPANDING
+    }
     crate::impl_view_basics_field!(lb);
 
     fn draw(&self, dc: &mut DrawCtx) {

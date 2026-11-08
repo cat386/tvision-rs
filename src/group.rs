@@ -27,11 +27,14 @@ pub struct Group {
     pub children: Vec<Box<dyn View>>,
     /// Индекс текущего (выбранного) ребёнка.
     pub current: Option<usize>,
+    /// Раскладка детей ([`crate::layout`]): пересчитывается при каждом
+    /// изменении размера группы.
+    pub layout: Option<Box<crate::layout::Layout>>,
 }
 
 impl Group {
     pub fn new(bounds: Rect) -> Self {
-        Group { vs: ViewState::new(bounds), children: Vec::new(), current: None }
+        Group { vs: ViewState::new(bounds), children: Vec::new(), current: None, layout: None }
     }
 
     // ------------------------------------------------------------------
@@ -330,6 +333,30 @@ impl Group {
         for c in self.children.iter_mut() {
             let nb = calc_bounds(c.as_ref(), delta, new);
             c.change_bounds(nb);
+        }
+        self.apply_layout();
+    }
+
+    /// Поставить раскладку на всю группу и сразу расставить детей.
+    /// Дети, которых нет в раскладке, остаются где были (и двигаются по
+    /// своему `grow_mode`).
+    pub fn set_layout(&mut self, layout: crate::layout::Layout) {
+        self.set_layout_inset(layout, 0);
+    }
+
+    pub(crate) fn set_layout_inset(&mut self, mut layout: crate::layout::Layout, inset: i32) {
+        layout.inset = inset;
+        self.layout = Some(Box::new(layout));
+        self.apply_layout();
+    }
+
+    /// Пересчитать раскладку (например, после смены текста кнопки или
+    /// скрытия элемента).
+    pub fn apply_layout(&mut self) {
+        if let Some(mut l) = self.layout.take() {
+            let r = Rect::new(l.inset, l.inset, self.vs.size.x - l.inset, self.vs.size.y - l.inset);
+            l.apply(self, r);
+            self.layout = Some(l);
         }
     }
 

@@ -64,6 +64,7 @@ pub mod fileops;
 pub mod geometry;
 pub mod group;
 pub mod json;
+pub mod layout;
 pub mod locale;
 pub mod mvc;
 pub mod platform;

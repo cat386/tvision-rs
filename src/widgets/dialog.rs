@@ -64,6 +64,16 @@ impl Dialog {
     pub fn select(&mut self, id: ViewId) {
         self.win.select(id);
     }
+
+    /// Раскладка элементов диалога (см. [`Window::set_layout`]).
+    pub fn set_layout(&mut self, layout: crate::layout::Layout) {
+        self.win.set_layout(layout);
+    }
+
+    /// Размер диалога — по раскладке (см. [`Window::adjust_size`]).
+    pub fn adjust_size(&mut self) {
+        self.win.adjust_size();
+    }
 }
 
 impl View for Dialog {

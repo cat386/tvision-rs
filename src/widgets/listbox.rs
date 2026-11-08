@@ -135,6 +135,9 @@ impl ListBox {
 }
 
 impl View for ListBox {
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        crate::layout::SizePolicy::EXPANDING
+    }
     crate::impl_view_basics!();
 
     /// Порт `TListViewer::draw`.

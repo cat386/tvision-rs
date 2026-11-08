@@ -1349,6 +1349,9 @@ fn listing_entries(l: &Listing) -> Vec<PanelEntry> {
 }
 
 impl View for FilePanel {
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        crate::layout::SizePolicy::EXPANDING
+    }
     crate::impl_view_basics!();
 
     fn draw(&self, dc: &mut DrawCtx) {

@@ -90,6 +90,29 @@ impl Window {
         self.group.vs.id
     }
 
+    /// Расставлять элементы окна раскладкой ([`crate::layout`]) внутри
+    /// рамки. Раскладка сразу применяется и потом пересчитывается при
+    /// каждом изменении размера окна; окно нельзя сделать меньше её
+    /// минимума. Полосы прокрутки и элементы вне раскладки остаются на
+    /// своих местах.
+    pub fn set_layout(&mut self, layout: crate::layout::Layout) {
+        self.group.set_layout_inset(layout, 1);
+    }
+
+    /// Подогнать размер окна под желаемый размер раскладки (как
+    /// `QWidget::adjustSize`). Левый верхний угол остаётся на месте;
+    /// окно с `of::CENTERED` центрируется при вставке.
+    pub fn adjust_size(&mut self) {
+        let Some(mut l) = self.group.layout.take() else { return };
+        let hint = l.size_hint(&self.group);
+        let inset = l.inset;
+        self.group.layout = Some(l);
+        let size = Point::new((hint.x + 2 * inset).max(MIN_WIN_SIZE.x), (hint.y + 2 * inset).max(MIN_WIN_SIZE.y));
+        let a = self.group.vs.origin;
+        self.group.change_bounds(Rect::new(a.x, a.y, a.x + size.x, a.y + size.y));
+        self.group.apply_layout();
+    }
+
     /// Дать фокус элементу окна (до вставки окна на рабочий стол —
     /// например, строке ввода в окне со строкой и таблицей).
     pub fn select(&mut self, id: ViewId) {
@@ -371,8 +394,14 @@ impl View for Window {
         self.group.valid(command, ctx)
     }
 
-    /// Окно не может быть меньше 16×6 (`minWinSize`).
+    /// Окно не может быть меньше 16×6 (`minWinSize`) и меньше минимума
+    /// своей раскладки.
     fn size_limits(&self, owner_size: Point) -> (Point, Point) {
-        (MIN_WIN_SIZE, owner_size)
+        let mut min = MIN_WIN_SIZE;
+        if let Some(l) = &self.group.layout {
+            min.x = min.x.max(l.last_min.x + 2 * l.inset);
+            min.y = min.y.max(l.last_min.y + 2 * l.inset);
+        }
+        (min, owner_size)
     }
 }

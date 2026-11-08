@@ -132,3 +132,7 @@ test = true
 [[example]]
 name = "json_settings"
 test = true
+
+[[example]]
+name = "layout_demo"
+test = true

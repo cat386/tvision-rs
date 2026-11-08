@@ -231,6 +231,10 @@ impl Cluster {
 }
 
 impl View for Cluster {
+    fn size_hint(&self) -> Option<crate::Point> {
+        let w = self.strings.iter().map(|s| crate::text::cstr_width(s)).max().unwrap_or(0) as i32 + 6;
+        Some(crate::Point::new(w, self.strings.len().max(1) as i32))
+    }
     crate::impl_view_basics!();
 
     /// Порт `TCluster::drawMultiBox`.

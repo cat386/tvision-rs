@@ -197,6 +197,12 @@ fn partial_attr(empty: Attr, filled: Attr) -> Attr {
 }
 
 impl View for ProgressBar {
+    fn size_hint(&self) -> Option<crate::Point> {
+        Some(crate::Point::new(20, 1))
+    }
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        crate::layout::SizePolicy::EXPANDING_H
+    }
     crate::impl_view_basics!();
 
     fn draw(&self, dc: &mut DrawCtx) {

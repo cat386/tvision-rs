@@ -102,6 +102,12 @@ impl History {
 }
 
 impl View for History {
+    fn size_hint(&self) -> Option<crate::Point> {
+        Some(crate::Point::new(3, 1))
+    }
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        crate::layout::SizePolicy::FIXED
+    }
     crate::impl_view_basics!();
 
     fn draw(&self, dc: &mut DrawCtx) {

@@ -135,6 +135,7 @@ fn rating_test() {
 | `update_commands(&self, ctx)` | разрешать и запрещать команды, пока представление в фокусе |
 | `exec_result(tag, cmd, view, ctx)` | получить ответ модального окна, открытого через `ctx.exec` (см. [`Ctx`](#ctx)) |
 | `change_bounds(r)`, `size_limits(owner)` | изменение размера и его пределы |
+| `size_hint()`, `size_policy()` | желаемый размер и политика для [раскладок](33-layout.md#свой-элемент-в-раскладке) |
 | `help_ctx()` | номер темы справки для F1 |
 | `monitor_event(ev)` | видеть все события программы (для отладочного окна) |
 | `as_window()`, `as_group()`, `as_group_mut()` | «я окно», «у меня есть дети» — пишут макросы и шаблон окна |
@@ -460,7 +461,7 @@ fn draw_box(dc: &mut DrawCtx, text: &str) {
 | `remove(id)` | убрать ребёнка |
 | `get_data()`, `set_data(v)` | данные всех детей разом |
 
-**Реже:** `Group::new(rect)`, `insert(Box<dyn View>)`, `index_of(id)`,
+**Реже:** `set_layout(раскладка)`, `apply_layout()`, поле `layout` ([раскладки](33-layout.md#раскладка-в-окне-и-группе)), `Group::new(rect)`, `insert(Box<dyn View>)`, `index_of(id)`,
 `child(id)`, `view(id)`, `view_mut(id)` (без приведения типа),
 `select_id(id, ctx)`, `select_index(i, ctx)`, `set_current`,
 `select_next(вперёд, ctx)`, `reset_current()`, `make_first(i)`,

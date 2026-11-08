@@ -818,6 +818,19 @@ pub trait View: Any {
         self.vs_mut().set_bounds(bounds);
     }
 
+    /// Желаемый размер для раскладок ([`crate::layout`]): у кнопки — по
+    /// надписи, у строки ввода — по длине. `None` — взять размер, который
+    /// был у представления при создании.
+    fn size_hint(&self) -> Option<Point> {
+        None
+    }
+
+    /// Как представление тянется в раскладке. По умолчанию — по ширине
+    /// «желаемо», по высоте ровно.
+    fn size_policy(&self) -> crate::layout::SizePolicy {
+        crate::layout::SizePolicy::default()
+    }
+
     /// Минимальный и максимальный размер (`sizeLimits`).
     fn size_limits(&self, owner_size: Point) -> (Point, Point) {
         let max = if self.vs().grow_mode & gf::FIXED != 0 { Point::new(i32::MAX, i32::MAX) } else { owner_size };
