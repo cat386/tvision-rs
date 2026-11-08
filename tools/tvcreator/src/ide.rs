@@ -14,6 +14,9 @@ use crate::codegen;
 use crate::model::Node;
 use crate::model::*;
 use crate::props::{next_value, props, set_prop, Prop, Sel};
+use crate::themes::{load_themes, resolve, settings_path, theme_dirs, Settings, ThemeEntry};
+use tvision::color::Attr;
+use tvision::theme::{choose_theme, Theme};
 
 // ----------------------------------------------------------------------
 // Команды
@@ -40,6 +43,17 @@ pub const CM_PREVIEW: u16 = 121;
 pub const CM_CODE: u16 = 122;
 pub const CM_CHECK: u16 = 123;
 pub const CM_ABOUT: u16 = 124;
+pub const CM_THEME_CHOOSE: u16 = 130;
+pub const CM_THEME_DEFAULT: u16 = 131;
+pub const CM_THEME_OPEN: u16 = 132;
+pub const CM_FORM_THEME_CHOOSE: u16 = 133;
+pub const CM_FORM_THEME_SAME: u16 = 134;
+/// Тема среды из меню: 140 + номер темы.
+pub const CM_IDE_THEME: u16 = 140;
+/// Тема формы из меню: 180 + номер темы.
+pub const CM_FORM_THEME: u16 = 180;
+/// Сколько тем помещается в меню.
+pub const MENU_THEMES: usize = 36;
 
 /// Пункты палитры: раскладки, распорки, виджеты.
 pub fn palette_items() -> Vec<String> {
@@ -176,6 +190,13 @@ pub struct Ide {
     last_tree: Option<Vec<usize>>,
     /// Последнее сообщение среды (для тестов).
     pub last_message: String,
+    /// Найденные темы.
+    pub themes: Vec<ThemeEntry>,
+    /// Выбор тем (запоминается в `settings_path`).
+    pub settings: Settings,
+    pub settings_path: Option<PathBuf>,
+    /// Цвета среды без темы — для «По умолчанию».
+    default_palette: Vec<Attr>,
 }
 
 fn sel_to_tree(s: &Sel) -> Vec<usize> {
@@ -200,15 +221,145 @@ fn tree_of(n: &Node) -> TreeNode {
 impl Ide {
     /// Открыть среду в программе `app` с документом `doc`.
     pub fn new(app: &mut Program, doc: FormDoc, path: Option<PathBuf>) -> Ide {
+        Ide::with_themes(app, doc, path, load_themes(&[]), None)
+    }
+
+    /// Среда со списком тем и файлом настроек (из него берутся темы
+    /// среды и формы).
+    pub fn with_themes(app: &mut Program, doc: FormDoc, path: Option<PathBuf>, themes: Vec<ThemeEntry>, settings_path: Option<PathBuf>) -> Ide {
         let dirty = Rc::new(Cell::new(false));
         let r = app.desktop().group.vs.extent();
         let w = MainWindow::new(r, dirty.clone());
         let ids = (w.palette, w.tree, w.canvas, w.props);
         let window = app.insert_window(w);
-        let mut ide =
-            Ide { doc, path, sel: Sel::Form, window, ids, dirty, undo: Vec::new(), redo: Vec::new(), last_tree: None, last_message: String::new() };
+        let settings = settings_path.as_deref().map(Settings::load).unwrap_or_default();
+        let default_palette = app.palette.clone();
+        let mut ide = Ide {
+            doc,
+            path,
+            sel: Sel::Form,
+            window,
+            ids,
+            dirty,
+            undo: Vec::new(),
+            redo: Vec::new(),
+            last_tree: None,
+            last_message: String::new(),
+            themes,
+            settings,
+            settings_path,
+            default_palette,
+        };
+        // Запомненные темы.
+        if let Some(e) = (!ide.settings.theme.is_empty()).then(|| resolve(&ide.themes, &ide.settings.theme)).flatten() {
+            app.set_theme(&e.theme);
+        }
+        let ft = ide.settings.form_theme.clone();
+        ide.set_form_theme(app, (!ft.is_empty()).then(|| resolve(&ide.themes, &ft)).flatten());
         ide.refresh_all(app);
         ide
+    }
+
+    // ---------- темы ----------
+
+    fn save_settings(&mut self) {
+        if let Some(p) = &self.settings_path {
+            let _ = self.settings.save(p); // не записалось — просто не запомнится
+        }
+    }
+
+    /// Тема среды (`None` — цвета по умолчанию).
+    pub fn set_ide_theme(&mut self, app: &mut Program, e: Option<&ThemeEntry>) {
+        match e {
+            Some(e) => {
+                app.set_theme(&e.theme);
+                self.settings.theme = e.key();
+            }
+            None => {
+                app.palette = self.default_palette.clone();
+                self.settings.theme.clear();
+            }
+        }
+        self.save_settings();
+    }
+
+    /// Тема формы на холсте и в предпросмотре (`None` — как у среды).
+    pub fn set_form_theme(&mut self, app: &mut Program, e: Option<ThemeEntry>) {
+        self.settings.form_theme = e.as_ref().map(|e| e.key()).unwrap_or_default();
+        if let Some(c) = app.find_mut::<Canvas>(self.ids.2) {
+            c.form_theme = e.map(|e| (e.theme.name.clone(), e.theme.palette.clone()));
+        }
+        self.save_settings();
+    }
+
+    /// Палитра темы формы, если она выбрана.
+    pub fn form_palette(&self, app: &Program) -> Option<Vec<Attr>> {
+        app.find::<Canvas>(self.ids.2).and_then(|c| c.form_theme.as_ref().map(|(_, p)| p.clone()))
+    }
+
+    fn add_theme(&mut self, e: ThemeEntry) -> usize {
+        match self.themes.iter().position(|x| x.key() == e.key()) {
+            Some(i) => i,
+            None => {
+                self.themes.push(e);
+                self.themes.len() - 1
+            }
+        }
+    }
+
+    /// Выбор темы формы: как `choose_theme`, но перекрашивается только
+    /// холст. Первый пункт — «как у среды».
+    pub fn choose_form_theme(&mut self, app: &mut Program) {
+        let mut d = Dialog::centered(46, 16, "Тема формы");
+        let mut list = ListBox::new(Rect::default(), 1, None);
+        let mut names = vec!["(как у среды)".to_string()];
+        names.extend(self.themes.iter().map(|e| e.theme.name.clone()));
+        list.set_items(names);
+        let current = self.form_palette(app);
+        list.focused = current.as_ref().and_then(|p| self.themes.iter().position(|e| &e.theme.palette == p)).map_or(0, |i| i + 1);
+        let list_id = d.add(list);
+        let note = d.add(StaticText::new(
+            Rect::default(),
+            "Форма на холсте перекрашивается сразу;
+цвета среды не меняются.",
+        ));
+        let ok = d.add(Button::new(Rect::default(), "O~K~", cm::OK, bf::DEFAULT));
+        let cancel = d.add(Button::new(Rect::default(), "Отмена", cm::CANCEL, bf::NORMAL));
+        d.set_layout(
+            VBox::new()
+                .margins(2, 1, 2, 0)
+                .add(item(list_id).min(30, 8).stretch(1))
+                .space(1)
+                .add(note)
+                .space(1)
+                .add(HBox::new().stretch(1).add(ok).add(cancel)),
+        );
+        // Справа — чтобы не закрывать холст.
+        d.win.group.vs.options &= !of::CENTERED;
+        let ext = app.desktop().group.vs.extent();
+        d.win.group.vs.origin = Point::new((ext.b.x - 48).max(0), 2);
+        d.select(list_id);
+        let canvas = self.ids.2;
+        let themes = self.themes.clone();
+        let before = app.find::<Canvas>(canvas).and_then(|c| c.form_theme.clone());
+        let mut shown = usize::MAX;
+        let (cmd, d) = app.exec_dialog_idle(d, |app, _| {
+            let i = app.find::<ListBox>(list_id).map(|l| l.focused).unwrap_or(0);
+            if i != shown {
+                shown = i;
+                if let Some(c) = app.find_mut::<Canvas>(canvas) {
+                    c.form_theme = i.checked_sub(1).and_then(|k| themes.get(k)).map(|e| (e.theme.name.clone(), e.theme.palette.clone()));
+                }
+            }
+            None
+        });
+        let i = d.win.group.find::<ListBox>(list_id).map(|l| l.focused).unwrap_or(0);
+        if cmd == cm::OK {
+            let e = i.checked_sub(1).and_then(|k| self.themes.get(k)).cloned();
+            self.set_form_theme(app, e);
+        } else if let Some(c) = app.find_mut::<Canvas>(canvas) {
+            c.form_theme = before;
+        }
     }
 
     pub fn is_dirty(&self) -> bool {
@@ -528,10 +679,21 @@ impl Ide {
     }
 
     fn preview(&mut self, app: &mut Program) {
-        let built = build(&self.doc);
+        let theme = self.form_palette(app);
+        // В теме формы предпросмотр модальный (палитра — на всю программу
+        // и возвращается после закрытия), поэтому окно показывается как диалог.
+        let mut doc = self.doc.clone();
+        if theme.is_some() {
+            doc.kind = FormKind::Dialog;
+        }
+        let built = build(&doc);
         match built.view.into_any().downcast::<Dialog>() {
             Ok(d) => {
+                let saved = theme.map(|p| std::mem::replace(&mut app.palette, p));
                 app.exec_dialog(*d);
+                if let Some(p) = saved {
+                    app.palette = p;
+                }
             }
             Err(any) => {
                 if let Ok(mut w) = any.downcast::<Window>() {
@@ -606,6 +768,41 @@ impl AppHandler for Ide {
                     self.error(app, &p.join("\n"));
                 }
             }
+            CM_THEME_CHOOSE => {
+                let list: Vec<Theme> = self.themes.iter().map(|e| e.theme.clone()).collect();
+                if let Some(i) = choose_theme(app, &list) {
+                    let e = self.themes[i].clone();
+                    self.set_ide_theme(app, Some(&e));
+                }
+            }
+            CM_THEME_DEFAULT => self.set_ide_theme(app, None),
+            CM_THEME_OPEN => {
+                let (c, d) = app.exec_dialog(FileDialog::new("*.tvtheme", "Открыть тему", "~И~мя", fd::OPEN_BUTTON, 102));
+                if c != cm::CANCEL {
+                    let p = d.file_name();
+                    match Theme::load(&p) {
+                        Ok(theme) => {
+                            let i = self.add_theme(ThemeEntry { theme, path: Some(p) });
+                            let e = self.themes[i].clone();
+                            self.set_ide_theme(app, Some(&e));
+                        }
+                        Err(e) => self.error(app, &e),
+                    }
+                }
+            }
+            CM_FORM_THEME_CHOOSE => self.choose_form_theme(app),
+            CM_FORM_THEME_SAME => self.set_form_theme(app, None),
+            c if (CM_IDE_THEME..CM_IDE_THEME + MENU_THEMES as u16).contains(&c) => {
+                if let Some(e) = self.themes.get((c - CM_IDE_THEME) as usize).cloned() {
+                    self.set_ide_theme(app, Some(&e));
+                }
+            }
+            c if (CM_FORM_THEME..CM_FORM_THEME + MENU_THEMES as u16).contains(&c) => {
+                let e = self.themes.get((c - CM_FORM_THEME) as usize).cloned();
+                if e.is_some() {
+                    self.set_form_theme(app, e);
+                }
+            }
             CM_ABOUT => self.info(
                 app,
                 "\x03TVCreator\n\n\x03Дизайнер форм для tvision-rs\n\x03в духе Qt Creator.\n\n\x03Формы — файлы .tvui,\n\x03код — F9 или tvcreator --gen.",
@@ -649,7 +846,29 @@ impl AppHandler for Ide {
     }
 }
 
+/// Меню с темами по умолчанию (встроенными).
 pub fn menu() -> Menu {
+    menu_with(&load_themes(&[]))
+}
+
+/// Меню «Тема»: тема среды и тема формы — по пункту на тему.
+fn themes_menu(themes: &[ThemeEntry]) -> Menu {
+    let mut ide = Menu::new();
+    let mut form = Menu::new();
+    for (i, e) in themes.iter().enumerate().take(MENU_THEMES) {
+        ide = ide.item(&e.theme.name, CM_IDE_THEME + i as u16);
+        form = form.item(&e.theme.name, CM_FORM_THEME + i as u16);
+    }
+    ide = ide
+        .separator()
+        .item_key("~В~ыбрать с предпросмотром...", CM_THEME_CHOOSE, kb::ctrl('t'), "Ctrl-T")
+        .item("~О~ткрыть файл темы...", CM_THEME_OPEN)
+        .item("По ~у~молчанию", CM_THEME_DEFAULT);
+    form = form.separator().item("~В~ыбрать с предпросмотром...", CM_FORM_THEME_CHOOSE).item("~К~ак у среды", CM_FORM_THEME_SAME);
+    Menu::new().submenu("~С~реда", ide).submenu("~Ф~орма на холсте", form)
+}
+
+pub fn menu_with(themes: &[ThemeEntry]) -> Menu {
     Menu::new()
         .submenu(
             "~Ф~айл",
@@ -692,6 +911,7 @@ pub fn menu() -> Menu {
                 .separator()
                 .item("О ~п~рограмме", CM_ABOUT),
         )
+        .submenu("~Т~ема", themes_menu(themes))
         .submenu("~О~кна", Menu::new().item_key("~С~ледующее", cm::NEXT, kb::F6, "F6").item_key("~З~акрыть", cm::CLOSE, kb::ALT_F3, "Alt-F3"))
 }
 
@@ -718,8 +938,9 @@ pub fn run(file: Option<PathBuf>) -> Result<(), String> {
         Some(p) => (FormDoc::new("Form1"), Some(p)), // новый файл
         None => (FormDoc::new("Form1"), None),
     };
-    let mut app = Program::with_terminal(Some(menu()), Some(status())).map_err(|e| e.to_string())?;
-    let mut ide = Ide::new(&mut app, doc, path);
+    let themes = load_themes(&theme_dirs());
+    let mut app = Program::with_terminal(Some(menu_with(&themes)), Some(status())).map_err(|e| e.to_string())?;
+    let mut ide = Ide::with_themes(&mut app, doc, path, themes, settings_path());
     app.run(&mut ide);
     Ok(())
 }
@@ -878,5 +1099,102 @@ mod tests {
         app.redraw();
         let s = app.screen_text();
         assert!(s.contains("Код: form1.rs") && s.contains("pub struct Form1"), "{}", s);
+    }
+
+    // ---------- темы ----------
+
+    fn canvas_theme(app: &Program, ide: &Ide) -> Option<String> {
+        app.find::<Canvas>(ide.ids.2).and_then(|c| c.form_theme.as_ref().map(|(n, _)| n.clone()))
+    }
+
+    #[test]
+    fn menu_has_theme_items() {
+        let (mut app, _ide) = ide_with(&[KeyEvent::new(Key::Char('т'), Mods::ALT)]);
+        app.redraw();
+        let s = app.screen_text();
+        assert!(s.contains("Среда") && s.contains("Форма на холсте"), "{}", s);
+    }
+
+    #[test]
+    fn ide_theme_from_menu_and_default() {
+        let (mut app, mut ide) = ide_with(&[]);
+        let default = app.palette.clone();
+        let classic = ide.themes.iter().position(|e| e.theme.base == tvision::theme::Base::Classic).unwrap();
+        app.put_event(Event::command_event(CM_IDE_THEME + classic as u16));
+        app.pump(&mut ide);
+        assert_eq!(app.palette, ide.themes[classic].theme.palette);
+        assert_eq!(ide.settings.theme, "builtin:classic");
+        app.put_event(Event::command_event(CM_THEME_DEFAULT));
+        app.pump(&mut ide);
+        assert_eq!(app.palette, default);
+        assert!(ide.settings.theme.is_empty());
+    }
+
+    #[test]
+    fn form_theme_paints_only_canvas() {
+        let (mut app, mut ide) = ide_with(&[]);
+        let ide_pal = app.palette.clone();
+        let classic = ide.themes.iter().position(|e| e.theme.base == tvision::theme::Base::Classic).unwrap();
+        app.put_event(Event::command_event(CM_FORM_THEME + classic as u16));
+        app.pump(&mut ide);
+        assert_eq!(app.palette, ide_pal, "цвета среды не меняются");
+        assert_eq!(canvas_theme(&app, &ide).as_deref(), Some("Классическая"));
+        app.redraw();
+        let s = app.screen_text();
+        assert!(s.contains("Тема формы: Классическая"), "{}", s);
+        // Рамка диалога формы — в цвете классического серого диалога.
+        let t = &ide.themes[classic].theme;
+        let frame = [t.get(32), t.get(33)];
+        assert!(app.screen().cells.iter().any(|c| c.ch == '┌' && frame.contains(&c.attr)));
+        // Предпросмотр в теме формы возвращает цвета среды.
+        app.put_event(Event::command_event(CM_PREVIEW));
+        app.pump(&mut ide);
+        assert_eq!(app.palette, ide_pal);
+        app.put_event(Event::command_event(CM_FORM_THEME_SAME));
+        app.pump(&mut ide);
+        assert_eq!(canvas_theme(&app, &ide), None);
+    }
+
+    #[test]
+    fn choose_form_theme_dialog() {
+        let down = KeyEvent::new(Key::Down, Mods::NONE);
+        let chosen = |last: KeyEvent| {
+            let mut b = HeadlessBackend::new(120, 40);
+            b.push_key(down);
+            b.push_key(last);
+            let mut app = Program::new(Box::new(b), Some(menu()), Some(status()));
+            let mut ide = Ide::new(&mut app, FormDoc::new("Form1"), None);
+            app.put_event(Event::command_event(CM_FORM_THEME_CHOOSE));
+            app.pump(&mut ide);
+            (canvas_theme(&app, &ide), ide.themes[0].theme.name.clone())
+        };
+        let (got, first) = chosen(kb::ENTER);
+        assert_eq!(got, Some(first));
+        // Отмена возвращает прежнюю тему формы.
+        assert_eq!(chosen(kb::ESC).0, None);
+    }
+
+    #[test]
+    fn themes_remembered_between_runs() {
+        let cfg = std::env::temp_dir().join(format!("tvcreator-theme-cfg-{}", std::process::id())).join("settings.json");
+        let _ = std::fs::remove_file(&cfg);
+        let run = |cmds: &[u16]| {
+            let mut app = Program::new(Box::new(HeadlessBackend::new(120, 40)), Some(menu()), Some(status()));
+            let mut ide = Ide::with_themes(&mut app, FormDoc::new("Form1"), None, load_themes(&[]), Some(cfg.clone()));
+            for c in cmds {
+                app.put_event(Event::command_event(*c));
+            }
+            app.pump(&mut ide);
+            let ft = canvas_theme(&app, &ide);
+            (app.palette.clone(), ft)
+        };
+        let themes = load_themes(&[]);
+        let mono = themes.iter().position(|e| e.theme.base == tvision::theme::Base::Monochrome).unwrap();
+        let classic = themes.iter().position(|e| e.theme.base == tvision::theme::Base::Classic).unwrap();
+        run(&[CM_IDE_THEME + mono as u16, CM_FORM_THEME + classic as u16]);
+        let (pal, ft) = run(&[]);
+        assert_eq!(pal, themes[mono].theme.palette);
+        assert_eq!(ft.as_deref(), Some("Классическая"));
+        let _ = std::fs::remove_dir_all(cfg.parent().unwrap());
     }
 }

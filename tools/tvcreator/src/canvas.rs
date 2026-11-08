@@ -23,13 +23,16 @@ pub struct Canvas {
     pub selected: Sel,
     /// Выбор мышью, который ещё не забрала среда.
     pub picked: Option<Sel>,
+    /// Тема формы: палитра приложения, в которой рисовать форму
+    /// (`None` — как у самой среды) и её имя для подсказки.
+    pub form_theme: Option<(String, Vec<Attr>)>,
 }
 
 impl Canvas {
     pub fn new() -> Self {
         let mut vs = ViewState::new(Rect::default());
         vs.options |= of::SELECTABLE | of::FIRST_CLICK;
-        Canvas { vs, built: None, selected: Sel::Form, picked: None }
+        Canvas { vs, built: None, selected: Sel::Form, picked: None, form_theme: None }
     }
 
     /// Прямоугольник выделенного в координатах формы.
@@ -100,8 +103,16 @@ impl View for Canvas {
         let fs = b.group().vs.size;
         {
             let r = Rect::new(FORM_OFFSET.x, FORM_OFFSET.y, FORM_OFFSET.x + fs.x, FORM_OFFSET.y + fs.y);
-            let mut sub = dc.sub_root(r, b.view.palette());
-            b.view.draw(&mut sub);
+            match &self.form_theme {
+                Some((_, pal)) => {
+                    let mut sub = dc.sub_themed(r, b.view.palette(), pal);
+                    b.view.draw(&mut sub);
+                }
+                None => {
+                    let mut sub = dc.sub_root(r, b.view.palette());
+                    b.view.draw(&mut sub);
+                }
+            }
         }
         if let Some(r) = self.selection_rect() {
             let r = r.moved(FORM_OFFSET.x, FORM_OFFSET.y);
@@ -122,6 +133,9 @@ impl View for Canvas {
             dc.write_str(FORM_OFFSET.x, y, hint, a);
             let info = format!("{} × {}", fs.x, fs.y);
             dc.write_str(FORM_OFFSET.x + fs.x - info.chars().count() as i32, FORM_OFFSET.y + fs.y, &info, a);
+            if let Some((name, _)) = &self.form_theme {
+                dc.write_str(FORM_OFFSET.x, y + 1, &format!("Тема формы: {}", name), a);
+            }
         }
     }
 
