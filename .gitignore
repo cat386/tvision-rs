@@ -1,2 +1,5 @@
 target/
 Cargo.lock
+tools/guide-pdf/guide.html
+tools/guide-pdf/__pycache__/
+tools/guide-pdf/.fonts/
