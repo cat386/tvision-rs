@@ -14,7 +14,8 @@
 ## Документация
 
 **[Руководство пользователя](docs/guide/README.md)** — для начинающих:
-десять уроков от пустой программы до приложения (у каждого — готовый
+одиннадцать уроков от пустой программы до приложения с данными в JSON
+и SQLite (у каждого — готовый
 пример `cargo run --example learn_…`) и справочник по каждому классу
 простым языком.
 
@@ -40,10 +41,12 @@ cargo run --example table   # таблица: миллион строк, сво�
 cargo run --example colors  # 256 цветов: палитра xterm, темы gruvbox/классика/сумерки, выбор цвета, режим 16/256
 cargo run --example learn_01_hello   # … learn_08_todo — программы к урокам руководства
 cargo run --example guide_contacts  # приложение из урока руководства: таблица, диалог с проверкой, файлы
+cargo run --example mvc_contacts    # то же на каркасе MVC: записи в JSON (или SQLite: --features sqlite -- файл.db)
 cargo run --example treeview  # дерево TreeView: файловая система с ленивой загрузкой, правка, JSON, флажки
 cargo run --example lfm     # файловый менеджер по мотивам lfm: две панели, вкладки, F5/F6/F8 с прогрессом, PowerCLI
 cargo run --example tvdemo  # порт tvdemo: калькулятор, календарь, пятнашки, ASCII, просмотр файлов...
 cargo test --all-targets    # все тесты, включая тесты tvdemo
+cargo test --all-targets --features sqlite  # плюс SQLite (нужна системная libsqlite3)
 cargo test                  # тесты на «невидимом» терминале
 ```
 
@@ -88,6 +91,22 @@ cargo test                  # тесты на «невидимом» терми�
 | `TMultiCheckBoxes`                    | `Cluster::multi_check_boxes`                |
 | `TInputLong`, `TColoredText`, `TCombo` (Dialog Design) | `InputLong`, `StaticText::colored`, `Combo` |
 | `TColorAttr`, `TColorXTerm`           | `Attr` (`u32`): байт BIOS + 256 цветов xterm |
+
+## Данные: JSON, SQLite, MVC
+
+Модули сверх оригинального tvision:
+
+* `tvision::json` — разбор и запись JSON (ошибки с номером строки и
+  столбца, ход разбора для полосы выполнения);
+* `tvision::sqlite` — база SQLite через системную `libsqlite3`, запросы с
+  параметрами, транзакции; включается признаком `sqlite`:
+  `tvision-rs = { git = "…", features = ["sqlite"] }`;
+* `tvision::mvc` — модель, окно-таблица и контроллер: по описанию полей
+  (`Schema`, `Field`) получаются таблица, диалог правки с проверкой и
+  сохранение каждого изменения в JSON или SQLite (`open_storage` выбирает
+  по расширению файла). Урок — [docs/guide/11-mvc.md](docs/guide/11-mvc.md).
+
+Внешних крейтов по-прежнему нет.
 
 ## Чего ещё нет (следующие этапы)
 

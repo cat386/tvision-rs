@@ -63,9 +63,13 @@ pub mod event;
 pub mod fileops;
 pub mod geometry;
 pub mod group;
+pub mod json;
 pub mod locale;
+pub mod mvc;
 pub mod platform;
 pub mod program;
+#[cfg(feature = "sqlite")]
+pub mod sqlite;
 pub mod text;
 pub mod view;
 pub mod widgets;
