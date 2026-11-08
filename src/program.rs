@@ -103,7 +103,28 @@ impl Program {
         if crate::color::color_mode() == crate::color::ColorMode::Ansi16 {
             app.palette = palettes::APP_COLOR.to_vec();
         }
+        // Тема из переменной окружения TVISION_THEME (путь к .tvtheme).
+        // Ошибку не показываем — программа просто остаётся в своих цветах;
+        // проверить файл можно через `load_theme`.
+        if let Ok(path) = std::env::var(crate::theme::THEME_ENV) {
+            if let Ok(t) = crate::theme::Theme::load(&path) {
+                app.set_theme(&t);
+            }
+        }
         Ok(app)
+    }
+
+    /// Подключить тему: палитра приложения меняется сразу, со следующей
+    /// перерисовки.
+    pub fn set_theme(&mut self, theme: &crate::theme::Theme) {
+        self.palette = theme.palette.clone();
+    }
+
+    /// Прочитать тему из файла `.tvtheme` и подключить.
+    pub fn load_theme(&mut self, path: impl AsRef<std::path::Path>) -> Result<crate::theme::Theme, String> {
+        let t = crate::theme::Theme::load(path)?;
+        self.set_theme(&t);
+        Ok(t)
     }
 
     /// Создаёт программу с заданным терминалом (например, `HeadlessBackend` для тестов).

@@ -1,0 +1,32 @@
+{
+  "tvtheme": 1,
+  "name": "Морская",
+  "description": "Бирюзовые диалоги на синем рабочем столе (16 цветов)",
+  "base": "classic",
+  "colors": [
+    {"index": 1, "item": "Рабочий стол: фон", "color": "lightcyan/blue"},
+    {"index": 2, "item": "Меню и строка состояния: пункт", "color": "white/blue"},
+    {"index": 3, "item": "Меню и строка состояния: недоступный пункт", "color": "darkgray/blue"},
+    {"index": 4, "item": "Меню и строка состояния: горячая буква", "color": "yellow/blue"},
+    {"index": 5, "item": "Меню и строка состояния: выбранный пункт", "color": "black/cyan"},
+    {"index": 6, "item": "Меню и строка состояния: выбранный недоступный", "color": "darkgray/cyan"},
+    {"index": 7, "item": "Меню и строка состояния: горячая буква выбранного", "color": "red/cyan"},
+    {"index": 32, "item": "Серый диалог: рамка неактивная", "color": "lightgray/cyan"},
+    {"index": 33, "item": "Серый диалог: рамка и фон", "color": "white/cyan"},
+    {"index": 34, "item": "Серый диалог: значки рамки", "color": "lightgreen/cyan"},
+    {"index": 37, "item": "Серый диалог: текст", "color": "yellow/cyan"},
+    {"index": 38, "item": "Серый диалог: подпись", "color": "black/cyan"},
+    {"index": 39, "item": "Серый диалог: подпись выбранного поля", "color": "white/cyan"},
+    {"index": 40, "item": "Серый диалог: горячая буква подписи", "color": "yellow/cyan"},
+    {"index": 46, "item": "Серый диалог: тень кнопки", "color": "black/cyan"},
+    {"index": 47, "item": "Серый диалог: флажки", "color": "black/lightgray"},
+    {"index": 48, "item": "Серый диалог: флажки выбранные", "color": "white/lightgray"},
+    {"index": 49, "item": "Серый диалог: горячая буква флажков", "color": "yellow/lightgray"},
+    {"index": 54, "item": "Серый диалог: края кнопки истории", "color": "green/cyan"},
+    {"index": 56, "item": "Серый диалог: история: стрелки", "color": "blue/lightgray"},
+    {"index": 57, "item": "Серый диалог: список", "color": "black/lightgray"},
+    {"index": 59, "item": "Серый диалог: список: отмеченное", "color": "yellow/lightgray"},
+    {"index": 60, "item": "Серый диалог: список: разделитель", "color": "blue/lightgray"},
+    {"index": 62, "item": "Серый диалог: флажки недоступные", "color": "darkgray/lightgray"}
+  ]
+}

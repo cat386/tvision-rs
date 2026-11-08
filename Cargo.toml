@@ -11,7 +11,7 @@ license = "MIT"
 # TVCreator (tools/tvcreator) — отдельный пакет в том же рабочем пространстве:
 # cargo run -p tvcreator, cargo test -p tvcreator.
 [workspace]
-members = [".", "tools/tvcreator"]
+members = [".", "tools/tvcreator", "tools/tvtheme"]
 
 [dependencies]
 
@@ -140,4 +140,8 @@ test = true
 
 [[example]]
 name = "layout_demo"
+test = true
+
+[[example]]
+name = "themes"
 test = true

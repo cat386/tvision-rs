@@ -55,6 +55,7 @@ Turbo Vision и текстовыми интерфейсами. Всё остал
 | [12. Рецепты: данные](12-data-recipes.md) | свои команды над моделью, своё окно, поиск, своё хранилище (CSV), консоль SQL, настройки в JSON | `mvc_todo`, `mvc_books`, `mvc_csv`, `sqlite_query`, `json_settings` |
 | [13. Раскладки: без координат](13-layouts.md) | `HBox`, `VBox`, `Grid`, `Form`, пружины — как в Qt: элементы расставляются и растягиваются сами | `layout_demo` |
 | [14. TVCreator: формы мышью](14-tvcreator.md) | дизайнер форм как Qt Designer: палитра, дерево, свойства, файл `.tvui`, генерация кода | `cargo run -p tvcreator` |
+| [15. Темы](15-themes.md) | редактор тем, файл `.tvtheme`, подключение темы в программе, выбор с предпросмотром | `themes`, `cargo run -p tvtheme` |
 
 Как запустить программу урока: скачайте репозиторий библиотеки и
 выполните в его каталоге, например, `cargo run --example learn_02_menu`.
@@ -82,6 +83,7 @@ Turbo Vision и текстовыми интерфейсами. Всё остал
 | [Терминал, буфер обмена, время, язык](31-platform.md) | тестовый терминал, буфер обмена, русский язык надписей |
 | [Данные: JSON, SQLite, MVC](32-data.md) | разбор JSON, запросы к SQLite, `Model`, `ModelWindow`, `CrudController` |
 | [Раскладки](33-layout.md) | `HBox`, `VBox`, `Grid`, `Form`, `Spacer`, политики размера, `set_layout`, `adjust_size` |
+| [Темы](34-themes.md) | `Theme`, файл `.tvtheme`, `load_theme`, `choose_theme`, `find_themes`, цвета текстом |
 
 Все примеры кода в справочнике проверены: они компилируются, а проверки
 `assert!` в них выполняются.
@@ -90,9 +92,9 @@ Turbo Vision и текстовыми интерфейсами. Всё остал
 
 **A** — [`Align`](27-data-views.md#tablecolumn-и-align--столбцы) · [`AnsiWriter`](31-platform.md#ansiwriter-inputparser-parsed) · [`AppHandler`](23-program.md#apphandler--код-приложения) · [`Attr`](20-basics.md#attr--цвет) · [`AttrPair`](20-basics.md#attrpair--пара-цветов) · [`Alignment`](33-layout.md#alignment)
 
-**B** — [`Backend`](31-platform.md#backend--терминал) · [`Background`](23-program.md#background--фон) · [`Button`](26-controls.md#button--кнопка)
+**B** — [`Backend`](31-platform.md#backend--терминал) · [`Background`](23-program.md#background--фон) · [`Base`](34-themes.md#base--основа) · [`Button`](26-controls.md#button--кнопка)
 
-**C** — [`Cell`](20-basics.md#cell--клетка-экрана) · [`ChDirDialog`](29-std-dialogs.md#chdirdialog--смена-каталога) · [`CheckBoxes`](26-controls.md#cluster--флажки-и-переключатели) · [`CheckState`](27-data-views.md#checkstate) · [`Clipboard`](31-platform.md#clipboard--буфер-обмена) · [`ClipboardBackend`](31-platform.md#clipboardbackend--свой-буфер-обмена) · [`Cluster`](26-controls.md#cluster--флажки-и-переключатели) · [`ClusterKind`](26-controls.md#cluster--флажки-и-переключатели) · [`Color256Dialog`](29-std-dialogs.md#color256dialog--выбор-одного-цвета) · [`Color256Selector`](29-std-dialogs.md#части-цветовых-диалогов) · [`ColorDialog`](29-std-dialogs.md#colordialog--настройка-цветов) · [`ColorDialogText`](29-std-dialogs.md#части-цветовых-диалогов) · [`ColorDisplay`](29-std-dialogs.md#части-цветовых-диалогов) · [`ColoredText`](26-controls.md#statictext--текст) · [`ColorGroup`](29-std-dialogs.md#colorgroup-и-coloritem) · [`ColorItem`](29-std-dialogs.md#colorgroup-и-coloritem) · [`ColorMode`](20-basics.md#colormode--сколько-цветов-у-терминала) · [`ColorSel`](29-std-dialogs.md#части-цветовых-диалогов) · [`ColorSelector`](29-std-dialogs.md#части-цветовых-диалогов) · [`Combo`](26-controls.md#combo--выпадающий-список) · [`ComboWindow`](26-controls.md#combo--выпадающий-список) · [`CommandSet`](22-views.md#commandset) · [`Conflict`](30-files.md#conflict) · [`Connection`](32-data.md#connection--база-sqlite) · [`CrossRef`](29-std-dialogs.md#helptopic-paragraph-crossref) · [`CrudController`](32-data.md#crudcontroller--контроллер) · [`Ctx`](22-views.md#ctx)
+**C** — [`Cell`](20-basics.md#cell--клетка-экрана) · [`ChDirDialog`](29-std-dialogs.md#chdirdialog--смена-каталога) · [`CheckBoxes`](26-controls.md#cluster--флажки-и-переключатели) · [`CheckState`](27-data-views.md#checkstate) · [`Clipboard`](31-platform.md#clipboard--буфер-обмена) · [`ClipboardBackend`](31-platform.md#clipboardbackend--свой-буфер-обмена) · [`Cluster`](26-controls.md#cluster--флажки-и-переключатели) · [`ClusterKind`](26-controls.md#cluster--флажки-и-переключатели) · [`Color256Dialog`](29-std-dialogs.md#color256dialog--выбор-одного-цвета) · [`Color256Selector`](29-std-dialogs.md#части-цветовых-диалогов) · [`ColorDialog`](29-std-dialogs.md#colordialog--настройка-цветов) · [`ColorDialogText`](29-std-dialogs.md#части-цветовых-диалогов) · [`ColorDisplay`](29-std-dialogs.md#части-цветовых-диалогов) · [`ColoredText`](26-controls.md#statictext--текст) · [`ColorGroup`](29-std-dialogs.md#colorgroup-и-coloritem) · [`ColorItem`](29-std-dialogs.md#colorgroup-и-coloritem) · [`ColorMode`](20-basics.md#colormode--сколько-цветов-у-терминала) · [`ColorSel`](29-std-dialogs.md#части-цветовых-диалогов) · [`ColorSelector`](29-std-dialogs.md#части-цветовых-диалогов) · [`Combo`](26-controls.md#combo--выпадающий-список) · [`ComboWindow`](26-controls.md#combo--выпадающий-список) · [`CommandSet`](22-views.md#commandset) · [`Conflict`](30-files.md#conflict) · [`Connection`](32-data.md#connection--база-sqlite) · [`CrossRef`](29-std-dialogs.md#helptopic-paragraph-crossref) · [`CrudController`](32-data.md#crudcontroller--контроллер) · [`Ctx`](22-views.md#ctx) · [`Color`](34-themes.md#цвет-текстом-color-attr_to_text-attr_from_text)
 
 **D** — [`Data`](32-data.md#data--значение-поля) · [`DateTime`](31-platform.md#datetime--местное-время) · [`Desktop`](23-program.md#desktop--рабочий-стол) · [`Dialog`](23-program.md#dialog--диалог) · [`DialogPalette`](23-program.md#dialogpalette) · [`DirListBox`](29-std-dialogs.md#части-файловых-диалогов) · [`DrawBuffer`](20-basics.md#drawbuffer--строка-для-рисования) · [`DrawCtx`](22-views.md#drawctx) · [`DualPanel`](30-files.md#dualpanel--две-панели)
 
@@ -124,7 +126,7 @@ Turbo Vision и текстовыми интерфейсами. Всё остал
 
 **S** — [`Schema`](32-data.md#schema--схема) · [`ScreenBuffer`](20-basics.md#screenbuffer--весь-экран) · [`ScrollBar`](26-controls.md#scrollbar--полоса-прокрутки) · [`Scroller`](27-data-views.md#scroller--прокрутка-для-своих-представлений) · [`SelectionMode`](27-data-views.md#selectionmode) · [`SizePolicy`](33-layout.md#policy-и-sizepolicy) · [`SortMode`](30-files.md#sortmode) · [`Spacer`](33-layout.md#spacer--распорка) · [`SqlError`](32-data.md#sqlerror-и-rows) · [`SqliteStorage`](32-data.md#sqlitestorage) · [`SqlValue`](32-data.md#sqlvalue) · [`StaticText`](26-controls.md#statictext--текст) · [`StatusDef`](24-menus.md#statusdef--набор-пунктов) · [`StatusItem`](24-menus.md#statusitem--пункт-строки-состояния) · [`StatusLine`](24-menus.md#statusline--строка-состояния) · [`Storage`](32-data.md#storage--хранилище) · [`StringLookupValidator`](25-validators.md#stringlookupvalidator--значение-из-списка)
 
-**T** — [`Table`](27-data-views.md#table--таблица) · [`TableColors`](27-data-views.md#tablecolors) · [`TableColumn`](27-data-views.md#tablecolumn-и-align--столбцы) · [`TableModel`](27-data-views.md#tablemodel--откуда-таблица-берёт-данные) · [`Terminal`](27-data-views.md#terminal--окно-журнала) · [`TreeColors`](27-data-views.md#treecolors) · [`TreeGlyphs`](27-data-views.md#treeglyphs) · [`TreeLoader`](27-data-views.md#treepath-и-treeloader) · [`TreeNode`](27-data-views.md#treenode--узел-дерева) · [`TreePath`](27-data-views.md#treepath-и-treeloader) · [`TreeView`](27-data-views.md#treeview--дерево)
+**T** — [`Table`](27-data-views.md#table--таблица) · [`TableColors`](27-data-views.md#tablecolors) · [`TableColumn`](27-data-views.md#tablecolumn-и-align--столбцы) · [`TableModel`](27-data-views.md#tablemodel--откуда-таблица-берёт-данные) · [`Terminal`](27-data-views.md#terminal--окно-журнала) · [`TreeColors`](27-data-views.md#treecolors) · [`TreeGlyphs`](27-data-views.md#treeglyphs) · [`TreeLoader`](27-data-views.md#treepath-и-treeloader) · [`TreeNode`](27-data-views.md#treenode--узел-дерева) · [`TreePath`](27-data-views.md#treepath-и-treeloader) · [`TreeView`](27-data-views.md#treeview--дерево) · [`Theme`](34-themes.md#theme--тема)
 
 **U** — [`UnixBackend`](31-platform.md#unixbackend-и-windowsbackend)
 
@@ -156,6 +158,6 @@ Turbo Vision и текстовыми интерфейсами. Всё остал
   `tvdemo` (демонстрационная программа Turbo Vision), `tvedit` (текстовый
   редактор), `table`, `treeview`, `json_table`, `mvc_contacts` (записи в
   JSON или SQLite), `mvc_todo`, `mvc_books`, `mvc_csv`, `sqlite_query`,
-  `json_settings` (рецепты урока 12), `layout_demo` (раскладки), `lfm` (файловый менеджер).
+  `json_settings` (рецепты урока 12), `layout_demo` (раскладки), `themes` (темы), `lfm` (файловый менеджер).
 * **[Тематические главы](../README.md)** — как библиотека устроена
   внутри: архитектура, события, цвета и палитры, перенос программ.

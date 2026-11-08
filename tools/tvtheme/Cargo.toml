@@ -1,0 +1,17 @@
+[package]
+name = "tvtheme"
+version = "0.1.0"
+edition = "2021"
+description = "Редактор тем для tvision-rs: палитра приложения в файле .tvtheme с живым предпросмотром"
+license = "MIT"
+
+[dependencies]
+tvision-rs = { path = "../.." }
+
+[lib]
+name = "tvtheme"
+path = "src/lib.rs"
+
+[[bin]]
+name = "tvtheme"
+path = "src/main.rs"

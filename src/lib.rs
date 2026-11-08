@@ -72,6 +72,7 @@ pub mod program;
 #[cfg(feature = "sqlite")]
 pub mod sqlite;
 pub mod text;
+pub mod theme;
 pub mod view;
 pub mod widgets;
 

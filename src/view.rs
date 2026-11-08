@@ -596,6 +596,22 @@ impl<'a> DrawCtx<'a> {
         }
     }
 
+    /// Как [`sub_root`](Self::sub_root), но и с другой палитрой
+    /// приложения: так редактор тем показывает окна в редактируемых цветах,
+    /// не меняя цвета самой программы.
+    pub fn sub_themed<'b>(&'b mut self, bounds: Rect, palette: &'static [u8], app_palette: &'b [Attr]) -> DrawCtx<'b> {
+        let abs = bounds.moved(self.origin.x, self.origin.y);
+        DrawCtx {
+            screen: self.screen,
+            origin: abs.a,
+            clip: self.clip.intersect(&abs),
+            app_palette,
+            palettes: vec![palette],
+            commands: self.commands,
+            size: bounds.size(),
+        }
+    }
+
     /// Абсолютная позиция представления на экране.
     pub fn origin(&self) -> Point {
         self.origin

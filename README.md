@@ -14,8 +14,8 @@
 ## Документация
 
 **[Руководство пользователя](docs/guide/README.md)** ([одним PDF-файлом](docs/tvision-rs-guide.pdf)) — для начинающих:
-четырнадцать уроков от пустой программы до приложений с данными в JSON,
-SQLite и CSV, раскладок в духе Qt и дизайнера форм TVCreator (у каждого — готовый
+пятнадцать уроков от пустой программы до приложений с данными в JSON,
+SQLite и CSV, раскладок в духе Qt, дизайнера форм TVCreator и тем (у каждого — готовый
 пример `cargo run --example learn_…`) и справочник по каждому классу
 простым языком.
 
@@ -48,12 +48,14 @@ cargo run --example mvc_csv         # склад в CSV: своё хранили
 cargo run --example sqlite_query --features sqlite  # консоль SQL: запрос сверху, результат в таблице
 cargo run --example json_settings   # настройки программы в JSON: значения по умолчанию, чужие ключи
 cargo run --example layout_demo     # раскладки как в Qt: HBox, VBox, Grid, Form, пружины — без координат
+cargo run --example themes          # темы из themes/: меню тем, выбор с предпросмотром (F3)
 cargo run --example treeview  # дерево TreeView: файловая система с ленивой загрузкой, правка, JSON, флажки
 cargo run --example lfm     # файловый менеджер по мотивам lfm: две панели, вкладки, F5/F6/F8 с прогрессом, PowerCLI
 cargo run --example tvdemo  # порт tvdemo: калькулятор, календарь, пятнашки, ASCII, просмотр файлов...
 cargo test --all-targets    # все тесты, включая тесты tvdemo
 cargo test --all-targets --features sqlite  # плюс SQLite (нужна системная libsqlite3)
 cargo test -p tvcreator     # дизайнер форм TVCreator
+cargo test -p tvtheme       # редактор тем
 cargo test                  # тесты на «невидимом» терминале
 ```
 
@@ -142,6 +144,22 @@ cargo run -p tvcreator --example generated_forms           # формы в пр�
 ```
 
 Урок — [14. TVCreator](docs/guide/14-tvcreator.md).
+
+## Темы и редактор тем
+
+Тема — палитра приложения (135 цветов) в файле `.tvtheme`.
+[`tools/tvtheme`](tools/tvtheme/README.md) — редактор с живым
+предпросмотром: группы цветов, сетки 16 цветов, 256 цветов, отмена,
+экспорт в Rust. В программе — `app.load_theme("тема.tvtheme")`,
+выбор с предпросмотром — `theme::choose_theme`, а без кода — переменная
+окружения `TVISION_THEME`. Образцы — в каталоге `themes/`.
+
+```text
+cargo run -p tvtheme -- themes/sea.tvtheme                     # редактор
+TVISION_THEME=themes/matrix.tvtheme cargo run --example themes # тема без кода
+```
+
+Урок — [15. Темы](docs/guide/15-themes.md).
 
 ## Чего ещё нет (следующие этапы)
 

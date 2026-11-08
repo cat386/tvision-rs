@@ -1,0 +1,7 @@
+{
+  "tvtheme": 1,
+  "name": "Gruvbox",
+  "description": "Тёплая тёмная палитра gruvbox (256 цветов) — по умолчанию",
+  "base": "gruvbox",
+  "colors": []
+}
