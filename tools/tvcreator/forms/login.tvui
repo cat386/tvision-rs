@@ -1,0 +1,37 @@
+{
+  "tvcreator": 1,
+  "name": "LoginDialog",
+  "title": "Вход",
+  "kind": "dialog",
+  "size": [40, 12],
+  "auto_size": true,
+  "command_base": 100,
+  "layout": {
+    "type": "vbox",
+    "margins": [2, 1, 2, 0],
+    "items": [
+      {
+        "type": "form",
+        "items": [
+          {"type": "label", "name": "label_user", "text": "~И~мя:", "link": "user"},
+          {"type": "input", "name": "user", "max_len": 30},
+          {"type": "label", "name": "label_pass", "text": "~П~ароль:", "link": "pass"},
+          {"type": "input", "name": "pass", "max_len": 30},
+          {"type": "label", "name": "label_server", "text": "~С~ервер:", "link": "server"},
+          {"type": "radiobuttons", "name": "server", "items": ["~Р~абочий", "~Д~омашний"]},
+          {"type": "checkboxes", "name": "remember", "items": ["~З~апомнить пароль"], "wide": true}
+        ]
+      },
+      {"type": "space", "size": 1},
+      {
+        "type": "hbox",
+        "items": [
+          {"type": "button", "name": "register", "text": "~Р~егистрация", "command": "CM_REGISTER"},
+          {"type": "stretch", "factor": 1},
+          {"type": "button", "name": "ok", "text": "O~K~", "command": "OK", "default": true},
+          {"type": "button", "name": "cancel", "text": "Отмена", "command": "CANCEL"}
+        ]
+      }
+    ]
+  }
+}

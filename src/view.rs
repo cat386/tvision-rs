@@ -579,6 +579,23 @@ impl<'a> DrawCtx<'a> {
         }
     }
 
+    /// Как [`sub`](Self::sub), но цепочка палитр начинается заново —
+    /// как у представления, лежащего прямо на рабочем столе. Нужно, чтобы
+    /// нарисовать «чужое» окно или диалог внутри своего представления
+    /// (например, форму в дизайнере) с его настоящими цветами.
+    pub fn sub_root(&mut self, bounds: Rect, palette: &'static [u8]) -> DrawCtx<'_> {
+        let abs = bounds.moved(self.origin.x, self.origin.y);
+        DrawCtx {
+            screen: self.screen,
+            origin: abs.a,
+            clip: self.clip.intersect(&abs),
+            app_palette: self.app_palette,
+            palettes: vec![palette],
+            commands: self.commands,
+            size: bounds.size(),
+        }
+    }
+
     /// Абсолютная позиция представления на экране.
     pub fn origin(&self) -> Point {
         self.origin

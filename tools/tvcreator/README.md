@@ -1,0 +1,255 @@
+# TVCreator
+
+Дизайнер форм для [tvision-rs](../../README.md) в духе **Qt Creator /
+Qt Designer**: окна и диалоги собираются из раскладок и виджетов на
+экране, сохраняются в файл формы `.tvui` и превращаются в обычный Rust-код
+— как `.ui` и `uic` у Qt.
+
+```text
+  Файл  Правка  Раскладка  Форма  Окна
+╔═════════════════════════════ TVCreator — login.tvui ═════════════════════════════╗
+║Виджеты              Форма                                   Свойства             ║
+║ ▤ Строка (HBox)     ░░┌──────────── Вход ─────────────┐░░░   Свойство │ Значение  ║
+║ ▥ Столбец (VBox)    ░░│                               │░░░  Имя       │user       ║
+║ ▦ Сетка (Grid)      ░░│   Имя:   ►                  ◄ │░░░  Класс     │Строка вв… ║
+║ ☰ Форма (Form)      ░░│   Пароль:                     │░░░  Длина     │30         ║
+║ ↔ Пружина           ░░│                               │░░░  Растяжение│0          ║
+║   Кнопка (Button)   ░░│          OK   ▄   Отмена ▄    │░░░  …                     ║
+║Объекты              ░░└───────────────────────────────┘░░░                        ║
+║└▾ LoginDialog       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                        ║
+║  └▾ VBox            ░░Щелчок — выбрать элемент; свойства — справа                 ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+ F2 Сохранить  F3 Открыть  F4 Свойство  F7 Код  F9 Генерировать  Ctrl-R Предпросмотр
+```
+
+## Запуск
+
+```text
+cargo run -p tvcreator                              # новая форма
+cargo run -p tvcreator -- tools/tvcreator/forms/login.tvui   # открыть образец
+cargo run -p tvcreator -- --gen форма.tvui [-o файл.rs]      # только код (как uic)
+```
+
+Установить как программу: `cargo install --path tools/tvcreator`, дальше
+просто `tvcreator форма.tvui`.
+
+## Как в Qt Creator
+
+| Qt Creator / Designer | TVCreator |
+|-----------------------|-----------|
+| файл `.ui` (XML) | файл `.tvui` (JSON — читается и правится глазами) |
+| Widget Box | **Виджеты** — палитра слева вверху |
+| Object Inspector | **Объекты** — дерево формы слева внизу |
+| форма в центре | **Форма** — живой вид: настоящие виджеты tvision-rs |
+| Property Editor | **Свойства** — справа |
+| Lay Out Horizontally / Vertically / in a Grid / in a Form Layout | меню **Раскладка → Обернуть в…** |
+| Horizontal / Vertical Spacer | **Пружина**, **Промежуток** |
+| buddy у QLabel | подпись сама подписывает поле, добавленное сразу после неё |
+| Form → Preview (Ctrl+R) | **Форма → Предпросмотр** (Ctrl+R) |
+| `uic` | **F9** или `tvcreator --gen` |
+
+## Работа
+
+1. **Добавить элемент.** Выберите пункт в палитре и нажмите **Enter**
+   (или **Ins** откуда угодно, или двойной щелчок). Куда он встанет:
+   * выделена раскладка — внутрь неё, последним;
+   * выделен виджет — сразу после него;
+   * выделена сама форма — в корневую раскладку.
+2. **Выбрать элемент** — щелчком по нему на форме или в дереве объектов.
+   Выбранный помечен `►` `◄`.
+3. **Поменять свойство** — встаньте на строку в таблице свойств и
+   нажмите **Enter** (или **F4**). «да/нет» и выбор из вариантов
+   переключаются сразу, остальное спрашивается в окошке. Неверное
+   значение не примется: появится объяснение.
+4. **Порядок** — **Ctrl+↑**, **Ctrl+↓**; **Del** — удалить;
+   **Ctrl+Z / Ctrl+Y** — отменить / повторить.
+5. **Обернуть** выделенное в строку, столбец, сетку или форму — меню
+   «Раскладка».
+6. **Предпросмотр** (Ctrl+R) — форма как в программе: можно вводить
+   текст, переключать флажки. Esc — закрыть.
+7. **F2** — сохранить `.tvui`, **F7** — посмотреть код, **F9** — записать
+   код рядом с формой (`login.tvui` с типом `LoginDialog` →
+   `login_dialog.rs`).
+
+Перед генерацией форма проверяется («Форма → Проверить»): имена должны
+годиться для Rust и не повторяться, подписи — ссылаться на существующие
+виджеты, команды кнопок — быть известными.
+
+## Свойства
+
+| У чего | Свойства |
+|--------|----------|
+| форма | имя типа (`LoginDialog`), заголовок, вид (`Dialog` / `Window`), ширина, высота, размер по содержимому, с какого номера нумеровать свои команды |
+| раскладка | вид (HBox/VBox/Grid/Form), промежуток, поля, у сетки — столбцов при расстановке по порядку |
+| любой виджет | имя переменной |
+| подпись | текст (`~И~мя:` — горячая буква), кого подписывает |
+| текст | текст (`\n` — новая строка) |
+| кнопка | надпись, команда (`OK`, `CANCEL`, `YES`, `NO`, `CLOSE`, `HELP` или своя `CM_ИМЯ`), по умолчанию |
+| строка ввода | длина |
+| флажки, переключатели, список | пункты через `;` |
+| таблица | столбцы через `;` |
+| полоса выполнения | максимум |
+| место в раскладке | растяжение, тянуться во все стороны, выравнивание по горизонтали и вертикали, мин. ширина и высота, ровно ширина и высота |
+| в сетке | клетка (строка, столбец; пусто — по порядку), сколько строк и столбцов занимает |
+| в форме | на всю ширину |
+| пружина / промежуток | коэффициент / клеток |
+
+Свои команды кнопок (`CM_SAVE`…) получают номера по порядку, начиная с
+«Свои команды с номера» (по умолчанию 100), и попадают в код константами.
+
+## Что получается в коде
+
+Из формы «Вход» (`forms/login.tvui`):
+
+```rust
+pub const CM_REGISTER: u16 = 100;
+
+/// Элементы формы «Вход»: id для `find` / `find_mut`.
+pub struct LoginDialog {
+    pub label_user: ViewId,
+    pub user: ViewId,
+    // …
+}
+
+impl LoginDialog {
+    /// Создать диалог «Вход».
+    pub fn create() -> (Dialog, LoginDialog) {
+        let mut d = Dialog::centered(40, 12, "Вход");
+        let user = d.add(InputLine::new(Rect::default(), 30));
+        // …
+        let form1 = Form::new()
+            .row(label_user, user)
+            .row(label_pass, pass)
+            .row(label_server, server)
+            .row_wide(remember);
+        let hbox1 = HBox::new()
+            .add(register)
+            .stretch(1)
+            .add(ok)
+            .add(cancel);
+        let vbox1 = VBox::new()
+            .margins(2, 1, 2, 0)
+            .add(form1)
+            .space(1)
+            .add(hbox1);
+        d.set_layout(vbox1);
+        d.adjust_size();
+        d.select(user);
+        (d, LoginDialog { label_user, user, /* … */ })
+    }
+}
+```
+
+Подключение — обычным `mod`:
+
+```rust
+mod login_dialog;
+use login_dialog::LoginDialog;
+
+let (d, ui) = LoginDialog::create();
+let (cmd, d) = app.exec_dialog(d);
+if cmd == cm::OK {
+    let name = d.win.group.find::<InputLine>(ui.user).unwrap().text();
+}
+```
+
+Целиком — `examples/generated_forms.rs` (`cargo run -p tvcreator --example generated_forms`).
+
+### Генерация при сборке (`build.rs`)
+
+Как `uic` в CMake: форма — исходник, код получается при сборке.
+
+```toml
+# Cargo.toml вашей программы
+[build-dependencies]
+tvcreator = { git = "https://github.com/cat386/tvision-rs" }
+```
+
+```rust
+// build.rs
+fn main() {
+    let doc = tvcreator::model::FormDoc::load("forms/login.tvui".as_ref()).unwrap();
+    let out = std::path::Path::new(&std::env::var("OUT_DIR").unwrap()).join("login_dialog.rs");
+    std::fs::write(out, tvcreator::codegen::generate_for_include(&doc, "login.tvui")).unwrap();
+    println!("cargo:rerun-if-changed=forms/login.tvui");
+}
+
+// main.rs
+mod login_dialog {
+    include!(concat!(env!("OUT_DIR"), "/login_dialog.rs"));
+}
+```
+
+`generate_for_include` отличается от `generate` только тем, что в нём нет
+`#![…]` и `//!` — их `include!` не принимает.
+
+## Файл формы `.tvui`
+
+```json
+{
+  "tvcreator": 1,
+  "name": "LoginDialog",
+  "title": "Вход",
+  "kind": "dialog",
+  "size": [40, 12],
+  "auto_size": true,
+  "command_base": 100,
+  "layout": {
+    "type": "vbox",
+    "margins": [2, 1, 2, 0],
+    "items": [
+      {"type": "form", "items": [
+        {"type": "label", "name": "label_user", "text": "~И~мя:", "link": "user"},
+        {"type": "input", "name": "user", "max_len": 30}
+      ]},
+      {"type": "stretch", "factor": 1},
+      {"type": "hbox", "items": [
+        {"type": "stretch", "factor": 1},
+        {"type": "button", "name": "ok", "text": "O~K~", "command": "OK", "default": true}
+      ]}
+    ]
+  }
+}
+```
+
+| `type` | Что | Свои ключи |
+|--------|-----|-----------|
+| `hbox`, `vbox`, `grid`, `form` | раскладки | `items`, `spacing`, `margins` [л, в, п, н], `columns` (сетка) |
+| `stretch` | пружина | `factor` |
+| `space` | промежуток | `size` |
+| `label` | подпись | `text`, `link` |
+| `text` | текст | `text` |
+| `input` | строка ввода | `max_len` |
+| `button` | кнопка | `text`, `command`, `default` |
+| `checkboxes`, `radiobuttons`, `listbox` | флажки, переключатели, список | `items` |
+| `table` | таблица | `items` (заголовки столбцов) |
+| `progress` | полоса выполнения | `max` |
+
+У виджетов и раскладок есть ещё `name` (у виджетов) и уточнения места:
+`stretch`, `expand`, `align_h` / `align_v` (`fill`, `start`, `center`,
+`end`), `min_w`, `min_h`, `fixed_w`, `fixed_h`, в сетке — `cell`
+[строка, столбец] и `span` [строк, столбцов], в форме — `wide`.
+
+В форме дети идут парами «подпись — поле»; элемент с `"wide": true`
+занимает строку целиком. В сетке без `cell` элементы встают по порядку,
+`columns` в строке.
+
+## Как устроено
+
+| Модуль | Что делает |
+|--------|-----------|
+| `model` | документ формы, правка дерева, файл `.tvui` |
+| `build` | сборка формы из настоящих виджетов (для холста и предпросмотра) |
+| `codegen` | генерация Rust-кода |
+| `props` | свойства узлов, проверка значений |
+| `canvas` | холст: рисует форму, выбор мышью |
+| `ide` | среда: окно, меню, команды, отмена, файлы |
+
+Холст и сгенерированный код идут по дереву формы одинаково; тест
+`generated_matches_runtime` (в `examples/generated_forms.rs`) сравнивает
+их расположение до клетки, а `generated_code_is_up_to_date` следит,
+чтобы код образцов не отставал от форм.
+
+```text
+cargo test -p tvcreator
+```

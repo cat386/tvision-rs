@@ -8,6 +8,11 @@ license = "MIT"
 # Библиотека намеренно не имеет внешних зависимостей:
 # работа с терминалом (Unix: termios + ANSI, Windows: Console API)
 # реализована внутри крейта, как и в оригинальном tvision (source/platform).
+# TVCreator (tools/tvcreator) — отдельный пакет в том же рабочем пространстве:
+# cargo run -p tvcreator, cargo test -p tvcreator.
+[workspace]
+members = [".", "tools/tvcreator"]
+
 [dependencies]
 
 # Необязательные возможности.

@@ -1,0 +1,39 @@
+{
+  "tvcreator": 1,
+  "name": "MailWindow",
+  "title": "Почта",
+  "kind": "window",
+  "size": [64, 20],
+  "auto_size": false,
+  "command_base": 110,
+  "layout": {
+    "type": "vbox",
+    "items": [
+      {
+        "type": "hbox",
+        "items": [
+          {"type": "listbox", "name": "folders", "items": ["Входящие", "Отправленные", "Черновики", "Корзина"], "stretch": 1, "min_w": 12},
+          {
+            "type": "vbox",
+            "spacing": 1,
+            "stretch": 3,
+            "items": [
+              {"type": "table", "name": "letters", "items": ["От", "Тема", "Дата"], "stretch": 2},
+              {"type": "text", "name": "preview", "text": "Выберите письмо.", "stretch": 1, "expand": true}
+            ]
+          }
+        ]
+      },
+      {"type": "space", "size": 1},
+      {
+        "type": "hbox",
+        "items": [
+          {"type": "progress", "name": "sync", "max": 100, "align_v": "center"},
+          {"type": "stretch", "factor": 1},
+          {"type": "button", "name": "reply", "text": "~О~тветить", "command": "CM_REPLY"},
+          {"type": "button", "name": "delete", "text": "~У~далить", "command": "CM_DELETE"}
+        ]
+      }
+    ]
+  }
+}

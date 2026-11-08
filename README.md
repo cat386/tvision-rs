@@ -14,8 +14,8 @@
 ## Документация
 
 **[Руководство пользователя](docs/guide/README.md)** ([одним PDF-файлом](docs/tvision-rs-guide.pdf)) — для начинающих:
-тринадцать уроков от пустой программы до приложений с данными в JSON,
-SQLite и CSV и раскладок в духе Qt (у каждого — готовый
+четырнадцать уроков от пустой программы до приложений с данными в JSON,
+SQLite и CSV, раскладок в духе Qt и дизайнера форм TVCreator (у каждого — готовый
 пример `cargo run --example learn_…`) и справочник по каждому классу
 простым языком.
 
@@ -53,6 +53,7 @@ cargo run --example lfm     # файловый менеджер по мотив�
 cargo run --example tvdemo  # порт tvdemo: калькулятор, календарь, пятнашки, ASCII, просмотр файлов...
 cargo test --all-targets    # все тесты, включая тесты tvdemo
 cargo test --all-targets --features sqlite  # плюс SQLite (нужна системная libsqlite3)
+cargo test -p tvcreator     # дизайнер форм TVCreator
 cargo test                  # тесты на «невидимом» терминале
 ```
 
@@ -124,6 +125,23 @@ cargo test                  # тесты на «невидимом» терми�
 размера окна, `adjust_size` подгоняет окно под содержимое. Свои
 представления сообщают желаемый размер методами `size_hint` и
 `size_policy`. Урок — [13. Раскладки](docs/guide/13-layouts.md).
+
+## TVCreator — дизайнер форм
+
+[`tools/tvcreator`](tools/tvcreator/README.md) — аналог Qt Creator / Qt
+Designer: палитра виджетов, дерево объектов, живой вид формы, редактор
+свойств, отмена, предпросмотр. Формы сохраняются в файлы `.tvui` (JSON) и
+превращаются в Rust-код (как `.ui` и `uic`): структура с id виджетов и
+`create()`, собирающая окно на раскладках.
+
+```text
+cargo run -p tvcreator                                     # среда
+cargo run -p tvcreator -- tools/tvcreator/forms/login.tvui # открыть образец
+cargo run -p tvcreator -- --gen форма.tvui -o форма.rs     # только код
+cargo run -p tvcreator --example generated_forms           # формы в программе
+```
+
+Урок — [14. TVCreator](docs/guide/14-tvcreator.md).
 
 ## Чего ещё нет (следующие этапы)
 
