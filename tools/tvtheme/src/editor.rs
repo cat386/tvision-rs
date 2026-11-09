@@ -888,4 +888,14 @@ mod tests {
         assert_eq!(app2.palette, own);
         let _ = std::fs::remove_dir_all(cfg.parent().unwrap());
     }
+
+    /// Списки, подписи и сетки редактора лежат в обычном окне — ни одной
+    /// клетки цвета ошибки.
+    #[test]
+    fn no_error_colors() {
+        let (mut app, _e) = editor(&[]);
+        app.redraw();
+        let bad = app.screen().cells.iter().filter(|c| c.attr == tvision::color::ERROR_ATTR).count();
+        assert_eq!(bad, 0);
+    }
 }

@@ -293,3 +293,34 @@ impl View for ListBox {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::color::ERROR_ATTR;
+    use crate::platform::HeadlessBackend;
+    use crate::widgets::{Label, Window};
+    use crate::{Program, Rect};
+
+    /// Список и подпись (элементы диалога) прямо в обычном окне: цвета
+    /// берутся из палитры окна, а не цвет ошибки; подсвечен один пункт.
+    #[test]
+    fn list_in_plain_window() {
+        let mut app = Program::new(Box::new(HeadlessBackend::new(60, 20)), None, None);
+        let mut w = Window::new(Rect::new(0, 0, 40, 12), "Окно", 1);
+        let mut l = ListBox::new(Rect::new(1, 2, 30, 8), 1, None);
+        l.set_items((1..=10).map(|i| format!("Пункт {}", i)).collect());
+        l.focused = 2;
+        let lid = w.add(l);
+        w.add(Label::new(Rect::new(1, 1, 20, 2), "~С~писок", Some(lid)));
+        app.insert_window(w);
+        app.redraw();
+        let sc = app.screen();
+        assert!(sc.cells.iter().all(|c| c.attr != ERROR_ATTR), "цвет ошибки на экране");
+        let rows: Vec<_> = (2..8).map(|y| sc.get(2, y).attr).collect();
+        let hi: Vec<usize> = (0..rows.len()).filter(|&k| rows[k] != rows[0]).collect();
+        assert_eq!(hi, vec![2], "{:x?}", rows);
+        // Горячая буква подписи — своим цветом.
+        assert_ne!(sc.get(2, 1).attr, sc.get(3, 1).attr);
+    }
+}

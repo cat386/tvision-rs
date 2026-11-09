@@ -1273,4 +1273,24 @@ mod tests {
         assert_eq!(app2.desktop().pattern(), '▒');
         let _ = std::fs::remove_dir_all(cfg.parent().unwrap());
     }
+
+    /// В палитре виджетов подсвечен ровно один пункт — текущий (раньше
+    /// весь список был цвета ошибки: список диалога в обычном окне).
+    #[test]
+    fn widget_palette_highlights_one_item() {
+        for keys in [vec![], vec![KeyEvent::new(Key::Down, Mods::NONE), KeyEvent::new(Key::Down, Mods::NONE)]] {
+            let (mut app, ide) = ide_with(&keys);
+            app.redraw();
+            let pal = app.find::<ListBox>(ide.ids.0).unwrap();
+            let (b, focused) = (pal.vs.bounds(), pal.focused);
+            let win = app.desktop().group.children.iter().find_map(|v| v.as_window().filter(|w| w.title.starts_with("TVCreator"))).unwrap();
+            // Экранные координаты: стол начинается под строкой меню.
+            let o = win.group.vs.origin + app.desktop().group.vs.origin;
+            let sc = app.screen();
+            let rows: Vec<u32> = (0..b.height()).map(|k| sc.cells[(o.y + b.a.y + k) as usize * sc.width + (o.x + b.a.x + 1) as usize].attr).collect();
+            assert!(rows.iter().all(|&a| a != tvision::color::ERROR_ATTR), "{:x?}", rows);
+            let hi: Vec<usize> = (0..rows.len()).filter(|&k| rows[k] != rows[if focused == 0 { 1 } else { 0 }]).collect();
+            assert_eq!(hi, vec![focused], "подсвечен только текущий пункт: {:x?}", rows);
+        }
+    }
 }
