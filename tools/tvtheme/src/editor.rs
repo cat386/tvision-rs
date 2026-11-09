@@ -898,4 +898,45 @@ mod tests {
         let bad = app.screen().cells.iter().filter(|c| c.attr == tvision::color::ERROR_ATTR).count();
         assert_eq!(bad, 0);
     }
+
+    /// Атрибуты строк списка на экране и номер текущего пункта.
+    fn list_rows(app: &Program, e: &ThemeEditor, id: ViewId) -> (Vec<u32>, usize, usize) {
+        let l = app.find::<ListBox>(id).unwrap();
+        let b = l.vs.bounds();
+        let win = app.find::<MainWindow>(e.ids.window).unwrap();
+        // Экранные координаты: стол начинается под строкой меню.
+        let o = win.win.group.vs.origin + app.desktop().group.vs.origin;
+        let sc = app.screen();
+        let rows = (0..b.height()).map(|k| sc.cells[(o.y + b.a.y + k) as usize * sc.width + (o.x + b.a.x + 1) as usize].attr).collect();
+        (rows, l.focused - l.top_item, l.range())
+    }
+
+    /// В списках «Группа» и «Цвет» подсвечен ровно один пункт — текущий,
+    /// и когда список в фокусе, и когда нет.
+    #[test]
+    fn lists_highlight_one_item() {
+        let down = KeyEvent::new(Key::Down, Mods::NONE);
+        // (idle, а с ним sync, в настоящей работе идёт между нажатиями.)
+        for case in 0..3 {
+            let keys = if case == 0 { vec![] } else { vec![down, down] };
+            let (mut app, mut e) = editor(&keys);
+            e.sync(&mut app);
+            if case == 2 {
+                // Фокус на «Цвет», курсор на третьем пункте.
+                app.find_mut::<ListBox>(e.ids.items).unwrap().focus_item(2);
+                app.focus(e.ids.items);
+                e.sync(&mut app);
+            }
+            app.redraw();
+            let expect = [(0, 0), (2, 0), (2, 2)][case];
+            for (id, want) in [(e.ids.groups, expect.0), (e.ids.items, expect.1)] {
+                let (rows, cur, n) = list_rows(&app, &e, id);
+                assert_eq!(cur, want, "случай {}, список {}", case, id);
+                assert!(rows.iter().all(|&a| a != tvision::color::ERROR_ATTR), "{:x?}", rows);
+                let normal = rows[if cur == 0 { 1 } else { 0 }];
+                let hi: Vec<usize> = (0..rows.len().min(n)).filter(|&k| rows[k] != normal).collect();
+                assert_eq!(hi, vec![cur], "случай {}, список {}: {:x?}", case, id, rows);
+            }
+        }
+    }
 }
