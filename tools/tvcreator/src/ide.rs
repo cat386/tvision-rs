@@ -14,8 +14,10 @@ use crate::codegen;
 use crate::model::Node;
 use crate::model::*;
 use crate::props::{next_value, props, set_prop, Prop, Sel};
-use crate::themes::{load_themes, resolve, settings_path, theme_dirs, Settings, ThemeEntry};
+use crate::themes::{load_themes, resolve, theme_dirs, ThemeEntry};
 use tvision::color::Attr;
+use tvision::json::Json;
+use tvision::settings::{settings_dialog_with, standard_palette, LanguageChoice, Settings};
 use tvision::theme::{choose_theme, Theme};
 
 // ----------------------------------------------------------------------
@@ -48,6 +50,7 @@ pub const CM_THEME_DEFAULT: u16 = 131;
 pub const CM_THEME_OPEN: u16 = 132;
 pub const CM_FORM_THEME_CHOOSE: u16 = 133;
 pub const CM_FORM_THEME_SAME: u16 = 134;
+pub const CM_SETTINGS: u16 = 135;
 /// Тема среды из меню: 140 + номер темы.
 pub const CM_IDE_THEME: u16 = 140;
 /// Тема формы из меню: 180 + номер темы.
@@ -196,11 +199,25 @@ pub struct Ide {
     pub last_message: String,
     /// Найденные темы.
     pub themes: Vec<ThemeEntry>,
-    /// Выбор тем (запоминается в `settings_path`).
+    /// Настройки среды (стандартные `tvision::settings`; тема формы — в
+    /// `extra["form_theme"]`). Файл — `settings_path`.
     pub settings: Settings,
     pub settings_path: Option<PathBuf>,
-    /// Цвета среды без темы — для «По умолчанию».
-    default_palette: Vec<Attr>,
+}
+
+/// Ключ настроек для темы формы.
+const FORM_THEME_KEY: &str = "form_theme";
+
+/// Настройки, если файла ещё нет: как у библиотеки, но по-русски —
+/// надписи среды русские.
+pub fn default_settings() -> Settings {
+    Settings { language: LanguageChoice::Ru, ..Settings::default() }
+}
+
+/// Ключ главного окна в настройках: заголовок меняется вместе с именем
+/// файла, поэтому окно узнаётся по началу заголовка.
+pub fn window_key(w: &Window) -> Option<String> {
+    w.title.starts_with("TVCreator").then(|| "tvcreator".to_string())
 }
 
 fn sel_to_tree(s: &Sel) -> Vec<usize> {
@@ -228,16 +245,16 @@ impl Ide {
         Ide::with_themes(app, doc, path, load_themes(&[]), None)
     }
 
-    /// Среда со списком тем и файлом настроек (из него берутся темы
-    /// среды и формы).
+    /// Среда со списком тем и файлом настроек. Если файл задан, его
+    /// настройки (тема, язык, цвета, мышь…) сразу применяются.
     pub fn with_themes(app: &mut Program, doc: FormDoc, path: Option<PathBuf>, themes: Vec<ThemeEntry>, settings_path: Option<PathBuf>) -> Ide {
         let dirty = Rc::new(Cell::new(false));
         let r = app.desktop().group.vs.extent();
         let w = MainWindow::new(r, dirty.clone());
         let ids = (w.palette, w.tree, w.canvas, w.props);
         let window = app.insert_window(w);
-        let settings = settings_path.as_deref().map(Settings::load).unwrap_or_default();
-        let default_palette = app.palette.clone();
+        let settings = settings_path.as_deref().map(|p| Settings::load_or(p, default_settings())).unwrap_or_else(default_settings);
+        let applied = settings_path.as_ref().map(|_| settings.apply(app));
         let mut ide = Ide {
             doc,
             path,
@@ -252,13 +269,11 @@ impl Ide {
             themes,
             settings,
             settings_path,
-            default_palette,
         };
-        // Запомненные темы.
-        if let Some(e) = (!ide.settings.theme.is_empty()).then(|| resolve(&ide.themes, &ide.settings.theme)).flatten() {
-            app.set_theme(&e.theme);
+        if let Some(Err(e)) = applied {
+            ide.last_message = e;
         }
-        let ft = ide.settings.form_theme.clone();
+        let ft = ide.settings.get(FORM_THEME_KEY).and_then(Json::as_str).unwrap_or("").to_string();
         ide.set_form_theme(app, (!ft.is_empty()).then(|| resolve(&ide.themes, &ft)).flatten());
         ide.refresh_all(app);
         ide
@@ -280,7 +295,7 @@ impl Ide {
                 self.settings.theme = e.key();
             }
             None => {
-                app.palette = self.default_palette.clone();
+                app.palette = standard_palette();
                 self.settings.theme.clear();
             }
         }
@@ -289,10 +304,29 @@ impl Ide {
 
     /// Тема формы на холсте и в предпросмотре (`None` — как у среды).
     pub fn set_form_theme(&mut self, app: &mut Program, e: Option<ThemeEntry>) {
-        self.settings.form_theme = e.as_ref().map(|e| e.key()).unwrap_or_default();
+        let key = e.as_ref().map(|e| e.key()).unwrap_or_default();
+        self.settings.set(FORM_THEME_KEY, Json::from_str(&key));
         if let Some(c) = app.find_mut::<Canvas>(self.ids.2) {
             c.form_theme = e.map(|e| (e.theme.name.clone(), e.theme.palette.clone()));
         }
+        self.save_settings();
+    }
+
+    /// Стандартный диалог «Настройки» (темы — те же, что в меню «Тема»).
+    pub fn settings_dialog(&mut self, app: &mut Program) {
+        let list: Vec<(String, Theme)> = self.themes.iter().map(|e| (e.key(), e.theme.clone())).collect();
+        if settings_dialog_with(app, &mut self.settings, &list) {
+            if let Some(p) = &self.settings_path {
+                if let Err(e) = self.settings.save(p) {
+                    self.error(app, &e);
+                }
+            }
+        }
+    }
+
+    /// Запомнить, где стоит окно среды, и записать настройки (при выходе).
+    pub fn save_on_exit(&mut self, app: &Program) {
+        self.settings.capture_windows_with(app, window_key);
         self.save_settings();
     }
 
@@ -795,6 +829,7 @@ impl AppHandler for Ide {
                 }
             }
             CM_FORM_THEME_CHOOSE => self.choose_form_theme(app),
+            CM_SETTINGS => self.settings_dialog(app),
             CM_FORM_THEME_SAME => self.set_form_theme(app, None),
             c if (CM_IDE_THEME..CM_IDE_THEME + MENU_THEMES as u16).contains(&c) => {
                 if let Some(e) = self.themes.get((c - CM_IDE_THEME) as usize).cloned() {
@@ -884,6 +919,8 @@ pub fn menu_with(themes: &[ThemeEntry]) -> Menu {
                 .separator()
                 .item_key("Сгенерировать ~к~од", CM_GENERATE, kb::f(9), "F9")
                 .separator()
+                .item("Нас~т~ройки...", CM_SETTINGS)
+                .separator()
                 .item_key("~В~ыход", cm::QUIT, kb::ALT_X, "Alt-X"),
         )
         .submenu(
@@ -936,7 +973,10 @@ pub fn status() -> Vec<StatusDef> {
 
 /// Запустить среду (из `main`).
 pub fn run(file: Option<PathBuf>) -> Result<(), String> {
-    locale::set_language(locale::Language::Ru);
+    // Настройки — рядом с программой (tvcreator.settings.json); язык —
+    // до меню.
+    let settings_path = Settings::default_path();
+    Settings::load_or(&settings_path, default_settings()).apply_language();
     let (doc, path) = match file {
         Some(p) if p.exists() => (FormDoc::load(&p)?, Some(p)),
         Some(p) => (FormDoc::new("Form1"), Some(p)), // новый файл
@@ -944,8 +984,14 @@ pub fn run(file: Option<PathBuf>) -> Result<(), String> {
     };
     let themes = load_themes(&theme_dirs());
     let mut app = Program::with_terminal(Some(menu_with(&themes)), Some(status())).map_err(|e| e.to_string())?;
-    let mut ide = Ide::with_themes(&mut app, doc, path, themes, settings_path());
+    let mut ide = Ide::with_themes(&mut app, doc, path, themes, Some(settings_path));
+    ide.settings.restore_windows_with(&mut app, window_key);
+    if !ide.last_message.is_empty() {
+        let m = ide.last_message.clone();
+        ide.error(&mut app, &m);
+    }
     app.run(&mut ide);
+    ide.save_on_exit(&app);
     Ok(())
 }
 
@@ -1122,7 +1168,6 @@ mod tests {
     #[test]
     fn ide_theme_from_menu_and_default() {
         let (mut app, mut ide) = ide_with(&[]);
-        let default = app.palette.clone();
         let classic = ide.themes.iter().position(|e| e.theme.base == tvision::theme::Base::Classic).unwrap();
         app.put_event(Event::command_event(CM_IDE_THEME + classic as u16));
         app.pump(&mut ide);
@@ -1130,7 +1175,7 @@ mod tests {
         assert_eq!(ide.settings.theme, "builtin:classic");
         app.put_event(Event::command_event(CM_THEME_DEFAULT));
         app.pump(&mut ide);
-        assert_eq!(app.palette, default);
+        assert_eq!(app.palette, standard_palette(), "стандартные цвета для этого терминала");
         assert!(ide.settings.theme.is_empty());
     }
 
@@ -1199,6 +1244,33 @@ mod tests {
         let (pal, ft) = run(&[]);
         assert_eq!(pal, themes[mono].theme.palette);
         assert_eq!(ft.as_deref(), Some("Классическая"));
+        let _ = std::fs::remove_dir_all(cfg.parent().unwrap());
+    }
+
+    #[test]
+    fn settings_dialog_saves_file_and_window() {
+        let cfg = std::env::temp_dir().join(format!("tvcreator-std-settings-{}", std::process::id())).join("tvcreator.settings.json");
+        let _ = std::fs::remove_file(&cfg);
+        // Диалог: узор фона (Alt+Ф) → ↓ «▒», Enter — OK.
+        let mut b = HeadlessBackend::new(120, 40);
+        for k in [KeyEvent::new(Key::Char('ф'), Mods::ALT), KeyEvent::new(Key::Down, Mods::NONE), kb::ENTER] {
+            b.push_key(k);
+        }
+        let mut app = Program::new(Box::new(b), Some(menu()), Some(status()));
+        let mut ide = Ide::with_themes(&mut app, FormDoc::new("Form1"), None, load_themes(&[]), Some(cfg.clone()));
+        app.put_event(Event::command_event(CM_SETTINGS));
+        app.pump(&mut ide);
+        assert_eq!(app.desktop().pattern(), '▒');
+        let saved = Settings::load(&cfg).unwrap();
+        assert_eq!(saved.pattern, '▒');
+        assert_eq!(saved.language, LanguageChoice::Ru, "по умолчанию — русский");
+        // При выходе запоминается окно среды.
+        ide.save_on_exit(&app);
+        assert!(Settings::load(&cfg).unwrap().window("tvcreator").is_some());
+        // Следующий запуск применяет настройки сам.
+        let mut app2 = Program::new(Box::new(HeadlessBackend::new(120, 40)), Some(menu()), Some(status()));
+        let _ide2 = Ide::with_themes(&mut app2, FormDoc::new("Form1"), None, load_themes(&[]), Some(cfg.clone()));
+        assert_eq!(app2.desktop().pattern(), '▒');
         let _ = std::fs::remove_dir_all(cfg.parent().unwrap());
     }
 }

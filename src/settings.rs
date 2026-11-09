@@ -286,6 +286,12 @@ impl Settings {
         Settings::load(path).unwrap_or_default()
     }
 
+    /// Прочитать; нет файла или он испорчен — `fallback` (например,
+    /// настройки по умолчанию с русским языком).
+    pub fn load_or(path: impl AsRef<Path>, fallback: Settings) -> Settings {
+        Settings::load(path).unwrap_or(fallback)
+    }
+
     /// Записать (каталог создаётся).
     pub fn save(&self, path: impl AsRef<Path>) -> Result<(), String> {
         let path = path.as_ref();

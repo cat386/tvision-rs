@@ -8,13 +8,11 @@
 //! 5. всегда есть встроенные: «Классическая», «Gruvbox», «Чёрно-белая»,
 //!    «Монохромная».
 //!
-//! Выбор хранится в файле настроек (`settings.json`): в каталоге из
-//! `TVCREATOR_CONFIG`, иначе `$XDG_CONFIG_HOME/tvcreator`,
-//! `~/.config/tvcreator`, на Windows — `%APPDATA%\tvcreator`.
+//! Выбор хранится в стандартных настройках `tvision::settings` — в файле
+//! `tvcreator.settings.json` рядом с программой.
 
 use std::path::{Path, PathBuf};
 
-use tvision::json::{parse_json, Json};
 use tvision::theme::{find_themes, Base, Theme};
 
 /// Тема и откуда она (`None` — встроенная).
@@ -92,52 +90,6 @@ pub fn resolve(themes: &[ThemeEntry], key: &str) -> Option<ThemeEntry> {
     Theme::load(&p).ok().map(|theme| ThemeEntry { theme, path: Some(p) })
 }
 
-// ----------------------------------------------------------------------
-// Настройки
-// ----------------------------------------------------------------------
-
-/// Что запоминает TVCreator между запусками.
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct Settings {
-    /// Тема среды (ключ [`ThemeEntry::key`]); пусто — цвета по умолчанию.
-    pub theme: String,
-    /// Тема формы на холсте и в предпросмотре; пусто — как у среды.
-    pub form_theme: String,
-}
-
-/// Файл настроек.
-pub fn settings_path() -> Option<PathBuf> {
-    let dir = if let Ok(d) = std::env::var("TVCREATOR_CONFIG") {
-        PathBuf::from(d)
-    } else if let Ok(d) = std::env::var("XDG_CONFIG_HOME") {
-        PathBuf::from(d).join("tvcreator")
-    } else if let Ok(d) = std::env::var("APPDATA") {
-        PathBuf::from(d).join("tvcreator")
-    } else {
-        PathBuf::from(std::env::var("HOME").ok()?).join(".config").join("tvcreator")
-    };
-    Some(dir.join("settings.json"))
-}
-
-impl Settings {
-    /// Прочитать; нет файла или он испорчен — настройки по умолчанию.
-    pub fn load(path: &Path) -> Settings {
-        let Ok(text) = std::fs::read_to_string(path) else { return Settings::default() };
-        let Ok(j) = parse_json(&text) else { return Settings::default() };
-        let s = |k: &str| j.get(k).and_then(Json::as_str).unwrap_or("").to_string();
-        Settings { theme: s("theme"), form_theme: s("form_theme") }
-    }
-
-    /// Записать (каталог создаётся). Ошибка не страшна — просто не запомнится.
-    pub fn save(&self, path: &Path) -> Result<(), String> {
-        if let Some(d) = path.parent() {
-            std::fs::create_dir_all(d).map_err(|e| e.to_string())?;
-        }
-        let j = Json::object(vec![("theme", Json::from_str(&self.theme)), ("form_theme", Json::from_str(&self.form_theme))]);
-        std::fs::write(path, j.pretty() + "\n").map_err(|e| e.to_string())
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -160,16 +112,5 @@ mod tests {
         assert_eq!(names.iter().filter(|n| **n == "Классическая").count(), 1);
         let sea = t.iter().find(|e| e.theme.name == "Морская").unwrap();
         assert_eq!(find_key(&t, &sea.key()).map(|i| &t[i].theme.name), Some(&sea.theme.name));
-    }
-
-    #[test]
-    fn settings_roundtrip() {
-        let p = std::env::temp_dir().join(format!("tvcreator-cfg-{}", std::process::id())).join("settings.json");
-        let s = Settings { theme: "builtin:classic".into(), form_theme: "/x/sea.tvtheme".into() };
-        s.save(&p).unwrap();
-        assert_eq!(Settings::load(&p), s);
-        std::fs::write(&p, "{").unwrap();
-        assert_eq!(Settings::load(&p), Settings::default());
-        let _ = std::fs::remove_dir_all(p.parent().unwrap());
     }
 }

@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 use tvision::color::*;
 use tvision::layout::{item, Alignment, Form, HBox, VBox};
+use tvision::settings::{settings_dialog, LanguageChoice, Settings};
 use tvision::theme::{self, attr_to_text, Base, Theme};
 use tvision::widgets::colorsel::{Color256Dialog, ColorDisplay, ColorGroup, ColorSel, ColorSelector};
 use tvision::*;
@@ -36,6 +37,19 @@ pub const CM_ABOUT: u16 = 117;
 pub const CM_COPY: u16 = 118;
 pub const CM_PASTE: u16 = 119;
 pub const CM_SHOW_CODE: u16 = 120;
+pub const CM_SETTINGS: u16 = 121;
+
+/// Настройки, если файла ещё нет: как у библиотеки, но по-русски —
+/// надписи редактора русские.
+pub fn default_settings() -> Settings {
+    Settings { language: LanguageChoice::Ru, ..Settings::default() }
+}
+
+/// Ключ главного окна в настройках: заголовок меняется вместе с именем
+/// файла, поэтому окно узнаётся по началу заголовка.
+pub fn window_key(w: &Window) -> Option<String> {
+    w.title.starts_with("Редактор тем").then(|| "tvtheme".to_string())
+}
 
 // ----------------------------------------------------------------------
 // Главное окно
@@ -156,10 +170,22 @@ pub struct ThemeEditor {
     own_palette: Vec<Attr>,
     clipboard: Option<Attr>,
     pub last_message: String,
+    /// Настройки самого редактора (его цвета, язык, место окна) —
+    /// стандартные `tvision::settings`; файл — `settings_path`.
+    pub settings: Settings,
+    pub settings_path: Option<PathBuf>,
 }
 
 impl ThemeEditor {
     pub fn new(app: &mut Program, theme: Theme, path: Option<PathBuf>) -> ThemeEditor {
+        ThemeEditor::with_settings(app, theme, path, None)
+    }
+
+    /// Редактор с файлом настроек: если файл задан, его настройки (тема
+    /// редактора, язык, цвета терминала, мышь…) сразу применяются.
+    pub fn with_settings(app: &mut Program, theme: Theme, path: Option<PathBuf>, settings_path: Option<PathBuf>) -> ThemeEditor {
+        let settings = settings_path.as_deref().map(|p| Settings::load_or(p, default_settings())).unwrap_or_else(default_settings);
+        let applied = settings_path.as_ref().map(|_| settings.apply(app));
         let groups = theme::color_groups();
         let theme = Rc::new(RefCell::new(theme));
         let dirty = Rc::new(Cell::new(false));
@@ -181,7 +207,12 @@ impl ThemeEditor {
             own_palette,
             clipboard: None,
             last_message: String::new(),
+            settings,
+            settings_path,
         };
+        if let Some(Err(err)) = applied {
+            e.last_message = err;
+        }
         e.sync(app);
         e.update_title(app);
         e
@@ -497,6 +528,31 @@ impl ThemeEditor {
         app.insert_window(w);
     }
 
+    /// Стандартный диалог «Настройки»: цвета самого редактора, язык,
+    /// окна, мышь.
+    pub fn settings_dialog(&mut self, app: &mut Program) {
+        // Тема «на весь редактор» мешала бы предпросмотру — выключим.
+        if self.live {
+            self.toggle_live(app);
+        }
+        if settings_dialog(app, &mut self.settings) {
+            self.own_palette = app.palette.clone();
+            if let Some(p) = &self.settings_path {
+                if let Err(e) = self.settings.save(p) {
+                    self.error(app, &e);
+                }
+            }
+        }
+    }
+
+    /// Запомнить, где стоит окно редактора, и записать настройки (при выходе).
+    pub fn save_on_exit(&mut self, app: &Program) {
+        self.settings.capture_windows_with(app, window_key);
+        if let Some(p) = &self.settings_path {
+            let _ = self.settings.save(p); // не записалось — просто не запомнится
+        }
+    }
+
     pub fn toggle_live(&mut self, app: &mut Program) {
         self.live = !self.live;
         app.palette = if self.live { self.theme.borrow().palette.clone() } else { self.own_palette.clone() };
@@ -556,6 +612,7 @@ impl AppHandler for ThemeEditor {
             }
             CM_PROPS => self.edit_props(app),
             CM_LIVE => self.toggle_live(app),
+            CM_SETTINGS => self.settings_dialog(app),
             CM_ABOUT => self.info(
                 app,
                 "\x03Редактор тем tvision-rs\n\n\x03Тема — 135 цветов палитры\n\x03в файле .tvtheme.\n\n\x03В программе: app.load_theme(путь)\n\x03или TVISION_THEME=путь.",
@@ -616,7 +673,12 @@ pub fn menu() -> Menu {
         )
         .submenu(
             "~В~ид",
-            Menu::new().item_key("~Т~ема на весь редактор", CM_LIVE, kb::ctrl('t'), "Ctrl-T").separator().item("О ~п~рограмме", CM_ABOUT),
+            Menu::new()
+                .item_key("~Т~ема на весь редактор", CM_LIVE, kb::ctrl('t'), "Ctrl-T")
+                .separator()
+                .item("~Н~астройки...", CM_SETTINGS)
+                .separator()
+                .item("О ~п~рограмме", CM_ABOUT),
         )
 }
 
@@ -636,7 +698,9 @@ pub fn status() -> Vec<StatusDef> {
 
 /// Запустить редактор (из `main`).
 pub fn run(file: Option<PathBuf>) -> Result<(), String> {
-    locale::set_language(locale::Language::Ru);
+    // Настройки — рядом с программой (tvtheme.settings.json); язык — до меню.
+    let settings_path = Settings::default_path();
+    Settings::load_or(&settings_path, default_settings()).apply_language();
     let (theme, path) = match file {
         Some(p) if p.exists() => (Theme::load(&p)?, Some(p)),
         Some(p) => {
@@ -651,8 +715,14 @@ pub fn run(file: Option<PathBuf>) -> Result<(), String> {
         }
     };
     let mut app = Program::with_terminal(Some(menu()), Some(status())).map_err(|e| e.to_string())?;
-    let mut ed = ThemeEditor::new(&mut app, theme, path);
+    let mut ed = ThemeEditor::with_settings(&mut app, theme, path, Some(settings_path));
+    ed.settings.restore_windows_with(&mut app, window_key);
+    if !ed.last_message.is_empty() {
+        let m = ed.last_message.clone();
+        ed.error(&mut app, &m);
+    }
     app.run(&mut ed);
+    ed.save_on_exit(&app);
     Ok(())
 }
 
@@ -785,5 +855,37 @@ mod tests {
         app.put_event(Event::command_event(cm::QUIT));
         app.pump(&mut e); // вопрос закроет Esc — «Отмена»
         assert!(app.is_running());
+    }
+
+    #[test]
+    fn settings_dialog_saves_file_and_window() {
+        let cfg = std::env::temp_dir().join(format!("tvtheme-std-settings-{}", std::process::id())).join("tvtheme.settings.json");
+        let _ = std::fs::remove_file(&cfg);
+        // Диалог: тема (список в фокусе) ↓ — «Классическая», Enter — OK.
+        let mut b = HeadlessBackend::new(130, 36);
+        for k in [KeyEvent::new(Key::Down, Mods::NONE), kb::ENTER] {
+            b.push_key(k);
+        }
+        let mut app = Program::new(Box::new(b), Some(menu()), Some(status()));
+        let mut e = ThemeEditor::with_settings(&mut app, Theme::builtin(Base::Gruvbox), None, Some(cfg.clone()));
+        e.toggle_live(&mut app); // включённая «тема на весь редактор» выключается
+        app.put_event(Event::command_event(CM_SETTINGS));
+        app.pump(&mut e);
+        assert!(!e.live);
+        let saved = Settings::load(&cfg).unwrap();
+        assert_eq!(saved.language, LanguageChoice::Ru);
+        assert_eq!(tvision::settings::resolve_theme(&saved.theme).unwrap().unwrap().palette, app.palette, "тема сохранена и применена");
+        // Ctrl+T и обратно — возвращаются цвета из настроек.
+        let own = app.palette.clone();
+        e.toggle_live(&mut app);
+        e.toggle_live(&mut app);
+        assert_eq!(app.palette, own);
+        e.save_on_exit(&app);
+        assert!(Settings::load(&cfg).unwrap().window("tvtheme").is_some());
+        // Следующий запуск — в тех же цветах.
+        let mut app2 = Program::new(Box::new(HeadlessBackend::new(130, 36)), Some(menu()), Some(status()));
+        let _e2 = ThemeEditor::with_settings(&mut app2, Theme::builtin(Base::Gruvbox), None, Some(cfg.clone()));
+        assert_eq!(app2.palette, own);
+        let _ = std::fs::remove_dir_all(cfg.parent().unwrap());
     }
 }
