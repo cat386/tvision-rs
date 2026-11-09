@@ -161,6 +161,30 @@ TVISION_THEME=themes/matrix.tvtheme cargo run --example themes # тема без
 
 Урок — [15. Темы](docs/guide/15-themes.md).
 
+### Настройки программы
+
+`tvision::settings` — стандартный диалог «Настройки» (тема с живым
+предпросмотром, цвета терминала, узор фона, язык, как расставить окна
+при запуске, мышь) и файл `<программа>.settings.json` **рядом с
+исполнимым файлом**. При запуске программа читает его и применяет, при
+выходе запоминает, где стояли окна:
+
+```rust,ignore
+let path = Settings::default_path();
+let mut settings = Settings::load_or_default(&path);
+settings.apply_language();
+let mut app = Program::with_terminal(Some(menu()), Some(status()))?;
+settings.apply(&mut app).ok();
+open_windows(&mut app);
+settings.restore_windows(&mut app);
+app.run(&mut handler);
+settings.capture_windows(&app);
+settings.save(&path).ok();
+```
+
+Пример — `cargo run --example app_settings`, урок —
+[16. Настройки программы](docs/guide/16-settings.md).
+
 ## Чего ещё нет (следующие этапы)
 
 * `TMonoSelector` (выбор цвета в монохромном режиме);

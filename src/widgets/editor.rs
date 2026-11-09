@@ -1634,6 +1634,10 @@ impl View for EditWindow {
         Some(&self.win)
     }
 
+    fn as_window_mut(&mut self) -> Option<&mut Window> {
+        Some(&mut self.win)
+    }
+
     fn draw(&self, dc: &mut DrawCtx) {
         // Заголовок (имя файла) обновляется в `handle_event`.
         self.win.draw_window(dc);

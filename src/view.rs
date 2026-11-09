@@ -897,6 +897,12 @@ pub trait View: Any {
         None
     }
 
+    /// То же для изменения (например, восстановить распахнутое окно из
+    /// настроек — [`crate::settings`]).
+    fn as_window_mut(&mut self) -> Option<&mut crate::widgets::Window> {
+        None
+    }
+
     /// Если представление — группа (или содержит группу), вернуть её.
     fn as_group(&self) -> Option<&Group> {
         None

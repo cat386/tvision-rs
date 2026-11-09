@@ -240,7 +240,9 @@ fn list_window(app: &mut Program) {
 | `palette` | цвета: `palettes::BLUE_WINDOW` (по умолчанию), `CYAN_WINDOW`, `GRAY_WINDOW` |
 | `group` | содержимое; `group.vs` — положение самого окна |
 
-**Реже:** `insert(Box<dyn View>)`, `zoom(размер)`, `number`, `id()`;
+**Реже:** `insert(Box<dyn View>)`, `zoom(размер)`, `is_zoomed()`,
+`normal_bounds()` (границы до распахивания — их запоминают
+[настройки](35-settings.md)), `number`, `id()`;
 `handle_window_event`, `draw_window`, `set_window_state` — для своих
 окон ([урок 8](08-own-window.md)).
 
@@ -265,6 +267,9 @@ impl View for NotesWindow {
     tvision::impl_group_basics!(win.group);
     fn as_window(&self) -> Option<&Window> {
         Some(&self.win)
+    }
+    fn as_window_mut(&mut self) -> Option<&mut Window> {
+        Some(&mut self.win)
     }
     fn draw(&self, dc: &mut DrawCtx) {
         self.win.draw_window(dc);

@@ -134,6 +134,21 @@ impl Window {
         self.group.add(crate::widgets::ScrollBar::new(r))
     }
 
+    /// Окно распахнуто на весь рабочий стол.
+    pub fn is_zoomed(&self) -> bool {
+        self.zoomed
+    }
+
+    /// Границы окна в обычном (не распахнутом) виде: у распахнутого —
+    /// те, к которым оно вернётся.
+    pub fn normal_bounds(&self) -> Rect {
+        if self.zoomed {
+            self.zoom_rect
+        } else {
+            self.group.vs.bounds()
+        }
+    }
+
     /// Распахнуть / восстановить (`zoom`).
     pub fn zoom(&mut self, owner: Point) {
         let (_, max) = self.size_limits(owner);
@@ -371,6 +386,10 @@ impl View for Window {
     crate::impl_group_basics!(group);
 
     fn as_window(&self) -> Option<&Window> {
+        Some(self)
+    }
+
+    fn as_window_mut(&mut self) -> Option<&mut Window> {
         Some(self)
     }
 

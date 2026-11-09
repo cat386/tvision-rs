@@ -69,6 +69,7 @@ pub mod locale;
 pub mod mvc;
 pub mod platform;
 pub mod program;
+pub mod settings;
 #[cfg(feature = "sqlite")]
 pub mod sqlite;
 pub mod text;

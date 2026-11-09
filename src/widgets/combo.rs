@@ -344,6 +344,10 @@ impl View for ComboWindow {
         Some(&self.win)
     }
 
+    fn as_window_mut(&mut self) -> Option<&mut Window> {
+        Some(&mut self.win)
+    }
+
     fn draw(&self, dc: &mut DrawCtx) {
         self.win.draw_window(dc);
     }

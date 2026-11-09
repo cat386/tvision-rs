@@ -496,6 +496,10 @@ impl View for Color256Dialog {
         Some(&self.dlg.win)
     }
 
+    fn as_window_mut(&mut self) -> Option<&mut crate::widgets::Window> {
+        Some(&mut self.dlg.win)
+    }
+
     fn draw(&self, dc: &mut DrawCtx) {
         self.dlg.draw(dc);
     }
@@ -692,6 +696,10 @@ impl View for ColorDialog {
 
     fn as_window(&self) -> Option<&crate::widgets::Window> {
         Some(&self.dlg.win)
+    }
+
+    fn as_window_mut(&mut self) -> Option<&mut crate::widgets::Window> {
+        Some(&mut self.dlg.win)
     }
 
     fn draw(&self, dc: &mut DrawCtx) {
