@@ -5,7 +5,8 @@
 //! `cargo run -p tvcreator -- --gen forms/login.tvui -o examples/forms/login.rs`).
 //!
 //! Запуск: `cargo run -p tvcreator --example generated_forms`
-//! F2 — «Вход», F3 — «Код доступа», окно «Почта» открыто сразу.
+//! F2 — «Вход», F3 — «Код доступа», F4 — «Свойства» (линии), окно «Почта»
+//! открыто сразу.
 
 // Сгенерированный код не форматируем — как вывод uic.
 #[rustfmt::skip]
@@ -19,11 +20,16 @@ mod login;
 #[rustfmt::skip]
 #[path = "forms/mail.rs"]
 mod mail;
+// Сгенерированный код не форматируем — как вывод uic.
+#[rustfmt::skip]
+#[path = "forms/props.rs"]
+mod props;
 
 use tvision::*;
 
 const CM_LOGIN: u16 = 200;
 const CM_KEYPAD: u16 = 201;
+const CM_PROPS: u16 = 202;
 
 struct App;
 
@@ -38,6 +44,15 @@ impl AppHandler for App {
                     let name = d.win.group.find::<InputLine>(ui.user).map(|l| l.text()).unwrap_or_default();
                     message_box(app, &format!("\x03Здравствуйте, {}!", name), mf::INFORMATION | mf::OK_BUTTON);
                 }
+            }
+            Some(CM_PROPS) => {
+                // Линии формы сами соединяются с рамкой и друг с другом.
+                let (d, ui) = props::PropsDialog::create();
+                let mut d = d;
+                if let Some(l) = d.win.group.find_mut::<InputLine>(ui.file_name) {
+                    l.set_text("отчёт.txt");
+                }
+                app.exec_dialog(d);
             }
             Some(CM_KEYPAD) => {
                 let (d, ui) = keypad::KeypadDialog::create();
@@ -69,6 +84,7 @@ fn status() -> Vec<StatusDef> {
     vec![StatusDef::all(vec![
         StatusItem::new("~F2~ Вход", kb::F2, CM_LOGIN),
         StatusItem::new("~F3~ Код доступа", kb::F3, CM_KEYPAD),
+        StatusItem::new("~F4~ Свойства", kb::f(4), CM_PROPS),
         StatusItem::new("~Alt-X~ Выход", kb::ALT_X, cm::QUIT),
     ])]
 }
@@ -110,11 +126,12 @@ mod tests {
         same("login", &super::login::LoginDialog::create().0);
         same("mail", &super::mail::MailWindow::create().0);
         same("keypad", &super::keypad::KeypadDialog::create().0);
+        same("props", &super::props::PropsDialog::create().0);
     }
 
     #[test]
     fn generated_code_is_up_to_date() {
-        for name in ["login", "mail", "keypad"] {
+        for name in ["login", "mail", "keypad", "props"] {
             let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("examples/forms").join(format!("{}.rs", name));
             let on_disk = std::fs::read_to_string(&path).unwrap();
             let fresh = codegen::generate(&form(name), &format!("{}.tvui", name));
@@ -160,5 +177,30 @@ mod tests {
         // 1 : 3 по ширине.
         let (fw, lw) = (folders.b.x - folders.a.x, letters.b.x - letters.a.x);
         assert!((lw as f64 / fw as f64 - 3.0).abs() < 0.3, "{} : {}", fw, lw);
+    }
+
+    /// Линии формы «Свойства» соединяются с рамкой и между собой.
+    #[test]
+    fn props_lines_join() {
+        let (d, _ui) = super::props::PropsDialog::create();
+        let size = d.win.group.vs.size;
+        let mut app = Program::new(Box::new(tvision::platform::HeadlessBackend::new(60, 20)), None, None);
+        let id = app.insert_window(d);
+        app.redraw();
+        // Диалог по центру экрана.
+        let o = app.find::<Dialog>(id).unwrap().win.group.vs.origin;
+        let sc = app.screen();
+        let rows: Vec<String> = (0..size.y).map(|y| (0..size.x).map(|x| sc.get((o.x + x) as usize, (o.y + y) as usize).ch).collect()).collect();
+        let text = rows.join("\n");
+        if std::env::var("SHOW_FORM").is_ok() {
+            println!("{}", text);
+        }
+        let line_rows: Vec<&String> = rows.iter().filter(|r| r.starts_with('╟')).collect();
+        assert_eq!(line_rows.len(), 2, "{}", text);
+        for r in &line_rows {
+            assert!(r.ends_with('╢'), "{}", text);
+        }
+        assert!(line_rows[0].contains('┬') && line_rows[1].contains('┴'), "{}", text);
+        assert!(!text.contains('?'));
     }
 }

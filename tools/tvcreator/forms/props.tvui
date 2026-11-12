@@ -1,0 +1,52 @@
+{
+  "tvcreator": 1,
+  "name": "PropsDialog",
+  "title": "Свойства",
+  "kind": "dialog",
+  "size": [40, 12],
+  "auto_size": true,
+  "command_base": 100,
+  "layout": {
+    "type": "vbox",
+    "margins": [2, 1, 2, 0],
+    "items": [
+      {
+        "type": "form",
+        "items": [
+          {"type": "label", "name": "label_name", "text": "~И~мя:", "link": "file_name"},
+          {"type": "input", "name": "file_name", "max_len": 30}
+        ]
+      },
+      {"type": "line", "name": "line1", "to_frame": true},
+      {
+        "type": "hbox",
+        "items": [
+          {
+            "type": "vbox",
+            "items": [
+              {"type": "text", "name": "size_title", "text": "Размер:"},
+              {"type": "text", "name": "size", "text": "12 КБ"}
+            ]
+          },
+          {"type": "line", "name": "line2", "vertical": true},
+          {
+            "type": "vbox",
+            "items": [
+              {"type": "text", "name": "date_title", "text": "Изменён:"},
+              {"type": "text", "name": "date", "text": "сегодня, 12:00"}
+            ]
+          }
+        ]
+      },
+      {"type": "line", "name": "line3", "to_frame": true},
+      {
+        "type": "hbox",
+        "items": [
+          {"type": "stretch", "factor": 1},
+          {"type": "button", "name": "ok", "text": "O~K~", "command": "OK", "default": true},
+          {"type": "button", "name": "cancel", "text": "Отмена", "command": "CANCEL"}
+        ]
+      }
+    ]
+  }
+}

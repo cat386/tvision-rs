@@ -57,6 +57,14 @@ pub fn make_widget(doc: &FormDoc, w: &Widget, link: Option<ViewId>) -> Box<dyn V
         }
         WidgetKind::Table => Box::new(Table::new(r, Box::new(VecTableModel::new(&items, vec![])), None, None)),
         WidgetKind::ProgressBar => Box::new(ProgressBar::new(r, w.max)),
+        WidgetKind::Line => {
+            let mut l = if w.vertical { Line::vertical(r) } else { Line::horizontal(r) };
+            if w.double {
+                l = l.double();
+            }
+            l.to_frame = w.to_frame;
+            Box::new(l)
+        }
     }
 }
 

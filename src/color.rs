@@ -731,6 +731,9 @@ pub mod palettes {
     pub const INPUT_LINE: &[u8] = b"\x13\x13\x14\x15";
     pub const LABEL: &[u8] = b"\x07\x08\x09\x09";
     pub const STATIC_TEXT: &[u8] = b"\x06";
+    /// Линия ([`crate::widgets::Line`]): цвет пассивной рамки окна или
+    /// диалога.
+    pub const LINE: &[u8] = b"\x01";
     pub const LIST_VIEWER: &[u8] = b"\x1A\x1A\x1B\x1C\x1D";
     pub const SCROLL_BAR: &[u8] = b"\x04\x05\x05";
     pub const SCROLLER: &[u8] = b"\x06\x07";

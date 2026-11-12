@@ -707,6 +707,17 @@ impl<'a> DrawCtx<'a> {
 
     /// Пишет одну ячейку по абсолютным координатам с учётом обрезки
     /// и широких символов.
+    /// Уже нарисованная клетка (локальные координаты); `None` — вне
+    /// области рисования. Нужна, например, линиям, чтобы соединиться с
+    /// рамкой окна ([`crate::widgets::line`]).
+    pub fn cell_at(&self, x: i32, y: i32) -> Option<Cell> {
+        let p = Point::new(self.origin.x + x, self.origin.y + y);
+        if !self.clip.contains(p) {
+            return None;
+        }
+        Some(self.screen.get(p.x as usize, p.y as usize))
+    }
+
     fn put_abs(&mut self, x: i32, y: i32, cell: Cell) {
         if !self.clip.contains(Point::new(x, y)) {
             return;
@@ -925,6 +936,12 @@ pub trait View: Any {
     /// Если представление — окно (или построено вокруг окна), вернуть его.
     /// Программа по этому узнаёт флаги активного окна для команд
     /// `cm::CLOSE`, `cm::ZOOM`, `cm::RESIZE`.
+    /// Это линия ([`crate::widgets::Line`]): группа рисует линии последними
+    /// и соединяет их между собой и с рамкой.
+    fn as_line(&self) -> Option<&crate::widgets::Line> {
+        None
+    }
+
     fn as_window(&self) -> Option<&crate::widgets::Window> {
         None
     }

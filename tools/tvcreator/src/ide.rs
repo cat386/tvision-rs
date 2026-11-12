@@ -1293,4 +1293,19 @@ mod tests {
             assert_eq!(hi, vec![focused], "подсвечен только текущий пункт: {:x?}", rows);
         }
     }
+
+    /// Линии формы на холсте соединяются с рамкой и между собой, а в
+    /// палитре есть «Линия».
+    #[test]
+    fn lines_on_canvas() {
+        assert!(palette_items().iter().any(|t| t.contains("Линия (Line)")));
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("forms/props.tvui");
+        let doc = FormDoc::load(&path).unwrap();
+        let mut app = Program::new(Box::new(HeadlessBackend::new(120, 40)), Some(menu()), Some(status()));
+        let _ide = Ide::new(&mut app, doc, Some(path));
+        app.redraw();
+        let s = app.screen_text();
+        // Форма на холсте неактивна — рамка одинарная: ├───┬───┤.
+        assert!(s.contains("├────") && s.contains("─┬─") && s.contains("─┴─") && s.contains("────┤"), "{}", s);
+    }
 }

@@ -517,11 +517,18 @@ impl Group {
     // Отрисовка
     // ------------------------------------------------------------------
 
-    /// Рисует детей снизу вверх, затем их тени.
+    /// Рисует детей снизу вверх, затем их тени. Линии
+    /// ([`crate::widgets::Line`]) — последними, с соединениями между собой и
+    /// с рамкой ([`crate::widgets::line::join_lines`]).
     pub fn draw_children(&self, dc: &mut DrawCtx) {
+        let mut lines = Vec::new();
         for c in &self.children {
             let vs = c.vs();
             if !vs.is_visible() {
+                continue;
+            }
+            if let Some(l) = c.as_line() {
+                lines.push((l, c.palette()));
                 continue;
             }
             let b = vs.bounds();
@@ -532,6 +539,16 @@ impl Group {
             if vs.state & sf::SHADOW != 0 {
                 dc.shadow(b);
             }
+        }
+        if !lines.is_empty() {
+            let segs: Vec<_> = lines
+                .iter()
+                .filter_map(|(l, pal)| {
+                    let attr = dc.sub(l.vs.bounds(), pal).color(1);
+                    crate::widgets::line::segment_of(l, dc, attr)
+                })
+                .collect();
+            crate::widgets::line::join_lines(dc, &segs);
         }
     }
 

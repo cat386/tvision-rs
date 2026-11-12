@@ -67,6 +67,7 @@ pub enum WidgetKind {
     ListBox,
     Table,
     ProgressBar,
+    Line,
 }
 
 impl LayoutKind {
@@ -96,7 +97,7 @@ impl LayoutKind {
 }
 
 impl WidgetKind {
-    pub const ALL: [WidgetKind; 9] = [
+    pub const ALL: [WidgetKind; 10] = [
         WidgetKind::Label,
         WidgetKind::StaticText,
         WidgetKind::InputLine,
@@ -106,6 +107,7 @@ impl WidgetKind {
         WidgetKind::ListBox,
         WidgetKind::Table,
         WidgetKind::ProgressBar,
+        WidgetKind::Line,
     ];
 
     /// Имя в файле.
@@ -120,6 +122,7 @@ impl WidgetKind {
             WidgetKind::ListBox => "listbox",
             WidgetKind::Table => "table",
             WidgetKind::ProgressBar => "progress",
+            WidgetKind::Line => "line",
         }
     }
     /// Название для человека (палитра, дерево объектов).
@@ -134,6 +137,7 @@ impl WidgetKind {
             WidgetKind::ListBox => "Список (ListBox)",
             WidgetKind::Table => "Таблица (Table)",
             WidgetKind::ProgressBar => "Полоса выполнения (ProgressBar)",
+            WidgetKind::Line => "Линия (Line)",
         }
     }
     /// Приставка для имён новых виджетов: `button1`, `input2`…
@@ -148,6 +152,7 @@ impl WidgetKind {
             WidgetKind::ListBox => "list",
             WidgetKind::Table => "table",
             WidgetKind::ProgressBar => "progress",
+            WidgetKind::Line => "line",
         }
     }
     pub fn from_key(s: &str) -> Option<WidgetKind> {
@@ -155,7 +160,7 @@ impl WidgetKind {
     }
     /// Можно ли сделать текущим (получает фокус по Tab).
     pub fn selectable(self) -> bool {
-        !matches!(self, WidgetKind::Label | WidgetKind::StaticText | WidgetKind::ProgressBar)
+        !matches!(self, WidgetKind::Label | WidgetKind::StaticText | WidgetKind::ProgressBar | WidgetKind::Line)
     }
     /// Есть ли у виджета данные (`get_data`/`set_data`).
     pub fn has_data(self) -> bool {
@@ -184,6 +189,10 @@ pub struct Widget {
     pub link: String,
     /// Полоса выполнения: максимум.
     pub max: i64,
+    /// Линия: вертикальная (иначе горизонтальная), двойная, до рамки окна.
+    pub vertical: bool,
+    pub double: bool,
+    pub to_frame: bool,
 }
 
 impl Widget {
@@ -209,6 +218,9 @@ impl Widget {
             items: items.into_iter().map(String::from).collect(),
             link: String::new(),
             max: 100,
+            vertical: false,
+            double: false,
+            to_frame: false,
         }
     }
 }
@@ -673,6 +685,13 @@ fn node_to_json(n: &Node) -> Json {
                     o.push(("items", Json::Arr(w.items.iter().map(|s| Json::from_str(s)).collect())));
                 }
                 WidgetKind::ProgressBar => o.push(("max", Json::from_i64(w.max))),
+                WidgetKind::Line => {
+                    for (k, v) in [("vertical", w.vertical), ("double", w.double), ("to_frame", w.to_frame)] {
+                        if v {
+                            o.push((k, Json::Bool(true)));
+                        }
+                    }
+                }
             }
         }
         NodeKind::Stretch(f) => {
@@ -749,6 +768,10 @@ fn node_from_json(j: &Json) -> Result<Node, String> {
         }
         w.link = s("link");
         w.max = int("max").unwrap_or(100);
+        let flag = |k: &str| j.get(k).and_then(Json::as_bool).unwrap_or(false);
+        w.vertical = flag("vertical");
+        w.double = flag("double");
+        w.to_frame = flag("to_frame");
         let mut n = Node::widget(w);
         n.item = ItemProps::default(); // уточнения — только из файла
         n

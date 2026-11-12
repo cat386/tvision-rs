@@ -76,7 +76,7 @@ Turbo Vision и текстовыми интерфейсами. Всё остал
 | [Программа, окна, диалоги](23-program.md) | `Program`, `AppHandler`, `Desktop`, `Window`, `Dialog` |
 | [Меню и строка состояния](24-menus.md) | `Menu`, `MenuBar`, контекстное меню, `StatusLine` |
 | [Проверка ввода](25-validators.md) | маски, диапазоны, фильтры, своя проверка |
-| [Элементы управления](26-controls.md) | кнопки, поля, флажки, списки, история, выпадающий список, полоса выполнения, окна сообщений |
+| [Элементы управления](26-controls.md) | кнопки, поля, флажки, списки, история, выпадающий список, полоса выполнения, линии, окна сообщений |
 | [Таблица, дерево, прокрутка](27-data-views.md) | `Table`, `TreeView`, `Outline`, `Scroller`, `Terminal` |
 | [Текстовый редактор](28-editor.md) | `EditWindow`, `Editor`, `Memo` |
 | [Готовые диалоги](29-std-dialogs.md) | выбор файла, каталога, цветов; справка по F1 |
@@ -114,7 +114,7 @@ Turbo Vision и текстовыми интерфейсами. Всё остал
 
 **K** — [`Key`](21-events.md#key--клавиша) · [`KeyEvent`](21-events.md#keyevent--нажатие-клавиши)
 
-**L** — [`Label`](26-controls.md#label--подпись) · [`Language`](31-platform.md#язык-интерфейса-language) · [`Layout`](33-layout.md#layout--раскладка) · [`ListBox`](26-controls.md#listbox--список) · [`LanguageChoice`](35-settings.md#перечисления)
+**L** — [`Label`](26-controls.md#label--подпись) · [`Language`](31-platform.md#язык-интерфейса-language) · [`Layout`](33-layout.md#layout--раскладка) · [`Line`](26-controls.md#line--линия) · [`LineStyle`](26-controls.md#line--линия) · [`ListBox`](26-controls.md#listbox--список) · [`LanguageChoice`](35-settings.md#перечисления)
 
 **M** — [`Margins`](33-layout.md#margins) · [`Memo`](28-editor.md#memo--многострочное-поле-в-диалоге) · [`Menu`](24-menus.md#menu--меню) · [`MenuBar`](24-menus.md#menubar--строка-меню) · [`MenuItem`](24-menus.md#menuitem--пункт-меню) · [`MenuOutcome`](24-menus.md#menusession-и-menuoutcome) · [`MenuSession`](24-menus.md#menusession-и-menuoutcome) · [`MemoryStorage`](32-data.md#memorystorage) · [`Message`](21-events.md#message-и-info--команда-с-данными) · [`Model`](32-data.md#model--модель) · [`ModelTableModel`](32-data.md#modeltablemodel-и-model_table) · [`ModelWindow`](32-data.md#modelwindow--окно-с-таблицей) · [`Mods`](21-events.md#mods--shift-ctrl-alt) · [`MouseEvent`](21-events.md#mouseevent--мышь) · [`MsgBoxText`](26-controls.md#окна-сообщений) · [`MultiCheckBoxes`](26-controls.md#cluster--флажки-и-переключатели)
 

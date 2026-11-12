@@ -119,6 +119,11 @@ pub fn props(doc: &FormDoc, sel: &Sel) -> Vec<Prop> {
                 }
                 WidgetKind::Table => out.push(p("w.items", "Столбцы (через ;)", w.items.join("; "), PropKind::List)),
                 WidgetKind::ProgressBar => out.push(p("w.max", "Максимум", w.max.to_string(), PropKind::Int(1, 1_000_000_000))),
+                WidgetKind::Line => {
+                    out.push(p("w.vertical", "Вертикальная", yes(w.vertical), PropKind::Bool));
+                    out.push(p("w.double", "Двойная", yes(w.double), PropKind::Bool));
+                    out.push(p("w.to_frame", "До рамки окна", yes(w.to_frame), PropKind::Bool));
+                }
             }
         }
         NodeKind::Stretch(f) => out.push(p("stretch.factor", "Коэффициент", f.to_string(), PropKind::Int(1, 100))),
@@ -314,6 +319,9 @@ pub fn set_prop(doc: &mut FormDoc, sel: &Sel, key: &str, value: &str) -> Result<
                     w.items = l;
                 }
                 "w.max" => w.max = int_in(v, 1, 1_000_000_000)?,
+                "w.vertical" => w.vertical = v == "да",
+                "w.double" => w.double = v == "да",
+                "w.to_frame" => w.to_frame = v == "да",
                 "w.class" => {}
                 _ => return Err(format!("Нет свойства {}.", key)),
             }

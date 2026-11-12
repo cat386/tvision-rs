@@ -115,6 +115,12 @@ fn widget_ctor(doc: &FormDoc, w: &Widget, link: Option<&str>) -> String {
         }
         WidgetKind::Table => format!("Table::new(Rect::default(), Box::new(VecTableModel::new(&[{}], vec![])), None, None)", items()),
         WidgetKind::ProgressBar => format!("ProgressBar::new(Rect::default(), {})", w.max),
+        WidgetKind::Line => format!(
+            "Line::{}(Rect::default()){}{}",
+            if w.vertical { "vertical" } else { "horizontal" },
+            if w.double { ".double()" } else { "" },
+            if w.to_frame { ".to_frame()" } else { "" }
+        ),
     }
 }
 
