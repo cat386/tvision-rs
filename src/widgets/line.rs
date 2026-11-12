@@ -182,45 +182,43 @@ pub fn joints(ch: char) -> Option<Joints> {
     GLYPHS.iter().find(|(c, _)| *c == ch).map(|(_, j)| *j)
 }
 
+/// Символ с ровно такими соединениями.
+fn exact(j: Joints) -> Option<char> {
+    GLYPHS.iter().find(|(_, g)| *g == j).map(|(c, _)| *c)
+}
+
+/// Обе стороны оси `(a, b)` — по более толстой, если `when` выполнено.
+fn even_axis(j: &mut Joints, a: usize, b: usize, when: bool) {
+    if when {
+        let m = j[a].max(j[b]);
+        j[a] = m;
+        j[b] = m;
+    }
+}
+
 /// Символ рамки для соединений. Сочетания, которых нет среди символов
 /// (одинарная вверх и двойная вниз, конец линии с одной стороны),
 /// заменяются ближайшими.
-pub fn glyph(j: Joints) -> char {
-    if let Some((c, _)) = GLYPHS.iter().find(|(_, g)| *g == j) {
-        return *c;
+pub fn glyph(mut j: Joints) -> char {
+    if let Some(c) = exact(j) {
+        return c;
     }
-    let mut j = j;
     // Конец линии: черта продолжается в обе стороны своей оси.
-    if j[LEFT] == 0 && j[RIGHT] == 0 {
-        let v = j[UP].max(j[DOWN]);
-        j[UP] = v;
-        j[DOWN] = v;
-    }
-    if j[UP] == 0 && j[DOWN] == 0 {
-        let h = j[LEFT].max(j[RIGHT]);
-        j[LEFT] = h;
-        j[RIGHT] = h;
-    }
-    if j == [0, 0, 0, 0] {
+    let (no_h, no_v) = (j[LEFT] == 0 && j[RIGHT] == 0, j[UP] == 0 && j[DOWN] == 0);
+    even_axis(&mut j, UP, DOWN, no_h);
+    even_axis(&mut j, LEFT, RIGHT, no_v);
+    if j == [0; 4] {
         return ' ';
     }
-    if let Some((c, _)) = GLYPHS.iter().find(|(_, g)| *g == j) {
-        return *c;
-    }
     // Разные линии на одной оси — по более толстой.
-    for (a, b) in [(UP, DOWN), (LEFT, RIGHT)] {
-        if j[a] != 0 && j[b] != 0 {
-            let m = j[a].max(j[b]);
-            j[a] = m;
-            j[b] = m;
-        }
-    }
-    if let Some((c, _)) = GLYPHS.iter().find(|(_, g)| *g == j) {
-        return *c;
-    }
+    let (both_v, both_h) = (j[UP] != 0 && j[DOWN] != 0, j[LEFT] != 0 && j[RIGHT] != 0);
+    even_axis(&mut j, UP, DOWN, both_v);
+    even_axis(&mut j, LEFT, RIGHT, both_h);
     // Остались одиночные смешанные концы — всё одной толщины.
-    let m = *j.iter().max().unwrap();
-    glyph(j.map(|v| if v == 0 { 0 } else { m }))
+    exact(j).unwrap_or_else(|| {
+        let m = j.iter().copied().max().unwrap_or(0);
+        glyph(j.map(|v| if v == 0 { 0 } else { m }))
+    })
 }
 
 fn merge(a: &mut Joints, b: Joints) {
@@ -243,11 +241,20 @@ pub struct Segment {
 }
 
 impl Segment {
-    fn cell(&self, k: i32) -> Point {
+    fn cell(&self, k: i32) -> (i32, i32) {
         if self.vertical {
-            Point::new(self.start.x, self.start.y + k)
+            (self.start.x, self.start.y + k)
         } else {
-            Point::new(self.start.x + k, self.start.y)
+            (self.start.x + k, self.start.y)
+        }
+    }
+
+    /// Направления «назад» и «вперёд» вдоль линии.
+    fn dirs(&self) -> (usize, usize) {
+        if self.vertical {
+            (UP, DOWN)
+        } else {
+            (LEFT, RIGHT)
         }
     }
 }
@@ -260,7 +267,7 @@ pub fn segment_of(l: &Line, dc: &DrawCtx, attr: Attr) -> Option<Segment> {
     if b.is_empty() {
         return None;
     }
-    let (mut start, mut len) = if l.vertical { (Point::new(b.a.x, b.a.y), b.height()) } else { (Point::new(b.a.x, b.a.y), b.width()) };
+    let (mut start, mut len) = (b.a, if l.vertical { b.height() } else { b.width() });
     if l.to_frame {
         let size = dc.size;
         let is_frame = |p: Point| dc.cell_at(p.x, p.y).and_then(|c| joints(c.ch)).is_some();
@@ -293,17 +300,9 @@ pub fn join_lines(dc: &mut DrawCtx, segs: &[Segment]) {
     // Клетки чужих символов рамок, которые надо дорисовать.
     let mut others: HashMap<(i32, i32), Joints> = HashMap::new();
 
-    // Направления «назад» и «вперёд» вдоль линии.
-    let back = |vertical: bool| -> (usize, usize) {
-        if vertical {
-            (UP, DOWN)
-        } else {
-            (LEFT, RIGHT)
-        }
-    };
     for s in segs {
         let w = s.style.weight();
-        let (bk, fw) = back(s.vertical);
+        let (bk, fw) = s.dirs();
         for k in 0..s.len {
             let p = s.cell(k);
             let mut j = [0; 4];
@@ -315,46 +314,43 @@ pub fn join_lines(dc: &mut DrawCtx, segs: &[Segment]) {
             }
             // Под линией уже символ рамки (линия поверх рамки) — соединить.
             let mut attr = s.attr;
-            if let Some(c) = dc.cell_at(p.x, p.y) {
-                if let Some(g) = joints(c.ch) {
-                    merge(&mut j, g);
-                    attr = c.attr;
-                }
+            if let Some((g, a)) = dc.cell_at(p.0, p.1).and_then(|c| joints(c.ch).map(|g| (g, c.attr))) {
+                merge(&mut j, g);
+                attr = a;
             }
-            let e = cells.entry((p.x, p.y)).or_insert(([0; 4], attr));
+            let e = cells.entry(p).or_insert(([0; 4], attr));
             merge(&mut e.0, j);
             e.1 = attr;
         }
     }
 
-    // Концы: что за ними.
-    let occupied: Vec<(i32, i32)> = cells.keys().copied().collect();
+    // Концы: что за ними. (Набор клеток линий здесь уже не меняется —
+    // только их соединения.)
     for s in segs {
         let w = s.style.weight();
-        let (bk, fw) = back(s.vertical);
+        let (bk, fw) = s.dirs();
         for (k, out, dir_out, dir_in) in [(0, -1, bk, fw), (s.len - 1, s.len, fw, bk)] {
-            let end = s.cell(k);
             let beyond = s.cell(out);
-            let key = (beyond.x, beyond.y);
-            if occupied.contains(&key) {
+            let joined = if let Some(e) = cells.get_mut(&beyond) {
                 // Другая линия.
-                if let Some(e) = cells.get_mut(&key) {
-                    e.0[dir_in] = e.0[dir_in].max(w);
-                }
-                if let Some(e) = cells.get_mut(&(end.x, end.y)) {
-                    e.0[dir_out] = e.0[dir_out].max(w);
-                }
-            } else if let Some(c) = dc.cell_at(beyond.x, beyond.y) {
+                e.0[dir_in] = e.0[dir_in].max(w);
+                true
+            } else {
                 // Чужой символ рамки поперёк линии (рамка окна).
-                if let Some(g) = joints(c.ch) {
-                    let across = if s.vertical { g[LEFT] != 0 || g[RIGHT] != 0 } else { g[UP] != 0 || g[DOWN] != 0 };
-                    if across {
-                        let e = others.entry(key).or_insert(g);
+                let g = dc.cell_at(beyond.0, beyond.1).and_then(|c| joints(c.ch));
+                let across = |g: &Joints| if s.vertical { g[LEFT] != 0 || g[RIGHT] != 0 } else { g[UP] != 0 || g[DOWN] != 0 };
+                match g.filter(across) {
+                    Some(g) => {
+                        let e = others.entry(beyond).or_insert(g);
                         e[dir_in] = e[dir_in].max(w);
-                        if let Some(e) = cells.get_mut(&(end.x, end.y)) {
-                            e.0[dir_out] = e.0[dir_out].max(w);
-                        }
+                        true
                     }
+                    None => false,
+                }
+            };
+            if joined {
+                if let Some(e) = cells.get_mut(&s.cell(k)) {
+                    e.0[dir_out] = e.0[dir_out].max(w);
                 }
             }
         }

@@ -73,31 +73,56 @@ pub const FORMAT_VERSION: i64 = 1;
 /// Узоры фона, которые предлагает диалог.
 pub const PATTERNS: [char; 4] = ['░', '▒', '▓', ' '];
 
-/// Язык надписей.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub enum LanguageChoice {
-    /// По переменным окружения `LC_ALL`, `LC_MESSAGES`, `LANG`.
-    #[default]
-    System,
-    En,
-    Ru,
+/// Перечисление настройки с ключами для файла: `ALL`, `key()`,
+/// `from_key()`.
+macro_rules! choice_enum {
+    ($(#[$m:meta])* $name:ident { $($(#[$vm:meta])* $v:ident => $k:literal),+ $(,)? }) => {
+        $(#[$m])*
+        #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+        pub enum $name {
+            $($(#[$vm])* $v),+
+        }
+
+        impl $name {
+            /// Все значения по порядку (как в диалоге).
+            pub const ALL: &'static [$name] = &[$($name::$v),+];
+
+            /// Значение в файле.
+            pub fn key(self) -> &'static str {
+                match self {
+                    $($name::$v => $k),+
+                }
+            }
+
+            pub fn from_key(s: &str) -> Option<Self> {
+                Self::ALL.iter().copied().find(|v| v.key() == s)
+            }
+
+            /// Номер в [`Self::ALL`] (для переключателей диалога).
+            fn index(self) -> u32 {
+                Self::ALL.iter().position(|v| *v == self).unwrap_or(0) as u32
+            }
+
+            /// Значение по номеру; за пределами — последнее.
+            fn at(i: usize) -> Self {
+                Self::ALL[i.min(Self::ALL.len() - 1)]
+            }
+        }
+    };
+}
+
+choice_enum! {
+    /// Язык надписей.
+    LanguageChoice {
+        /// По переменным окружения `LC_ALL`, `LC_MESSAGES`, `LANG`.
+        #[default]
+        System => "system",
+        En => "en",
+        Ru => "ru",
+    }
 }
 
 impl LanguageChoice {
-    pub const ALL: [LanguageChoice; 3] = [LanguageChoice::System, LanguageChoice::En, LanguageChoice::Ru];
-
-    pub fn key(self) -> &'static str {
-        match self {
-            LanguageChoice::System => "system",
-            LanguageChoice::En => "en",
-            LanguageChoice::Ru => "ru",
-        }
-    }
-
-    pub fn from_key(s: &str) -> Option<Self> {
-        Self::ALL.into_iter().find(|l| l.key() == s)
-    }
-
     /// Какой язык получится.
     pub fn language(self) -> Language {
         match self {
@@ -121,31 +146,18 @@ pub fn system_language() -> Language {
     Language::En
 }
 
-/// Сколько цветов у терминала.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub enum ColorChoice {
-    /// Определить по терминалу ([`crate::color::detect_color_mode`]).
-    #[default]
-    Auto,
-    Colors16,
-    Colors256,
+choice_enum! {
+    /// Сколько цветов у терминала.
+    ColorChoice {
+        /// Определить по терминалу ([`crate::color::detect_color_mode`]).
+        #[default]
+        Auto => "auto",
+        Colors16 => "16",
+        Colors256 => "256",
+    }
 }
 
 impl ColorChoice {
-    pub const ALL: [ColorChoice; 3] = [ColorChoice::Auto, ColorChoice::Colors16, ColorChoice::Colors256];
-
-    pub fn key(self) -> &'static str {
-        match self {
-            ColorChoice::Auto => "auto",
-            ColorChoice::Colors16 => "16",
-            ColorChoice::Colors256 => "256",
-        }
-    }
-
-    pub fn from_key(s: &str) -> Option<Self> {
-        Self::ALL.into_iter().find(|c| c.key() == s)
-    }
-
     fn mode(self) -> Option<ColorMode> {
         match self {
             ColorChoice::Auto => None,
@@ -155,34 +167,18 @@ impl ColorChoice {
     }
 }
 
-/// Как расставить окна при запуске.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub enum WindowsAtStart {
-    /// Как стояли при выходе.
-    #[default]
-    Restore,
-    /// Каскадом.
-    Cascade,
-    /// Мозаикой.
-    Tile,
-    /// Как их открывает программа (ничего не менять).
-    AsProgram,
-}
-
-impl WindowsAtStart {
-    pub const ALL: [WindowsAtStart; 4] = [WindowsAtStart::Restore, WindowsAtStart::Cascade, WindowsAtStart::Tile, WindowsAtStart::AsProgram];
-
-    pub fn key(self) -> &'static str {
-        match self {
-            WindowsAtStart::Restore => "restore",
-            WindowsAtStart::Cascade => "cascade",
-            WindowsAtStart::Tile => "tile",
-            WindowsAtStart::AsProgram => "program",
-        }
-    }
-
-    pub fn from_key(s: &str) -> Option<Self> {
-        Self::ALL.into_iter().find(|w| w.key() == s)
+choice_enum! {
+    /// Как расставить окна при запуске.
+    WindowsAtStart {
+        /// Как стояли при выходе.
+        #[default]
+        Restore => "restore",
+        /// Каскадом.
+        Cascade => "cascade",
+        /// Мозаикой.
+        Tile => "tile",
+        /// Как их открывает программа (ничего не менять).
+        AsProgram => "program",
     }
 }
 
@@ -677,12 +673,12 @@ impl Values {
         if let Some(i) = self.theme {
             s.theme = if i == 0 { String::new() } else { themes[i - 1].0.clone() };
         }
-        s.colors = ColorChoice::ALL[self.colors.min(2)];
+        s.colors = ColorChoice::at(self.colors);
         if let Some(p) = self.pattern {
             s.pattern = PATTERNS[p.min(PATTERNS.len() - 1)];
         }
-        s.language = LanguageChoice::ALL[self.language.min(2)];
-        s.windows_at_start = WindowsAtStart::ALL[self.windows.min(3)];
+        s.language = LanguageChoice::at(self.language);
+        s.windows_at_start = WindowsAtStart::at(self.windows);
         s.tile_columns_first = self.options & 1 != 0;
         s.reverse_buttons = self.options & 2 != 0;
         if let Ok(n) = self.double_click.trim().parse::<u32>() {
@@ -728,7 +724,7 @@ fn run_dialog(app: &mut Program, s: &Settings, themes: &[(String, Theme)]) -> (u
 
     // Цвета терминала.
     let mut colors = Cluster::radio_buttons(Rect::default(), &[tr("Detect automatically"), tr("16 colors"), tr("256 colors")]);
-    colors.value = ColorChoice::ALL.iter().position(|c| *c == s.colors).unwrap_or(0) as u32;
+    colors.value = s.colors.index();
     let colors_id = d.add(colors);
     let colors_label = d.add(Label::new(Rect::default(), tr("Terminal ~c~olors"), Some(colors_id)));
 
@@ -741,13 +737,13 @@ fn run_dialog(app: &mut Program, s: &Settings, themes: &[(String, Theme)]) -> (u
 
     // Язык.
     let mut lang = Cluster::radio_buttons(Rect::default(), &[tr("As in the system"), "English", "Русский"]);
-    lang.value = LanguageChoice::ALL.iter().position(|l| *l == s.language).unwrap_or(0) as u32;
+    lang.value = s.language.index();
     let lang_id = d.add(lang);
     let lang_label = d.add(Label::new(Rect::default(), tr("~L~anguage"), Some(lang_id)));
 
     // Окна при запуске.
     let mut wins = Cluster::radio_buttons(Rect::default(), &[tr("Where they were"), tr("Cascade"), tr("Tile"), tr("As the program opens them")]);
-    wins.value = WindowsAtStart::ALL.iter().position(|w| *w == s.windows_at_start).unwrap_or(0) as u32;
+    wins.value = s.windows_at_start.index();
     let wins_id = d.add(wins);
     let wins_label = d.add(Label::new(Rect::default(), tr("~W~indows at start"), Some(wins_id)));
 
@@ -813,7 +809,7 @@ fn run_dialog(app: &mut Program, s: &Settings, themes: &[(String, Theme)]) -> (u
         let p = app.find::<Cluster>(pattern_id).map(|c| c.value).unwrap_or(0);
         if (t, c, p) != shown {
             if c != shown.1 {
-                set_color_mode(ColorChoice::ALL[(c as usize).min(2)].mode());
+                set_color_mode(ColorChoice::at(c as usize).mode());
             }
             if t != shown.0 || c != shown.1 {
                 app.palette = theme_palette(t, themes);

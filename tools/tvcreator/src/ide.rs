@@ -292,7 +292,7 @@ impl Ide {
         match e {
             Some(e) => {
                 app.set_theme(&e.theme);
-                self.settings.theme = e.key();
+                self.settings.theme = e.key.clone();
             }
             None => {
                 app.palette = standard_palette();
@@ -304,7 +304,7 @@ impl Ide {
 
     /// Тема формы на холсте и в предпросмотре (`None` — как у среды).
     pub fn set_form_theme(&mut self, app: &mut Program, e: Option<ThemeEntry>) {
-        let key = e.as_ref().map(|e| e.key()).unwrap_or_default();
+        let key = e.as_ref().map(|e| e.key.clone()).unwrap_or_default();
         self.settings.set(FORM_THEME_KEY, Json::from_str(&key));
         if let Some(c) = app.find_mut::<Canvas>(self.ids.2) {
             c.form_theme = e.map(|e| (e.theme.name.clone(), e.theme.palette.clone()));
@@ -314,7 +314,7 @@ impl Ide {
 
     /// Стандартный диалог «Настройки» (темы — те же, что в меню «Тема»).
     pub fn settings_dialog(&mut self, app: &mut Program) {
-        let list: Vec<(String, Theme)> = self.themes.iter().map(|e| (e.key(), e.theme.clone())).collect();
+        let list: Vec<(String, Theme)> = self.themes.iter().map(|e| (e.key.clone(), e.theme.clone())).collect();
         if settings_dialog_with(app, &mut self.settings, &list) {
             if let Some(p) = &self.settings_path {
                 if let Err(e) = self.settings.save(p) {
@@ -336,7 +336,7 @@ impl Ide {
     }
 
     fn add_theme(&mut self, e: ThemeEntry) -> usize {
-        match self.themes.iter().position(|x| x.key() == e.key()) {
+        match self.themes.iter().position(|x| x.key == e.key) {
             Some(i) => i,
             None => {
                 self.themes.push(e);
@@ -820,7 +820,7 @@ impl AppHandler for Ide {
                     let p = d.file_name();
                     match Theme::load(&p) {
                         Ok(theme) => {
-                            let i = self.add_theme(ThemeEntry { theme, path: Some(p) });
+                            let i = self.add_theme(ThemeEntry::from_file(&p, theme));
                             let e = self.themes[i].clone();
                             self.set_ide_theme(app, Some(&e));
                         }
