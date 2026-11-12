@@ -42,8 +42,8 @@ pub use dialog::{Dialog, DialogPalette};
 pub use editor::{ef, EditWindow, Editor, FileEditor, Indicator, Memo, Pos};
 pub use filedlg::{cd, fd, ChDirDialog, DirListBox, FileDialog, FileEntry, FileInfoPane, FileList};
 pub use filepanel::{
-    available_roots, class_by_name, format_size_full, format_size_short, format_time_full, format_time_short, glob_match, DualPanel, FileClass, FileFilter,
-    FileKind, FilePanel, FilePanelColors, PanelEntry, SortMode,
+    available_roots, class_by_name, format_size_full, format_size_short, format_time_full, format_time_short, glob_match, DualPanel, FileClass,
+    FileFilter, FileKind, FilePanel, FilePanelColors, PanelEntry, SortMode,
 };
 pub use frame::Frame;
 pub use help::{HelpFile, HelpTopic, HelpViewer, HelpWindow};
@@ -55,7 +55,6 @@ pub use listbox::ListBox;
 pub use menu::{Menu, MenuBar, MenuItem};
 pub use msgbox::{build_message_box, input_box, message_box, message_box_rect, mf};
 pub use outline::{Node, Outline};
-pub use treeview::{CheckState, TreeColors, TreeGlyphs, TreeLoader, TreeNode, TreePath, TreeView, DEFAULT_TREE_COLORS};
 pub use progress::{ProgressBar, ProgressStyle, PROGRESS_PALETTE};
 pub use scrollbar::ScrollBar;
 pub use scroller::{Scroller, Terminal};
@@ -64,5 +63,6 @@ pub use statusline::{StatusDef, StatusItem, StatusLine};
 pub use table::{
     column_letters, natural_cmp, Align, FnTableModel, SelectionMode, Table, TableColors, TableColumn, TableModel, VecTableModel, DEFAULT_TABLE_COLORS,
 };
+pub use treeview::{CheckState, TreeColors, TreeGlyphs, TreeLoader, TreeNode, TreePath, TreeView, DEFAULT_TREE_COLORS};
 pub use validate::{FilterValidator, FnValidator, PictureValidator, RangeValidator, StringLookupValidator, Validator};
 pub use window::{wf, Window};

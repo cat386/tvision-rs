@@ -223,10 +223,12 @@ fn menu() -> Menu {
         )
         .submenu(
             "~J~SON",
-            Menu::new()
-                .item_key("~П~роверить", CM_CHECK, kb::f(9), "F9")
-                .item_key("~Ф~орматировать", CM_FORMAT, kb::f(8), "F8")
-                .item_key("~С~жать", CM_COMPACT, kb::f(7), "F7"),
+            Menu::new().item_key("~П~роверить", CM_CHECK, kb::f(9), "F9").item_key("~Ф~орматировать", CM_FORMAT, kb::f(8), "F8").item_key(
+                "~С~жать",
+                CM_COMPACT,
+                kb::f(7),
+                "F7",
+            ),
         )
         .submenu(
             "~П~равка",
