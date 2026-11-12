@@ -43,6 +43,10 @@ fn open(app: &mut Program) -> Option<std::path::PathBuf> {
 * **кнопки**: `fd::OPEN_BUTTON` («Открыть»), `fd::OK_BUTTON` («OK» — для
   «Сохранить как»), `fd::REPLACE_BUTTON`, `fd::CLEAR_BUTTON`,
   `fd::HELP_BUTTON`; «Отмена» есть всегда;
+* **«Диск…»** — на Windows есть всегда: список дисков (`C:`, `D:`…),
+  курсор на текущем, Enter или двойной щелчок — перейти в корень диска.
+  В других системах её добавляет флаг `fd::DRIVE_BUTTON` (в списке —
+  `/`, домашний каталог и точки монтирования);
 * **номер истории** — диалог запоминает введённые имена; у каждого
   диалога свой номер.
 
@@ -74,7 +78,9 @@ fn change_dir(app: &mut Program) -> Option<std::path::PathBuf> {
 ```
 
 `ChDirDialog::new(флаги, номер_истории)`; флаги `cd::NORMAL`,
-`cd::NO_LOAD_DIR`, `cd::HELP_BUTTON`; `directory()` — выбранный каталог.
+`cd::NO_LOAD_DIR`, `cd::HELP_BUTTON`, `cd::DRIVE_BUTTON` (кнопка «Диск…»
+— как у `FileDialog`: на Windows есть всегда); `directory()` — выбранный
+каталог.
 
 ## Части файловых диалогов
 
@@ -88,6 +94,11 @@ fn change_dir(app: &mut Program) -> Option<std::path::PathBuf> {
   поля `path`, `entry`.
 * **`DirListBox`** — дерево каталогов (`TDirListBox`): `new_directory(путь)`,
   `focused_path()`; поля `lb`, `paths`, `dir`, `cur`, `activated`.
+* **`DriveDialog`** — выбор диска (кнопка «Диск…», команда
+  `cm::CHANGE_DRIVE`): `DriveDialog::new(&корни, текущий_путь)`,
+  `selection()`. Корни дают `available_roots()`, текущий диск —
+  `current_drive(&корни, путь)` (самый длинный подходящий корень),
+  `root_of(путь)` — корень пути.
 * **`FileDialogText`** — надписи диалогов («Открыть», «Неверное имя
   файла»…); по-русски — с `locale::set_language(Language::Ru)`.
 

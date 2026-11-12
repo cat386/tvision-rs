@@ -40,7 +40,7 @@ pub use combo::{cbx, Combo, ComboWindow};
 pub use desktop::Desktop;
 pub use dialog::{Dialog, DialogPalette};
 pub use editor::{ef, EditWindow, Editor, FileEditor, Indicator, Memo, Pos};
-pub use filedlg::{cd, fd, ChDirDialog, DirListBox, FileDialog, FileEntry, FileInfoPane, FileList};
+pub use filedlg::{cd, current_drive, fd, root_of, ChDirDialog, DirListBox, DriveDialog, FileDialog, FileEntry, FileInfoPane, FileList};
 pub use filepanel::{
     available_roots, class_by_name, format_size_full, format_size_short, format_time_full, format_time_short, glob_match, DualPanel, FileClass,
     FileFilter, FileKind, FilePanel, FilePanelColors, PanelEntry, SortMode,

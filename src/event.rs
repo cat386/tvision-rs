@@ -356,6 +356,8 @@ pub mod cm {
     pub const FILE_INIT: u16 = 1004;
     pub const CHANGE_DIR: u16 = 1005;
     pub const REVERT: u16 = 1006;
+    /// Файловые диалоги: кнопка «Диск…» — выбрать диск (на Windows).
+    pub const CHANGE_DRIVE: u16 = 1007;
     /// Файловая панель: Enter (или двойной щелчок) на файле. Команда
     /// ставится в очередь; программа берёт файл у панели в фокусе.
     pub const FILE_PANEL_EXECUTE: u16 = 1010;
