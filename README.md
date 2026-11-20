@@ -59,6 +59,13 @@ cargo test -p tvtheme       # редактор тем
 cargo test                  # тесты на «невидимом» терминале
 ```
 
+Пример [Qwen Agent](examples/qwen-agent/README.md) — чат с Qwen через API Model Studio:
+список диалогов, история сообщений, многострочный запрос и настройки подключения.
+Нужны curl и API-ключ в переменной окружения DASHSCOPE_API_KEY.
+Запуск из корня репозитория:
+
+    cargo run --release --manifest-path examples/qwen-agent/Cargo.toml
+
 ## Что уже перенесено
 
 | C++                                   | Rust                                        |
