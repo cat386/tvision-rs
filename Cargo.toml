@@ -145,3 +145,7 @@ test = true
 [[example]]
 name = "themes"
 test = true
+
+[[example]]
+name = "markdown"
+test = true

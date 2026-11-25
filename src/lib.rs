@@ -37,6 +37,7 @@
 //! | — (нет в оригинале) | [`TreeView`], [`TreeNode`] — дерево с ленивой загрузкой и флажками |
 //! | `TColorDialog` | [`ColorDialog`] |
 //! | `THelpFile`, `THelpWindow` | [`HelpFile`], [`HelpWindow`] |
+//! | — (просмотр Markdown) | [`MarkdownViewer`] |
 //! | — (полоса выполнения) | [`ProgressBar`] |
 //!
 //! ## Главное архитектурное отличие от C++
