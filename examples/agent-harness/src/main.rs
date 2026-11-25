@@ -120,7 +120,6 @@ struct Agent {
     prompt: ViewId,
     feedback: ViewId,
     pending: Option<Pending>,
-    rendered_width: i32,
     workspace: PathBuf,
     data_file: PathBuf,
 }
@@ -139,7 +138,7 @@ impl Agent {
         window.flags = wf::MOVE | wf::GROW | wf::ZOOM;
         let chat_list = window.add(ListBox::new(Rect::default(), 1, None));
         let scroll = window.add(ScrollBar::new(Rect::new(0, 0, 1, 10)));
-        let transcript = window.add(Terminal::new(Rect::default(), None, Some(scroll), 100_000));
+        let transcript = window.add(MarkdownViewer::new(Rect::default(), "", Some(scroll)));
         let prompt = window.add(Memo::new(Rect::default(), None, None));
         let feedback = window.add(StaticText::new(
             Rect::default(),
@@ -186,7 +185,6 @@ impl Agent {
             prompt,
             feedback,
             pending: None,
-            rendered_width: 0,
             workspace: std::env::current_dir().map_err(|e| e.to_string())?,
             data_file,
         };
@@ -331,29 +329,11 @@ impl Agent {
         if let Some(input) = app.find_mut::<Memo>(self.prompt) {
             input.editor.set_text(&self.chats[self.current].draft);
         }
-        if let Some(terminal) = app.find_mut::<Terminal>(self.transcript) {
-            self.rendered_width = terminal.vs.size.x;
-            terminal.clear();
-            for message in &self.chats[self.current].messages {
-                terminal.write_line(match message.role.as_str() {
-                    "user" => "ВЫ",
-                    "event" => "ИНСТРУМЕНТ",
-                    _ => "АГЕНТ",
-                });
-                for line in message.text.lines() {
-                    // Терминальные управляющие символы не должны менять экран приложения.
-                    let line: String = line
-                        .chars()
-                        .map(|c| if c.is_control() { ' ' } else { c })
-                        .collect();
-                    for wrapped in
-                        tvision::text::wrap_text(&line, terminal.vs.size.x.max(1) as usize)
-                    {
-                        terminal.write_line(&wrapped);
-                    }
-                }
-                terminal.write_line("");
-            }
+        if let Some(viewer) = app.find_mut::<MarkdownViewer>(self.transcript) {
+            viewer.set_markdown(&chat_markdown(&self.chats[self.current].messages));
+            viewer
+                .scroller
+                .scroll_to(0, viewer.scroller.limit.y, viewer.vs.size);
         }
     }
 
@@ -583,7 +563,10 @@ impl AppHandler for Agent {
             Some(STOP) => {
                 if let Some(pending) = self.pending.take() {
                     pending.worker.stop();
-                    self.chats[pending.chat].messages.push(Message { role: "event".into(), text: "Остановлено пользователем. F7 — проверьте журнал; прерванное действие может иметь неизвестный результат.".into() });
+                    self.chats[pending.chat].messages.push(Message {
+                        role: "event".into(),
+                        text: "Остановлено пользователем. F7 — проверьте журнал; прерванное действие может иметь неизвестный результат.".into(),
+                    });
                     self.show_chat(app);
                     self.feedback(
                         app,
@@ -664,14 +647,6 @@ impl AppHandler for Agent {
             self.show_chat(app);
             self.persist(app);
         }
-        let width = app
-            .find::<Terminal>(self.transcript)
-            .map(|view| view.vs.size.x)
-            .unwrap_or(0);
-        if width != self.rendered_width {
-            self.draft(app);
-            self.show_chat(app);
-        }
         self.poll(app);
         if let Some(window) = app.find_mut::<Window>(self.window) {
             window.title = format!(
@@ -723,6 +698,58 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Ответы — Markdown, запросы и события — буквальный текст внутри блока кода.
+fn chat_markdown(messages: &[Message]) -> String {
+    let mut document = String::new();
+    for message in messages {
+        let heading = match message.role.as_str() {
+            "user" => "ВЫ",
+            "event" => "ИНСТРУМЕНТ",
+            _ => "АГЕНТ",
+        };
+        document.push_str(&format!("## {heading}\n\n"));
+        let body: String = message
+            .text
+            .chars()
+            .filter(|c| !c.is_control() || matches!(c, '\n' | '\t'))
+            .collect();
+        if message.role == "assistant" {
+            document.push_str(&body);
+            document.push('\n');
+            let mut fence = None;
+            for line in body.lines() {
+                let line = line.trim_start();
+                let ch = line.chars().next().unwrap_or(' ');
+                let count = line.chars().take_while(|&c| c == ch).count();
+                if let Some((open, minimum)) = fence {
+                    if ch == open && count >= minimum && line[count..].trim().is_empty() {
+                        fence = None;
+                    }
+                } else if matches!(ch, '`' | '~') && count >= 3 {
+                    fence = Some((ch, count));
+                }
+            }
+            if let Some((ch, count)) = fence {
+                document.push_str(&ch.to_string().repeat(count));
+                document.push('\n');
+            }
+        } else {
+            // Длина ограды больше любой последовательности тильд в данных.
+            let count = body
+                .split(|c| c != '~')
+                .map(str::len)
+                .max()
+                .unwrap_or(0)
+                .max(2)
+                + 1;
+            let fence = "~".repeat(count);
+            document.push_str(&format!("{fence}\n{body}\n{fence}\n"));
+        }
+        document.push('\n');
+    }
+    document
+}
+
 fn approval(app: &mut Program, name: &str, arguments: &str, workspace: &Path) -> bool {
     let extent = app.desktop().group.vs.extent();
     let mut dialog = Dialog::centered(
@@ -759,4 +786,43 @@ fn approval(app: &mut Program, name: &str, arguments: &str, workspace: &Path) ->
     );
     dialog.select(output);
     app.exec_dialog(dialog).0 == cm::YES
+}
+
+#[cfg(test)]
+mod markdown_tests {
+    use super::*;
+
+    #[test]
+    fn transcript_formats_answers_and_keeps_other_roles_literal() {
+        let mut app = Program::new(
+            Box::new(platform::HeadlessBackend::new(100, 40)),
+            None,
+            None,
+        );
+        let data = std::env::temp_dir().join(format!("harness-md-{}.json", std::process::id()));
+        let mut agent = Agent::build(&mut app, data).unwrap();
+        agent.chats[0].messages = vec![
+            Message {
+                role: "user".into(),
+                text: "**буквально**".into(),
+            },
+            Message {
+                role: "assistant".into(),
+                text: "# Ответ\n- **готово**\n```rust\nlet x = 1;".into(),
+            },
+            Message {
+                role: "event".into(),
+                text: "~~~\n# журнал".into(),
+            },
+        ];
+        agent.show_chat(&mut app);
+        assert!(app.find::<MarkdownViewer>(agent.transcript).is_some());
+        app.pump(&mut program::NoHandler);
+        let screen = app.screen_text();
+        assert!(screen.contains("**буквально**"), "{screen}");
+        assert!(screen.contains("• готово"), "{screen}");
+        assert!(!screen.contains("**готово**"), "{screen}");
+        assert!(screen.contains("ИНСТРУМЕНТ"), "{screen}");
+        assert!(screen.contains("# журнал"), "{screen}");
+    }
 }
