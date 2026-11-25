@@ -1,0 +1,6 @@
+/target/
+/.venv/
+**/__pycache__/
+/agent-chats.json
+/*.sqlite*
+/agent-harness.exe

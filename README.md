@@ -292,3 +292,11 @@ fn main() -> std::io::Result<()> {
 флажки сравнивают горячие буквы с учётом пар QWERTY ↔ ЙЦУКЕН. Встроенные
 надписи библиотеки (окна сообщений, диалог файлов) переводятся на русский
 вызовом `locale::set_language(locale::Language::Ru)`.
+
+### Agent Harness
+
+[Пример полноценного агента](examples/agent-harness/README.md): чаты Qwen/OpenAI-compatible API, вызов инструментов для файлов, терминала, интернета, Playwright и Windows UI Automation, подтверждения действий и журнал SQLite.
+
+```bash
+cargo run --manifest-path examples/agent-harness/Cargo.toml
+```
