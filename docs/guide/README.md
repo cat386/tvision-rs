@@ -20,6 +20,10 @@ Norton Commander или Turbo Pascal. Это перевод на Rust знаме
 > закладками и указателем). Пересобрать после правок:
 > `python3 tools/guide-pdf/build.py`.
 
+**[TV Studio](https://github.com/cat386/tvstudio)** — визуальная среда для
+приложений на tvision-rs (формы, проект `.tvsp`, сборка из IDE); уроки ниже
+можно проходить и вручную в редакторе, и в TV Studio с тем же `tvision-rs`.
+
 ## Для кого это руководство
 
 Для тех, кто **немного знает Rust** (умеет создать проект через `cargo

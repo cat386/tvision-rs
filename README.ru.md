@@ -155,6 +155,10 @@ cargo run -p tvcreator --example generated_forms           # формы в пр�
 
 Урок — [14. TVCreator](docs/guide/14-tvcreator.md).
 
+## TV Studio
+
+**[TV Studio](https://github.com/cat386/tvstudio)** — среда визуальной разработки программ на tvision-rs в духе Turbo Pascal / Delphi: формы рисуются мышью, дерево проекта и меню, генерация Rust-кода, встроенный редактор, сборка и запуск из среды. Проекты хранятся в файлах `.tvsp` — в этом репозитории есть [`tvision-rs.tvsp`](tvision-rs.tvsp), чтобы открыть библиотеку как проект. TVCreator (выше) — отдельный лёгкий дизайнер форм `.tvui` и генератор кода; TV Studio — цельная IDE с workspace, сборкой и связкой форм с исходниками.
+
 ## Темы и редактор тем
 
 Тема — палитра приложения (135 цветов) в файле `.tvtheme`.

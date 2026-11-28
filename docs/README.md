@@ -9,6 +9,11 @@
 В Rust-коде крейт называется `tvision` (`use tvision::*;`), в `Cargo.toml` —
 `tvision-rs`.
 
+**[TV Studio](https://github.com/cat386/tvstudio)** — среда разработки на tvision-rs
+(окна и формы на экране, `.tvsp`, сборка из IDE). В корне репозитория —
+[`tvision-rs.tvsp`](../tvision-rs.tvsp). Дизайнер только форм —
+[`tools/tvcreator`](../tools/tvcreator/README.md) (`.tvui`).
+
 ## С чего начать
 
 **[Руководство пользователя](guide/README.md)** — для начинающих:

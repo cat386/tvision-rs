@@ -124,6 +124,10 @@ cargo run -p tvcreator --example generated_forms           # forms in an app
 
 Lesson: [14. TVCreator](docs/guide/14-tvcreator.md).
 
+## TV Studio
+
+**[TV Studio](https://github.com/cat386/tvstudio)** — a full visual IDE for tvision-rs (Turbo Pascal / Delphi style): paint forms with the mouse, edit the application tree and menus, generate Rust, edit code in the built-in editor, build and run from the IDE. Projects are stored in `.tvsp` files — this repository includes [`tvision-rs.tvsp`](tvision-rs.tvsp) for experimenting with the library as a project. TV Creator above is a focused `.tvui` designer and codegen tool; TV Studio adds the whole project workflow (workspace, build integration, forms, and sources in one environment).
+
 ## Themes and tvtheme
 
 A theme is the app palette (135 entries) in a `.tvtheme` file.

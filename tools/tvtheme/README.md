@@ -5,6 +5,10 @@
 меняет их с живым предпросмотром и сохраняет в отдельный файл `.tvtheme`,
 который программа подключает одной строкой.
 
+Приложения целиком можно собирать в **[TV Studio](https://github.com/cat386/tvstudio)**
+— среде на tvision-rs с проектами `.tvsp`; темы из `themes/` подключаются в коде
+или через `TVISION_THEME` (см. [корневой README](../../README.ru.md), раздел «Темы»).
+
 ```text
 cargo run -p tvtheme                        # новая тема
 cargo run -p tvtheme -- themes/sea.tvtheme  # открыть (или создать) файл
