@@ -1,6 +1,6 @@
 [package]
 name = "tvcreator"
-version = "0.1.0"
+version = "0.5.0"
 edition = "2021"
 description = "TVCreator — дизайнер форм для tvision-rs в духе Qt Creator: файлы .tvui и генерация Rust-кода"
 license = "MIT"

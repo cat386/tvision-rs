@@ -1,0 +1,334 @@
+# tvision-rs
+
+**English:** [README.md](README.md)
+
+Порт библиотеки текстового интерфейса **Turbo Vision** ([magiblot/tvision](https://github.com/magiblot/tvision)) с C++ на Rust.
+
+* без внешних зависимостей (работа с терминалом реализована внутри, как в оригинале);
+* Linux / macOS / BSD (termios + ANSI) и Windows 10+ (Console API + VT);
+* мышь, Unicode (кириллица, широкие символы), 16 цветов с оригинальными палитрами
+  и 256 цветов xterm (`color::attr256`, темы, выбор из 256 в `ColorDialog`);
+* тема [gruvbox](https://github.com/morhetz/gruvbox) по умолчанию
+  (`color::palettes::GRUVBOX`; классическая — `APP_COLOR`, она же ставится
+  в 16-цветных терминалах);
+* комментарии в коде — на русском.
+
+## Документация
+
+**[Руководство пользователя](docs/guide/README.md)** ([одним PDF-файлом](docs/tvision-rs-guide.pdf)) — для начинающих:
+пятнадцать уроков от пустой программы до приложений с данными в JSON,
+SQLite и CSV, раскладок в духе Qt, дизайнера форм TVCreator и тем (у каждого — готовый
+пример `cargo run --example learn_…`) и справочник по каждому классу
+простым языком.
+
+
+Подробное руководство на русском — в каталоге [`docs/`](docs/README.md):
+быстрый старт, архитектура, события, свои представления, окна, меню,
+диалоги и элементы, проверка ввода, редактор, стандартные диалоги, цвета,
+платформа, язык интерфейса, тестирование, перенос программ с C++/Pascal,
+справочник констант, файловые панели и операции, дерево `TreeView`. Справка по отдельным типам — `cargo doc --open`.
+
+## Запуск примеров
+
+```
+cargo run --example hello   # порт hello.cpp
+cargo run --example demo    # окна, меню, диалог со всеми элементами, список, контекстное меню
+cargo run --example tvedit  # порт примера tvedit: многооконный редактор файлов
+cargo run --example tvhc -- examples/demohelp.txt hc.rs   # проверка справки и константы контекстов
+cargo run --example progress  # полоса выполнения: копирование, работа в потоке, все виды полос
+cargo run --example json_parse  # разбор JSON в редакторе: проверка с переходом к ошибке, форматирование, сжатие
+cargo run --example json_table -- examples/data/books.json  # JSON-файл в таблице: сортировка, окно записи
+cargo run --example json_load   # загрузка большого JSON в потоке с диалогом ProgressBar и отменой
+cargo run --example table   # таблица: миллион строк, своя модель, правка, сортировка, диалог
+cargo run --example colors  # 256 цветов: палитра xterm, темы gruvbox/классика/сумерки, выбор цвета, режим 16/256
+cargo run --example learn_01_hello   # … learn_08_todo — программы к урокам руководства
+cargo run --example guide_contacts  # приложение из урока руководства: таблица, диалог с проверкой, файлы
+cargo run --example mvc_contacts    # то же на каркасе MVC: записи в JSON (или SQLite: --features sqlite -- файл.db)
+cargo run --example mvc_todo        # задачи: свои команды над моделью (F5 — сделано), сводка в заголовке
+cargo run --example mvc_books       # книги: своё окно со строкой итогов, поиск Ctrl+F, статистика F9
+cargo run --example mvc_csv         # склад в CSV: своё хранилище (трейт Storage)
+cargo run --example sqlite_query --features sqlite  # консоль SQL: запрос сверху, результат в таблице
+cargo run --example json_settings   # настройки программы в JSON: значения по умолчанию, чужие ключи
+cargo run --example layout_demo     # раскладки как в Qt: HBox, VBox, Grid, Form, пружины — без координат
+cargo run --example themes          # темы из themes/: меню тем, выбор с предпросмотром (F3)
+cargo run --example treeview  # дерево TreeView: файловая система с ленивой загрузкой, правка, JSON, флажки
+cargo run --example lfm     # файловый менеджер по мотивам lfm: две панели, вкладки, F5/F6/F8 с прогрессом, PowerCLI
+cargo run --example tvdemo  # порт tvdemo: калькулятор, календарь, пятнашки, ASCII, просмотр файлов...
+cargo test --all-targets    # все тесты, включая тесты tvdemo
+cargo test --all-targets --features sqlite  # плюс SQLite (нужна системная libsqlite3)
+cargo test -p tvcreator     # дизайнер форм TVCreator
+cargo test -p tvtheme       # редактор тем
+cargo test                  # тесты на «невидимом» терминале
+```
+
+Пример [Qwen Agent](examples/qwen-agent/README.md) — чат с Qwen через API Model Studio:
+список диалогов, история сообщений, многострочный запрос и настройки подключения.
+Нужны curl и API-ключ в переменной окружения DASHSCOPE_API_KEY.
+Запуск из корня репозитория:
+
+    cargo run --release --manifest-path examples/qwen-agent/Cargo.toml
+
+## Что уже перенесено
+
+| C++                                   | Rust                                        |
+|---------------------------------------|---------------------------------------------|
+| `TPoint`, `TRect`                     | `Point`, `Rect`                             |
+| `TDrawBuffer`, `TScreenCell`          | `DrawBuffer`, `Cell`, `ScreenBuffer`        |
+| `TEvent`, `kbXXX`, `cmXXX`            | `Event`, `KeyEvent`, модули `kb`, `cm`      |
+| `TView`                               | трейт `View` + `ViewState`                  |
+| `TGroup`                              | `Group`                                     |
+| `TProgram`, `TApplication`            | `Program` + трейт `AppHandler`              |
+| `TDesktop`, `TBackground`             | `Desktop`, `Background` (мозаика, каскад)   |
+| `TWindow`, `TFrame`                   | `Window`, `Frame`                           |
+| `TMenuBar`, `TMenuBox`, `TMenuPopup`  | `MenuBar`, `MenuSession`, `Menu`, `MenuItem`|
+| `TStatusLine`, `TStatusDef`, `TStatusItem` | `StatusLine`, `StatusDef`, `StatusItem` |
+| `TDialog`                             | `Dialog`                                    |
+| `TButton`                             | `Button`                                    |
+| `TStaticText`, `TLabel`               | `StaticText`, `Label`                       |
+| `TInputLine`                          | `InputLine` (выделение, буфер обмена, проверка) |
+| `TCheckBoxes`, `TRadioButtons`        | `Cluster::check_boxes`, `Cluster::radio_buttons` |
+| `TScrollBar`                          | `ScrollBar`                                 |
+| `TListViewer`, `TListBox`             | `ListBox` (несколько столбцов)              |
+| — (нет в оригинале)                   | `Table` — таблица: модель данных, правка, сортировка, закреплённые столбцы |
+| — (нет в оригинале)                   | `ProgressBar` — полоса выполнения; `Program::exec_dialog_idle` — модальное окно с фоновой работой |
+| — (нет в оригинале)                   | `TreeView` — дерево: ленивая загрузка, флажки с тремя состояниями, быстрый поиск, правка |
+| — (нет в оригинале)                   | `FilePanel`, `DualPanel`, `fileops` — файловые панели (по мотивам lfm) и операции в потоке |
+| `messageBox`, `inputBox`              | `message_box`, `message_box_rect`, `input_box` |
+| `platform/*`                          | `platform::{unix, windows, ansi}`           |
+| `TValidator`, `TPXPictureValidator`, `TFilterValidator`, `TRangeValidator`, `TStringLookupValidator` | трейт `Validator`, `PictureValidator`, `FilterValidator`, `RangeValidator`, `StringLookupValidator` |
+| `THistory`, `THistoryWindow`, `historyAdd` | `History`, `HistoryWindow`, `history_add` |
+| `TScroller`, `TTerminal`              | `Scroller`, `Terminal`                      |
+| `TEditor`, `TMemo`, `TFileEditor`     | `Editor`, `Memo`, `FileEditor` (многоуровневая отмена, поиск/замена) |
+| `TEditWindow`, `TIndicator`           | `EditWindow`, `Indicator`                   |
+| `TFileDialog`, `TFileList`, `TFileInfoPane` | `FileDialog`, `FileList`, `FileInfoPane` |
+| `TChDirDialog`, `TDirListBox`         | `ChDirDialog`, `DirListBox`                 |
+| `TOutlineViewer`, `TOutline`, `TNode` | `Outline`, `Node`                           |
+| `TColorDialog`, `TColorSelector`, `TColorDisplay`, `TColorGroup`, `TColorItem` | `ColorDialog`, `ColorSelector`, `ColorDisplay`, `ColorGroup`, `ColorItem` |
+| `THelpFile`, `THelpTopic`, `THelpViewer`, `THelpWindow` | `HelpFile`, `HelpTopic`, `HelpViewer`, `HelpWindow` |
+| утилита `tvhc`                        | пример `tvhc` (проверка + константы `HC_*`) |
+| `TMultiCheckBoxes`                    | `Cluster::multi_check_boxes`                |
+| `TInputLong`, `TColoredText`, `TCombo` (Dialog Design) | `InputLong`, `StaticText::colored`, `Combo` |
+| `TColorAttr`, `TColorXTerm`           | `Attr` (`u32`): байт BIOS + 256 цветов xterm |
+
+## Данные: JSON, SQLite, MVC
+
+Модули сверх оригинального tvision:
+
+* `tvision::json` — разбор и запись JSON (ошибки с номером строки и
+  столбца, ход разбора для полосы выполнения);
+* `tvision::sqlite` — база SQLite через системную `libsqlite3`, запросы с
+  параметрами, транзакции; включается признаком `sqlite`:
+  `tvision-rs = { git = "…", features = ["sqlite"] }`;
+* `tvision::mvc` — модель, окно-таблица и контроллер: по описанию полей
+  (`Schema`, `Field`) получаются таблица, диалог правки с проверкой и
+  сохранение каждого изменения в JSON или SQLite (`open_storage` выбирает
+  по расширению файла). Уроки — [11. MVC](docs/guide/11-mvc.md) и
+  [12. Рецепты](docs/guide/12-data-recipes.md).
+
+Внешних крейтов по-прежнему нет.
+
+## Раскладки в духе Qt
+
+Модуль `tvision::layout`: `HBox`, `VBox`, `Grid`, `Form`, пружины
+(`stretch`, `Spacer`), политики размера (`Fixed`, `Preferred`,
+`Expanding`…), поля и промежутки. Элементы создаются с `Rect::default()`,
+`Window::set_layout` расставляет их и пересчитывает при каждом изменении
+размера окна, `adjust_size` подгоняет окно под содержимое. Свои
+представления сообщают желаемый размер методами `size_hint` и
+`size_policy`. Урок — [13. Раскладки](docs/guide/13-layouts.md).
+
+## TVCreator — дизайнер форм
+
+[`tools/tvcreator`](tools/tvcreator/README.md) — аналог Qt Creator / Qt
+Designer: палитра виджетов, дерево объектов, живой вид формы, редактор
+свойств, отмена, предпросмотр. Формы сохраняются в файлы `.tvui` (JSON) и
+превращаются в Rust-код (как `.ui` и `uic`): структура с id виджетов и
+`create()`, собирающая окно на раскладках.
+
+```text
+cargo run -p tvcreator                                     # среда
+cargo run -p tvcreator -- tools/tvcreator/forms/login.tvui # открыть образец
+cargo run -p tvcreator -- --gen форма.tvui -o форма.rs     # только код
+cargo run -p tvcreator -- --gen-include форма.tvui -o include.rs  # для include!
+cargo run -p tvcreator --example generated_forms           # формы в программе
+```
+
+Урок — [14. TVCreator](docs/guide/14-tvcreator.md).
+
+## Темы и редактор тем
+
+Тема — палитра приложения (135 цветов) в файле `.tvtheme`.
+[`tools/tvtheme`](tools/tvtheme/README.md) — редактор с живым
+предпросмотром: группы цветов, сетки 16 цветов, 256 цветов, отмена,
+экспорт в Rust. В программе — `app.load_theme("тема.tvtheme")`,
+выбор с предпросмотром — `theme::choose_theme`, а без кода — переменная
+окружения `TVISION_THEME`. Образцы — в каталоге `themes/`.
+
+```text
+cargo run -p tvtheme -- themes/sea.tvtheme                     # редактор
+TVISION_THEME=themes/matrix.tvtheme cargo run --example themes # тема без кода
+```
+
+Урок — [15. Темы](docs/guide/15-themes.md).
+
+### Настройки программы
+
+`tvision::settings` — стандартный диалог «Настройки» (тема с живым
+предпросмотром, цвета терминала, узор фона, язык, как расставить окна
+при запуске, мышь) и файл `<программа>.settings.json` **рядом с
+исполнимым файлом**. При запуске программа читает его и применяет, при
+выходе запоминает, где стояли окна:
+
+```rust,ignore
+let path = Settings::default_path();
+let mut settings = Settings::load_or_default(&path);
+settings.apply_language();
+let mut app = Program::with_terminal(Some(menu()), Some(status()))?;
+settings.apply(&mut app).ok();
+open_windows(&mut app);
+settings.restore_windows(&mut app);
+app.run(&mut handler);
+settings.capture_windows(&app);
+settings.save(&path).ok();
+```
+
+Пример — `cargo run --example app_settings`, урок —
+[16. Настройки программы](docs/guide/16-settings.md).
+
+## Чего ещё нет (следующие этапы)
+
+* `TMonoSelector` (выбор цвета в монохромном режиме);
+* `TStreamable` / ресурсы (сохранение объектов в поток);
+* TrueColor (24-битные RGB-цвета; 256 цветов xterm уже есть);
+* кодировки, отличные от UTF-8, в редакторе.
+
+## Системный буфер обмена
+
+`Ctx::clipboard` связан с буфером обмена ОС (строки ввода и редактор
+используют его для Ctrl+Ins / Shift+Ins / Shift+Del):
+
+| ОС | Как |
+|----|-----|
+| Windows | WinAPI, `CF_UNICODETEXT` |
+| macOS | `pbcopy` / `pbpaste` |
+| Linux / BSD, Wayland | `wl-copy` / `wl-paste` |
+| Linux / BSD, X11 | `xclip` или `xsel` |
+| нет ничего из этого (например, SSH) | копирование — последовательностью терминала OSC 52, вставка — из внутреннего буфера |
+
+## tvdemo
+
+`examples/tvdemo/` — порт демонстрационной программы целиком: меню «≡»
+(Alt+Пробел), About, Puzzle, Calendar, Ascii Table, Calculator, Event Viewer
+(Alt+0), просмотр файлов, смена каталога, выход в оболочку (DOS Shell),
+настройки мыши, цвета, узор фона, сохранение/восстановление рабочего стола,
+часы и счётчик памяти, контекстная справка по F1 из оригинального
+`demohelp.txt`. Отличия: «Video mode» переключает палитры (цветная, ч/б,
+монохромная), а не 25/43 строки; рабочий стол сохраняется в простой
+текстовый формат вместо потоков объектов `TStreamable`.
+
+Для этого в библиотеке появились: `Program::dos_shell`, `Program::double_delay`
+и `reverse_buttons`, `Program::event_monitor` + `View::monitor_event`,
+`Ctx::with_program` (действие с программой из любого представления),
+`Desktop::set_pattern`, `platform::time` (местное время),
+`Menu::submenu_key` и `Menu::help`.
+
+## Справка
+
+Исходник справки пишется в формате `tvhc` (см. `examples/demohelp.txt`) и
+читается программой напрямую — двоичный `.hlp` не нужен:
+
+```rust
+let help = Rc::new(HelpFile::parse(include_str!("demohelp.txt"))?);
+// по F1:
+let ctx = app.help_ctx();
+app.exec_dialog(HelpWindow::new(help.clone(), ctx));
+```
+
+Палитра приложения (`Program::palette`) теперь обычный `Vec<u8>`; её меняет
+`ColorDialog`, а сохранить её между запусками можно как угодно (например, в файл).
+
+## Модальные окна изнутри представлений
+
+В C++ любое представление могло вызвать `owner->execView(dialog)` или
+`messageBox(...)` прямо из `handleEvent`. Здесь для этого есть
+`ctx.exec(Box::new(dialog), Some(self.vs.id), tag)`: программа запускает окно
+после текущего события, а результат приходит в `View::exec_result(tag, cmd, view, ctx)`.
+Так работают сообщения валидаторов, окно истории, вопрос «Сохранить изменения?»
+и диалоги поиска/замены в редакторе. `View::valid(cmd, ctx)` тоже получает контекст.
+
+## Главное отличие от C++
+
+В C++ представление хранит указатель на владельца и вызывает его напрямую
+(`owner->setCurrent(this)`, `message(owner, ...)`, `destroy(this)`).
+Здесь представления владельца не знают: они пишут запрос в контекст `Ctx`
+(`ctx.select(id)`, `ctx.message(cmd, info)`, `ctx.close(id)`), а владелец
+выполняет его сразу после возврата из `handle_event`. Модальные диалоги
+запускаются из обработчика приложения: `let (cmd, dlg) = app.exec_dialog(dlg);`.
+
+## Мини-пример
+
+```rust
+use tvision::*;
+
+struct App;
+impl AppHandler for App {
+    fn handle_event(&mut self, app: &mut Program, ev: &mut Event) {
+        if ev.command() == Some(cm::NEW) {
+            message_box(app, "\x03Привет!", mf::INFORMATION | mf::OK_BUTTON);
+            ev.clear();
+        }
+    }
+}
+
+fn main() -> std::io::Result<()> {
+    let menu = Menu::new().submenu("~Ф~айл", Menu::new()
+        .item_key("~П~ривет", cm::NEW, kb::F2, "F2")
+        .item_key("~В~ыход", cm::QUIT, kb::ALT_X, "Alt-X"));
+    let status = vec![StatusDef::all(vec![StatusItem::new("~Alt-X~ Выход", kb::ALT_X, cm::QUIT)])];
+    Program::with_terminal(Some(menu), Some(status))?.run(&mut App);
+    Ok(())
+}
+```
+
+Горячие буквы работают в любой раскладке: на Windows Alt+буква приходит
+латинской буквой клавиши (Alt+Ф — это Alt+A), и меню, метки, кнопки и
+флажки сравнивают горячие буквы с учётом пар QWERTY ↔ ЙЦУКЕН. Встроенные
+надписи библиотеки (окна сообщений, диалог файлов) переводятся на русский
+вызовом `locale::set_language(locale::Language::Ru)`.
+
+### Agent Harness
+
+[Пример полноценного агента](examples/agent-harness/README.md): чаты Qwen/OpenAI-compatible API, вызов инструментов для файлов, терминала, интернета, Playwright и Windows UI Automation, подтверждения действий и журнал SQLite.
+
+```bash
+cargo run --manifest-path examples/agent-harness/Cargo.toml
+```
+
+### Просмотр Markdown
+
+`MarkdownViewer` — виджет чтения Markdown с переносом строк, вертикальной
+прокруткой и выделением заголовков, цитат, списков, кода и ссылок.
+
+```bash
+cargo run --example markdown -- README.md
+```
+
+Без аргумента открывается демонстрационный документ. F3 выбирает `.md` файл
+(UTF-8, до 4 МиБ), стрелки и PgUp/PgDn прокручивают, Home/End переходят
+к началу/концу. Окно можно изменять в размерах; текст переносится заново.
+
+```rust
+use tvision::*;
+let mut window = Window::new(Rect::new(0, 0, 80, 24), "Документ", 0);
+let scroll = window.standard_scroll_bar(true);
+let viewer = MarkdownViewer::new(Rect::new(1, 1, 79, 23), "# Заголовок\nТекст **Markdown**", Some(scroll));
+window.add(viewer);
+```
+
+`set_markdown(&str)` заменяет документ и сбрасывает прокрутку; `markdown()`
+возвращает исходный текст после удаления управляющих символов.
+Поддерживается базовое подмножество: ATX-заголовки (`#`), списки,
+цитаты (`>`), блоки с тройными обратными кавычками/тильдами, разделители,
+простое выделение и inline-ссылки. Адрес ссылки виден рядом с подписью.
+Вложенная inline-разметка, таблицы, setext-заголовки и reference-ссылки
+не разбираются. HTML и изображения не выполняются, ссылки не открываются.

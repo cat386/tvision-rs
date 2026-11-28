@@ -70,6 +70,7 @@ impl AppHandler for EditorApp {
 }
 
 fn main() -> std::io::Result<()> {
+    locale::set_language(locale::Language::Ru);	
     let menu = Menu::new()
         .submenu(
             "~F~ile",

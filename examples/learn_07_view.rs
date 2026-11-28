@@ -35,6 +35,12 @@ impl View for Counter {
         let color = dc.color(if self.vs.is_focused() { 2 } else { 1 });
         // Сначала закрашиваем всю свою строку, потом пишем текст.
         dc.fill(self.vs.extent(), ' ', color);
+        // --[ ]--
+        //let count = format!("Счёт: {}", self.value);
+        let _len = format!("Счёт: {}", self.value).len() + 1;
+        //let rect = self.vs.extent().width() - len as i32;
+        dc.write_str(format!("Счёт: {}", self.value).len() as i32 + 1, 0, "*", color);
+        //dc.fill(, '*', color);
         dc.write_str(1, 0, &format!("Счёт: {}", self.value), color);
     }
 
@@ -59,6 +65,9 @@ impl View for Counter {
                     Key::Char(' ') | Key::Enter => self.value += 1,
                     Key::Char('-') => self.value -= 1,
                     Key::Char('0') => self.value = 0,
+                    Key::Up => self.value += 1,
+                    Key::Down => self.value -= 1,
+                    Key::Esc => self.value = 0,
                     _ => return, // чужая клавиша (например, Tab) — пусть обработают другие
                 }
                 ev.clear();

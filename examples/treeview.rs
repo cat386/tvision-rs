@@ -703,8 +703,17 @@ mod tests {
         app.redraw();
         let screen = app.screen_text();
         assert!(screen.contains("file10.txt"), "{}", screen);
-        assert!(screen.contains("file10.txt\n") || screen.contains("/file10.txt"), "{}", screen);
-        assert!(screen.contains("file10.txt — 2 байт"), "сведения о последнем файле:\n{}", screen);
+        assert!(
+            screen.contains("file10.txt — 2 байт"),
+            "сведения о последнем файле:\n{}",
+            screen
+        );
+        assert!(
+            screen.contains(&format!("{}\\file10.txt", d.display()))
+                || screen.contains(&format!("{}/file10.txt", d.display())),
+            "полный путь в статусной строке:\n{}",
+            screen
+        );
         let _ = std::fs::remove_dir_all(&d);
     }
 
